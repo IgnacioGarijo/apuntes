@@ -69,6 +69,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="manual_rdd_r_completo_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="manual_rdd_r_completo_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -262,7 +264,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>el tratamiento cambia de forma discontinua al cruzar el umbral.</li>
 </ul>
 <p>En un RDD sharp típico:</p>
-<p>[ D_i = 1(X_i c) ]</p>
+<p><span class="math display">\[
+D_i = 1(X_i \ge c)
+\]</span></p>
 <p>La lógica es que unidades justo por debajo y justo por encima del cutoff son muy parecidas. Si observamos un salto en el outcome justo en el cutoff, podemos interpretarlo como efecto causal del tratamiento bajo ciertos supuestos.</p>
 </section>
 <section id="intuición-causal" class="level1" data-number="4">
@@ -271,7 +275,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Una persona con nota 4.99 y otra con nota 5.01 probablemente son similares. La diferencia relevante es que una no recibe la beca y la otra sí.</p>
 <p>El RDD compara outcomes <strong>localmente</strong> alrededor del cutoff.</p>
 <p>El estimando sharp básico es:</p>
-<p>[ <em>{SRD} = </em>{x c} E[Y_i X_i=x] - _{x c} E[Y_i X_i=x] ]</p>
+<p><span class="math display">\[
+\tau_{SRD}
+=
+\lim_{x \downarrow c} E[Y_i \mid X_i=x]
+-
+\lim_{x \uparrow c} E[Y_i \mid X_i=x]
+\]</span></p>
 <p>Es decir:</p>
 <blockquote class="blockquote">
 <p>diferencia entre el límite derecho y el límite izquierdo de la esperanza condicional del outcome en el cutoff.</p>
@@ -293,16 +303,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="estimando-sharp" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="estimando-sharp"><span class="header-section-number">5.1</span> 5.1. Estimando sharp</h2>
 <p>En sharp RDD, cruzar el cutoff determina tratamiento.</p>
-<p>[ D_i = 1(X_i c) ]</p>
+<p><span class="math display">\[
+D_i = 1(X_i \ge c)
+\]</span></p>
 <p>El parámetro es:</p>
-<p>[ _{SRD} = E[Y_i(1)-Y_i(0) X_i=c] ]</p>
+<p><span class="math display">\[
+\tau_{SRD}
+=
+E[Y_i(1)-Y_i(0) \mid X_i=c]
+\]</span></p>
 <p>bajo continuidad de los outcomes potenciales en el cutoff.</p>
 </section>
 <section id="estimando-fuzzy" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="estimando-fuzzy"><span class="header-section-number">5.2</span> 5.2. Estimando fuzzy</h2>
 <p>En fuzzy RDD, cruzar el cutoff cambia la probabilidad de tratamiento, pero no determina tratamiento perfectamente.</p>
 <p>El estimando es:</p>
-<p>[ _{FRD} = ]</p>
+<p><span class="math display">\[
+\tau_{FRD}
+=
+\frac{
+\lim_{x \downarrow c}E[Y_i\mid X_i=x]
+-
+\lim_{x \uparrow c}E[Y_i\mid X_i=x]
+}{
+\lim_{x \downarrow c}E[D_i\mid X_i=x]
+-
+\lim_{x \uparrow c}E[D_i\mid X_i=x]
+}
+\]</span></p>
 <p>Esto es un <strong>Wald local</strong>.</p>
 <p>Se interpreta como un efecto local para los <strong>compliers</strong> alrededor del cutoff: unidades cuya recepción del tratamiento cambia por estar a un lado u otro del umbral.</p>
 </section>
@@ -313,10 +341,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 data-number="6.1" class="anchored" data-anchor-id="continuidad-de-outcomes-potenciales"><span class="header-section-number">6.1</span> 6.1. Continuidad de outcomes potenciales</h2>
 <p>El supuesto central es que, en ausencia del tratamiento, no habría un salto en el outcome justo en el cutoff.</p>
 <p>Formalmente:</p>
-<p>[ E[Y_i(0)X_i=x] ]</p>
+<p><span class="math display">\[
+E[Y_i(0)\mid X_i=x]
+\]</span></p>
 <p>debe ser continuo en (c).</p>
 <p>En sharp RDD, también suele formularse como continuidad de ambos outcomes potenciales:</p>
-<p>[ E[Y_i(0)X_i=x] E[Y_i(1)X_i=x] ]</p>
+<p><span class="math display">\[
+E[Y_i(0)\mid X_i=x]
+\quad\text{y}\quad
+E[Y_i(1)\mid X_i=x]
+\]</span></p>
 <p>en el cutoff.</p>
 <p>Intuición:</p>
 <blockquote class="blockquote">
@@ -386,7 +420,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="sharp-rdd" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="sharp-rdd"><span class="header-section-number">8.1</span> 8.1. Sharp RDD</h2>
 <p>En un sharp RDD, cruzar el cutoff determina perfectamente el tratamiento.</p>
-<p>[ D_i = 1(X_i c) ]</p>
+<p><span class="math display">\[
+D_i = 1(X_i \ge c)
+\]</span></p>
 <p>Ejemplo:</p>
 <ul>
 <li>si nota &gt;= 5, recibes la beca;</li>
@@ -1173,7 +1209,9 @@ window.addEventListener('load', function () { styleCell_tinytable_d2s61a1p991gto
 <section id="modelo-paramétrico" class="level1" data-number="23">
 <h1 data-number="23"><span class="header-section-number">23</span> 23. Modelo paramétrico</h1>
 <p>Un enfoque paramétrico estima algo como:</p>
-<p>[ Y_i = + D_i + f(X_i-c) + D_i g(X_i-c) + u_i ]</p>
+<p><span class="math display">\[
+Y_i = \alpha + \tau D_i + f(X_i-c) + D_i g(X_i-c) + u_i
+\]</span></p>
 <p>Permite distintas pendientes a cada lado del cutoff.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>df_sharp <span class="ot">&lt;-</span> df_sharp <span class="sc">|&gt;</span></span>
@@ -1786,7 +1824,9 @@ Unique Obs.                    1034          966
 </div>
 </div>
 <p>Para gráficos y modelos paramétricos, suele ser cómodo trabajar con:</p>
-<p>[ X_i - c ]</p>
+<p><span class="math display">\[
+X_i - c
+\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_cutoff_5000, <span class="fu">aes</span>(<span class="at">x =</span> x_c, <span class="at">y =</span> y)) <span class="sc">+</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
@@ -3594,7 +3634,9 @@ Unique Obs.                    1516         1484
 <li>puntuaciones con cortes distintos por grupo.</li>
 </ul>
 <p>Una estrategia es normalizar la running variable:</p>
-<p>[ X_{ij}^{norm} = X_{ij} - c_j ]</p>
+<p><span class="math display">\[
+X_{ij}^{norm} = X_{ij} - c_j
+\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb83"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb83-1"><a href="#cb83-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">555</span>)</span>
 <span id="cb83-2"><a href="#cb83-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -4833,9 +4875,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-77"><a href="#cb114-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-78"><a href="#cb114-78" aria-hidden="true" tabindex="-1"></a>En un RDD sharp típico:</span>
 <span id="cb114-79"><a href="#cb114-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-80"><a href="#cb114-80" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-80"><a href="#cb114-80" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-81"><a href="#cb114-81" aria-hidden="true" tabindex="-1"></a>D_i = 1(X_i \ge c)</span>
-<span id="cb114-82"><a href="#cb114-82" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-82"><a href="#cb114-82" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-83"><a href="#cb114-83" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-84"><a href="#cb114-84" aria-hidden="true" tabindex="-1"></a>La lógica es que unidades justo por debajo y justo por encima del cutoff son muy parecidas. Si observamos un salto en el outcome justo en el cutoff, podemos interpretarlo como efecto causal del tratamiento bajo ciertos supuestos.</span>
 <span id="cb114-85"><a href="#cb114-85" aria-hidden="true" tabindex="-1"></a></span>
@@ -4849,13 +4891,13 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-93"><a href="#cb114-93" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-94"><a href="#cb114-94" aria-hidden="true" tabindex="-1"></a>El estimando sharp básico es:</span>
 <span id="cb114-95"><a href="#cb114-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-96"><a href="#cb114-96" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-96"><a href="#cb114-96" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-97"><a href="#cb114-97" aria-hidden="true" tabindex="-1"></a>\tau_{SRD}</span>
 <span id="cb114-98"><a href="#cb114-98" aria-hidden="true" tabindex="-1"></a>=</span>
 <span id="cb114-99"><a href="#cb114-99" aria-hidden="true" tabindex="-1"></a>\lim_{x \downarrow c} E<span class="co">[</span><span class="ot">Y_i \mid X_i=x</span><span class="co">]</span></span>
 <span id="cb114-100"><a href="#cb114-100" aria-hidden="true" tabindex="-1"></a>-</span>
 <span id="cb114-101"><a href="#cb114-101" aria-hidden="true" tabindex="-1"></a>\lim_{x \uparrow c} E<span class="co">[</span><span class="ot">Y_i \mid X_i=x</span><span class="co">]</span></span>
-<span id="cb114-102"><a href="#cb114-102" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-102"><a href="#cb114-102" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-103"><a href="#cb114-103" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-104"><a href="#cb114-104" aria-hidden="true" tabindex="-1"></a>Es decir:</span>
 <span id="cb114-105"><a href="#cb114-105" aria-hidden="true" tabindex="-1"></a></span>
@@ -4881,17 +4923,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-125"><a href="#cb114-125" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-126"><a href="#cb114-126" aria-hidden="true" tabindex="-1"></a>En sharp RDD, cruzar el cutoff determina tratamiento.</span>
 <span id="cb114-127"><a href="#cb114-127" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-128"><a href="#cb114-128" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-128"><a href="#cb114-128" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-129"><a href="#cb114-129" aria-hidden="true" tabindex="-1"></a>D_i = 1(X_i \ge c)</span>
-<span id="cb114-130"><a href="#cb114-130" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-130"><a href="#cb114-130" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-131"><a href="#cb114-131" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-132"><a href="#cb114-132" aria-hidden="true" tabindex="-1"></a>El parámetro es:</span>
 <span id="cb114-133"><a href="#cb114-133" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-134"><a href="#cb114-134" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-134"><a href="#cb114-134" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-135"><a href="#cb114-135" aria-hidden="true" tabindex="-1"></a>\tau_{SRD}</span>
 <span id="cb114-136"><a href="#cb114-136" aria-hidden="true" tabindex="-1"></a>=</span>
 <span id="cb114-137"><a href="#cb114-137" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_i(1)-Y_i(0) \mid X_i=c</span><span class="co">]</span></span>
-<span id="cb114-138"><a href="#cb114-138" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-138"><a href="#cb114-138" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-139"><a href="#cb114-139" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-140"><a href="#cb114-140" aria-hidden="true" tabindex="-1"></a>bajo continuidad de los outcomes potenciales en el cutoff.</span>
 <span id="cb114-141"><a href="#cb114-141" aria-hidden="true" tabindex="-1"></a></span>
@@ -4901,7 +4943,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-145"><a href="#cb114-145" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-146"><a href="#cb114-146" aria-hidden="true" tabindex="-1"></a>El estimando es:</span>
 <span id="cb114-147"><a href="#cb114-147" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-148"><a href="#cb114-148" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-148"><a href="#cb114-148" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-149"><a href="#cb114-149" aria-hidden="true" tabindex="-1"></a>\tau_{FRD}</span>
 <span id="cb114-150"><a href="#cb114-150" aria-hidden="true" tabindex="-1"></a>=</span>
 <span id="cb114-151"><a href="#cb114-151" aria-hidden="true" tabindex="-1"></a>\frac{</span>
@@ -4913,7 +4955,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-157"><a href="#cb114-157" aria-hidden="true" tabindex="-1"></a>-</span>
 <span id="cb114-158"><a href="#cb114-158" aria-hidden="true" tabindex="-1"></a>\lim_{x \uparrow c}E<span class="co">[</span><span class="ot">D_i\mid X_i=x</span><span class="co">]</span></span>
 <span id="cb114-159"><a href="#cb114-159" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb114-160"><a href="#cb114-160" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-160"><a href="#cb114-160" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-161"><a href="#cb114-161" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-162"><a href="#cb114-162" aria-hidden="true" tabindex="-1"></a>Esto es un **Wald local**.</span>
 <span id="cb114-163"><a href="#cb114-163" aria-hidden="true" tabindex="-1"></a></span>
@@ -4927,19 +4969,19 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-171"><a href="#cb114-171" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-172"><a href="#cb114-172" aria-hidden="true" tabindex="-1"></a>Formalmente:</span>
 <span id="cb114-173"><a href="#cb114-173" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-174"><a href="#cb114-174" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-174"><a href="#cb114-174" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-175"><a href="#cb114-175" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_i(0)\mid X_i=x</span><span class="co">]</span></span>
-<span id="cb114-176"><a href="#cb114-176" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-176"><a href="#cb114-176" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-177"><a href="#cb114-177" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-178"><a href="#cb114-178" aria-hidden="true" tabindex="-1"></a>debe ser continuo en <span class="sc">\(</span>c<span class="sc">\)</span>.</span>
 <span id="cb114-179"><a href="#cb114-179" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-180"><a href="#cb114-180" aria-hidden="true" tabindex="-1"></a>En sharp RDD, también suele formularse como continuidad de ambos outcomes potenciales:</span>
 <span id="cb114-181"><a href="#cb114-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-182"><a href="#cb114-182" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-182"><a href="#cb114-182" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-183"><a href="#cb114-183" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_i(0)\mid X_i=x</span><span class="co">]</span></span>
 <span id="cb114-184"><a href="#cb114-184" aria-hidden="true" tabindex="-1"></a>\quad\text{y}\quad</span>
 <span id="cb114-185"><a href="#cb114-185" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_i(1)\mid X_i=x</span><span class="co">]</span></span>
-<span id="cb114-186"><a href="#cb114-186" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-186"><a href="#cb114-186" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-187"><a href="#cb114-187" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-188"><a href="#cb114-188" aria-hidden="true" tabindex="-1"></a>en el cutoff.</span>
 <span id="cb114-189"><a href="#cb114-189" aria-hidden="true" tabindex="-1"></a></span>
@@ -5012,9 +5054,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-256"><a href="#cb114-256" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-257"><a href="#cb114-257" aria-hidden="true" tabindex="-1"></a>En un sharp RDD, cruzar el cutoff determina perfectamente el tratamiento.</span>
 <span id="cb114-258"><a href="#cb114-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-259"><a href="#cb114-259" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-259"><a href="#cb114-259" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-260"><a href="#cb114-260" aria-hidden="true" tabindex="-1"></a>D_i = 1(X_i \ge c)</span>
-<span id="cb114-261"><a href="#cb114-261" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-261"><a href="#cb114-261" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-262"><a href="#cb114-262" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-263"><a href="#cb114-263" aria-hidden="true" tabindex="-1"></a>Ejemplo:</span>
 <span id="cb114-264"><a href="#cb114-264" aria-hidden="true" tabindex="-1"></a></span>
@@ -5406,9 +5448,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-676"><a href="#cb114-676" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-677"><a href="#cb114-677" aria-hidden="true" tabindex="-1"></a>Un enfoque paramétrico estima algo como:</span>
 <span id="cb114-678"><a href="#cb114-678" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-679"><a href="#cb114-679" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-679"><a href="#cb114-679" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-680"><a href="#cb114-680" aria-hidden="true" tabindex="-1"></a>Y_i = \alpha + \tau D_i + f(X_i-c) + D_i g(X_i-c) + u_i</span>
-<span id="cb114-681"><a href="#cb114-681" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-681"><a href="#cb114-681" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-682"><a href="#cb114-682" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-683"><a href="#cb114-683" aria-hidden="true" tabindex="-1"></a>Permite distintas pendientes a cada lado del cutoff.</span>
 <span id="cb114-684"><a href="#cb114-684" aria-hidden="true" tabindex="-1"></a></span>
@@ -5519,9 +5561,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-795"><a href="#cb114-795" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-796"><a href="#cb114-796" aria-hidden="true" tabindex="-1"></a>Para gráficos y modelos paramétricos, suele ser cómodo trabajar con:</span>
 <span id="cb114-797"><a href="#cb114-797" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-798"><a href="#cb114-798" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-798"><a href="#cb114-798" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-799"><a href="#cb114-799" aria-hidden="true" tabindex="-1"></a>X_i - c</span>
-<span id="cb114-800"><a href="#cb114-800" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-800"><a href="#cb114-800" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-801"><a href="#cb114-801" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-804"><a href="#cb114-804" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb114-805"><a href="#cb114-805" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_cutoff_5000, <span class="fu">aes</span>(<span class="at">x =</span> x_c, <span class="at">y =</span> y)) <span class="sc">+</span></span>
@@ -6121,9 +6163,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb114-1461"><a href="#cb114-1461" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-1462"><a href="#cb114-1462" aria-hidden="true" tabindex="-1"></a>Una estrategia es normalizar la running variable:</span>
 <span id="cb114-1463"><a href="#cb114-1463" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb114-1464"><a href="#cb114-1464" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb114-1464"><a href="#cb114-1464" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-1465"><a href="#cb114-1465" aria-hidden="true" tabindex="-1"></a>X_{ij}^{norm} = X_{ij} - c_j</span>
-<span id="cb114-1466"><a href="#cb114-1466" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb114-1466"><a href="#cb114-1466" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb114-1467"><a href="#cb114-1467" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb114-1470"><a href="#cb114-1470" aria-hidden="true" tabindex="-1"></a><span class="in">```{r}</span></span>
 <span id="cb114-1471"><a href="#cb114-1471" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">555</span>)</span>

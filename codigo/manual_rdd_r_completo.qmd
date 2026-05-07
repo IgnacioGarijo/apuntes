@@ -75,9 +75,9 @@ La estructura básica es:
 
 En un RDD sharp típico:
 
-\[
+$$
 D_i = 1(X_i \ge c)
-\]
+$$
 
 La lógica es que unidades justo por debajo y justo por encima del cutoff son muy parecidas. Si observamos un salto en el outcome justo en el cutoff, podemos interpretarlo como efecto causal del tratamiento bajo ciertos supuestos.
 
@@ -91,13 +91,13 @@ El RDD compara outcomes **localmente** alrededor del cutoff.
 
 El estimando sharp básico es:
 
-\[
+$$
 \tau_{SRD}
 =
 \lim_{x \downarrow c} E[Y_i \mid X_i=x]
 -
 \lim_{x \uparrow c} E[Y_i \mid X_i=x]
-\]
+$$
 
 Es decir:
 
@@ -123,17 +123,17 @@ Si una política trata a municipios con población inferior a 5.000 habitantes, 
 
 En sharp RDD, cruzar el cutoff determina tratamiento.
 
-\[
+$$
 D_i = 1(X_i \ge c)
-\]
+$$
 
 El parámetro es:
 
-\[
+$$
 \tau_{SRD}
 =
 E[Y_i(1)-Y_i(0) \mid X_i=c]
-\]
+$$
 
 bajo continuidad de los outcomes potenciales en el cutoff.
 
@@ -143,7 +143,7 @@ En fuzzy RDD, cruzar el cutoff cambia la probabilidad de tratamiento, pero no de
 
 El estimando es:
 
-\[
+$$
 \tau_{FRD}
 =
 \frac{
@@ -155,7 +155,7 @@ El estimando es:
 -
 \lim_{x \uparrow c}E[D_i\mid X_i=x]
 }
-\]
+$$
 
 Esto es un **Wald local**.
 
@@ -169,19 +169,19 @@ El supuesto central es que, en ausencia del tratamiento, no habría un salto en 
 
 Formalmente:
 
-\[
+$$
 E[Y_i(0)\mid X_i=x]
-\]
+$$
 
 debe ser continuo en \(c\).
 
 En sharp RDD, también suele formularse como continuidad de ambos outcomes potenciales:
 
-\[
+$$
 E[Y_i(0)\mid X_i=x]
 \quad\text{y}\quad
 E[Y_i(1)\mid X_i=x]
-\]
+$$
 
 en el cutoff.
 
@@ -254,9 +254,9 @@ Un RDD no es convincente si:
 
 En un sharp RDD, cruzar el cutoff determina perfectamente el tratamiento.
 
-\[
+$$
 D_i = 1(X_i \ge c)
-\]
+$$
 
 Ejemplo:
 
@@ -648,9 +648,9 @@ kernel_results
 
 Un enfoque paramétrico estima algo como:
 
-\[
+$$
 Y_i = \alpha + \tau D_i + f(X_i-c) + D_i g(X_i-c) + u_i
-\]
+$$
 
 Permite distintas pendientes a cada lado del cutoff.
 
@@ -761,9 +761,9 @@ summary(rd_pop)
 
 Para gráficos y modelos paramétricos, suele ser cómodo trabajar con:
 
-\[
+$$
 X_i - c
-\]
+$$
 
 ```{r}
 ggplot(df_cutoff_5000, aes(x = x_c, y = y)) +
@@ -1363,9 +1363,9 @@ A veces existen varios cutoffs:
 
 Una estrategia es normalizar la running variable:
 
-\[
+$$
 X_{ij}^{norm} = X_{ij} - c_j
-\]
+$$
 
 ```{r}
 set.seed(555)

@@ -73,6 +73,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="manual_did_r_referencia_files/libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
 <script src="manual_did_r_referencia_files/libs/pagedtable-1.1/js/pagedtable.js"></script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -290,9 +292,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h1 data-number="3"><span class="header-section-number">3</span> 1. Qué es diferencias en diferencias</h1>
 <p>La idea básica de diferencias en diferencias es comparar cómo cambia un outcome en un grupo tratado antes y después de una intervención, y restarle cómo cambia el outcome en un grupo comparable no tratado.</p>
 <p>En el caso clásico con dos grupos y dos periodos:</p>
-<p>[ ATT = (E[Y_{post}D=1]-E[Y_{pre}D=1]) - (E[Y_{post}D=0]-E[Y_{pre}D=0]) ]</p>
+<p><span class="math display">\[
+ATT =
+\left(E[Y_{post}\mid D=1]-E[Y_{pre}\mid D=1]\right)
+-
+\left(E[Y_{post}\mid D=0]-E[Y_{pre}\mid D=0]\right)
+\]</span></p>
 <p>El supuesto clave es la hipótesis de <strong>tendencias paralelas</strong>:</p>
-<p>[ E[Y_{post}(0)-Y_{pre}(0)D=1] = E[Y_{post}(0)-Y_{pre}(0)D=0] ]</p>
+<p><span class="math display">\[
+E[Y_{post}(0)-Y_{pre}(0)\mid D=1]
+=
+E[Y_{post}(0)-Y_{pre}(0)\mid D=0]
+\]</span></p>
 <p>Es decir, en ausencia del tratamiento, el grupo tratado habría evolucionado como el grupo de control.</p>
 <section id="simulación-de-un-did-2x2" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="simulación-de-un-did-2x2"><span class="header-section-number">3.1</span> 1.1 Simulación de un DiD 2x2</h2>
@@ -983,7 +994,9 @@ RMSE: 1.61526   Adj. R2: 0.303647</code></pre>
 <section id="twfe-sin-covariables" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> 3. TWFE sin covariables</h1>
 <p>El modelo TWFE básico es:</p>
-<p>[ Y_{it}=<em>i + <em>t + D</em>{it}+u</em>{it} ]</p>
+<p><span class="math display">\[
+Y_{it}=\alpha_i + \lambda_t + \beta D_{it}+u_{it}
+\]</span></p>
 <p>donde:</p>
 <ul>
 <li><code>alpha_i</code> son efectos fijos de unidad;</li>
@@ -1517,7 +1530,9 @@ RMSE: 0.97421     Adj. R2: 0.701563
 <section id="event-study-twfe-básico" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="event-study-twfe-básico"><span class="header-section-number">5.2</span> 3.2 Event study TWFE básico</h2>
 <p>El event study TWFE usa dummies de tiempo relativo al tratamiento:</p>
-<p>[ Y_{it}=_i+<em>t+</em>{k }<em>k 1{t-G_i=k}+u</em>{it} ]</p>
+<p><span class="math display">\[
+Y_{it}=\alpha_i+\lambda_t+\sum_{k \neq -1}\beta_k 1\{t-G_i=k\}+u_{it}
+\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>es_twfe <span class="ot">&lt;-</span> <span class="fu">feols</span>(</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> <span class="fu">i</span>(rel_time, <span class="at">ref =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">|</span> id <span class="sc">+</span> year,</span>
@@ -2393,7 +2408,9 @@ Estimation Method:  Doubly Robust</code></pre>
 <section id="diseño-escalonado-por-qué-cambia-todo" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> 6. Diseño escalonado: por qué cambia todo</h1>
 <p>En un diseño escalonado, distintas unidades reciben el tratamiento en distintos momentos. El parámetro natural ya no es un único ATT, sino:</p>
-<p>[ ATT(g,t) ]</p>
+<p><span class="math display">\[
+ATT(g,t)
+\]</span></p>
 <p>donde:</p>
 <ul>
 <li><code>g</code> es la cohorte de tratamiento;</li>
@@ -2800,9 +2817,13 @@ Estimation Method:  Doubly Robust</code></pre>
 <section id="covariables-en-did" class="level1" data-number="10">
 <h1 data-number="10"><span class="header-section-number">10</span> 8. Covariables en DiD</h1>
 <p>Meter covariables no es un acto mecánico. Cambia la hipótesis de identificación. Sin covariables, se pide tendencias paralelas incondicionales:</p>
-<p>[ E[Y(0)D=1] = E[Y(0)D=0] ]</p>
+<p><span class="math display">\[
+E[\Delta Y(0)\mid D=1] = E[\Delta Y(0)\mid D=0]
+\]</span></p>
 <p>Con covariables, se pide tendencias paralelas condicionales:</p>
-<p>[ E[Y(0)D=1,X] = E[Y(0)D=0,X] ]</p>
+<p><span class="math display">\[
+E[\Delta Y(0)\mid D=1,X] = E[\Delta Y(0)\mid D=0,X]
+\]</span></p>
 <section id="qué-covariables-usar" class="level2" data-number="10.1">
 <h2 data-number="10.1" class="anchored" data-anchor-id="qué-covariables-usar"><span class="header-section-number">10.1</span> 8.1 Qué covariables usar</h2>
 <p>Buenas candidatas:</p>
@@ -3390,7 +3411,9 @@ RMSE: 0.97421     Adj. R2: 0.701563
 <section id="covariables-invariantes-interactuadas-con-efectos-temporales" class="level2" data-number="11.3">
 <h2 data-number="11.3" class="anchored" data-anchor-id="covariables-invariantes-interactuadas-con-efectos-temporales"><span class="header-section-number">11.3</span> 9.3 Covariables invariantes interactuadas con efectos temporales</h2>
 <p>Si creemos que las tendencias varían por género o sector, podemos permitir tendencias específicas por año:</p>
-<p>[ Y_{it}=_i+<em>t+D</em>{it}+X_i<em>t+u</em>{it} ]</p>
+<p><span class="math display">\[
+Y_{it}=\alpha_i+\lambda_t+\beta D_{it}+X_i\times\lambda_t+u_{it}
+\]</span></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>twfe_interact <span class="ot">&lt;-</span> <span class="fu">feols</span>(</span>
 <span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> D <span class="sc">+</span> <span class="fu">i</span>(year, gender) <span class="sc">+</span> <span class="fu">i</span>(year, sector) <span class="sc">|</span> id <span class="sc">+</span> year,</span>
@@ -4559,7 +4582,9 @@ Estimation Method:  Inverse Probability Weighting</code></pre>
 <h1 data-number="13"><span class="header-section-number">13</span> 11. RA: Regression Adjustment</h1>
 <p>RA estima el contrafactual de los tratados usando un modelo de outcome ajustado en los controles.</p>
 <p>La idea es estimar:</p>
-<p>[ m_0(X)=E[YD=0,X] ]</p>
+<p><span class="math display">\[
+m_0(X)=E[\Delta Y\mid D=0,X]
+\]</span></p>
 <p>Luego se predice qué habría ocurrido a los tratados en ausencia de tratamiento.</p>
 <section id="ra-en-2x2-con-drdid" class="level2" data-number="13.1">
 <h2 data-number="13.1" class="anchored" data-anchor-id="ra-en-2x2-con-drdid"><span class="header-section-number">13.1</span> 11.1 RA en 2x2 con <code>DRDID</code></h2>
@@ -8354,20 +8379,20 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-64"><a href="#cb173-64" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-65"><a href="#cb173-65" aria-hidden="true" tabindex="-1"></a>En el caso clásico con dos grupos y dos periodos:</span>
 <span id="cb173-66"><a href="#cb173-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-67"><a href="#cb173-67" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-67"><a href="#cb173-67" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-68"><a href="#cb173-68" aria-hidden="true" tabindex="-1"></a>ATT =</span>
 <span id="cb173-69"><a href="#cb173-69" aria-hidden="true" tabindex="-1"></a>\left(E<span class="co">[</span><span class="ot">Y_{post}\mid D=1</span><span class="co">]</span>-E<span class="co">[</span><span class="ot">Y_{pre}\mid D=1</span><span class="co">]</span>\right)</span>
 <span id="cb173-70"><a href="#cb173-70" aria-hidden="true" tabindex="-1"></a>-</span>
 <span id="cb173-71"><a href="#cb173-71" aria-hidden="true" tabindex="-1"></a>\left(E<span class="co">[</span><span class="ot">Y_{post}\mid D=0</span><span class="co">]</span>-E<span class="co">[</span><span class="ot">Y_{pre}\mid D=0</span><span class="co">]</span>\right)</span>
-<span id="cb173-72"><a href="#cb173-72" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-72"><a href="#cb173-72" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-73"><a href="#cb173-73" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-74"><a href="#cb173-74" aria-hidden="true" tabindex="-1"></a>El supuesto clave es la hipótesis de **tendencias paralelas**:</span>
 <span id="cb173-75"><a href="#cb173-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-76"><a href="#cb173-76" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-76"><a href="#cb173-76" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-77"><a href="#cb173-77" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_{post}(0)-Y_{pre}(0)\mid D=1</span><span class="co">]</span></span>
 <span id="cb173-78"><a href="#cb173-78" aria-hidden="true" tabindex="-1"></a>=</span>
 <span id="cb173-79"><a href="#cb173-79" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">Y_{post}(0)-Y_{pre}(0)\mid D=0</span><span class="co">]</span></span>
-<span id="cb173-80"><a href="#cb173-80" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-80"><a href="#cb173-80" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-81"><a href="#cb173-81" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-82"><a href="#cb173-82" aria-hidden="true" tabindex="-1"></a>Es decir, en ausencia del tratamiento, el grupo tratado habría evolucionado como el grupo de control.</span>
 <span id="cb173-83"><a href="#cb173-83" aria-hidden="true" tabindex="-1"></a></span>
@@ -8520,9 +8545,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-230"><a href="#cb173-230" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-231"><a href="#cb173-231" aria-hidden="true" tabindex="-1"></a>El modelo TWFE básico es:</span>
 <span id="cb173-232"><a href="#cb173-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-233"><a href="#cb173-233" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-233"><a href="#cb173-233" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-234"><a href="#cb173-234" aria-hidden="true" tabindex="-1"></a>Y_{it}=\alpha_i + \lambda_t + \beta D_{it}+u_{it}</span>
-<span id="cb173-235"><a href="#cb173-235" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-235"><a href="#cb173-235" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-236"><a href="#cb173-236" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-237"><a href="#cb173-237" aria-hidden="true" tabindex="-1"></a>donde:</span>
 <span id="cb173-238"><a href="#cb173-238" aria-hidden="true" tabindex="-1"></a></span>
@@ -8553,9 +8578,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-263"><a href="#cb173-263" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-264"><a href="#cb173-264" aria-hidden="true" tabindex="-1"></a>El event study TWFE usa dummies de tiempo relativo al tratamiento:</span>
 <span id="cb173-265"><a href="#cb173-265" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-266"><a href="#cb173-266" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-266"><a href="#cb173-266" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-267"><a href="#cb173-267" aria-hidden="true" tabindex="-1"></a>Y_{it}=\alpha_i+\lambda_t+\sum_{k \neq -1}\beta_k 1<span class="sc">\{</span>t-G_i=k<span class="sc">\}</span>+u_{it}</span>
-<span id="cb173-268"><a href="#cb173-268" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-268"><a href="#cb173-268" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-269"><a href="#cb173-269" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-270"><a href="#cb173-270" aria-hidden="true" tabindex="-1"></a><span class="in">```{r twfe-event-study}</span></span>
 <span id="cb173-271"><a href="#cb173-271" aria-hidden="true" tabindex="-1"></a>es_twfe <span class="ot">&lt;-</span> <span class="fu">feols</span>(</span>
@@ -8767,9 +8792,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-477"><a href="#cb173-477" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-478"><a href="#cb173-478" aria-hidden="true" tabindex="-1"></a>En un diseño escalonado, distintas unidades reciben el tratamiento en distintos momentos. El parámetro natural ya no es un único ATT, sino:</span>
 <span id="cb173-479"><a href="#cb173-479" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-480"><a href="#cb173-480" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-480"><a href="#cb173-480" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-481"><a href="#cb173-481" aria-hidden="true" tabindex="-1"></a>ATT(g,t)</span>
-<span id="cb173-482"><a href="#cb173-482" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-482"><a href="#cb173-482" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-483"><a href="#cb173-483" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-484"><a href="#cb173-484" aria-hidden="true" tabindex="-1"></a>donde:</span>
 <span id="cb173-485"><a href="#cb173-485" aria-hidden="true" tabindex="-1"></a></span>
@@ -8959,15 +8984,15 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-671"><a href="#cb173-671" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-672"><a href="#cb173-672" aria-hidden="true" tabindex="-1"></a>Meter covariables no es un acto mecánico. Cambia la hipótesis de identificación. Sin covariables, se pide tendencias paralelas incondicionales:</span>
 <span id="cb173-673"><a href="#cb173-673" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-674"><a href="#cb173-674" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-674"><a href="#cb173-674" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-675"><a href="#cb173-675" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">\Delta Y(0)\mid D=1</span><span class="co">]</span> = E<span class="co">[</span><span class="ot">\Delta Y(0)\mid D=0</span><span class="co">]</span></span>
-<span id="cb173-676"><a href="#cb173-676" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-676"><a href="#cb173-676" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-677"><a href="#cb173-677" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-678"><a href="#cb173-678" aria-hidden="true" tabindex="-1"></a>Con covariables, se pide tendencias paralelas condicionales:</span>
 <span id="cb173-679"><a href="#cb173-679" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-680"><a href="#cb173-680" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-680"><a href="#cb173-680" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-681"><a href="#cb173-681" aria-hidden="true" tabindex="-1"></a>E<span class="co">[</span><span class="ot">\Delta Y(0)\mid D=1,X</span><span class="co">]</span> = E<span class="co">[</span><span class="ot">\Delta Y(0)\mid D=0,X</span><span class="co">]</span></span>
-<span id="cb173-682"><a href="#cb173-682" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-682"><a href="#cb173-682" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-683"><a href="#cb173-683" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-684"><a href="#cb173-684" aria-hidden="true" tabindex="-1"></a><span class="fu">## 8.1 Qué covariables usar</span></span>
 <span id="cb173-685"><a href="#cb173-685" aria-hidden="true" tabindex="-1"></a></span>
@@ -9036,9 +9061,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-748"><a href="#cb173-748" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-749"><a href="#cb173-749" aria-hidden="true" tabindex="-1"></a>Si creemos que las tendencias varían por género o sector, podemos permitir tendencias específicas por año:</span>
 <span id="cb173-750"><a href="#cb173-750" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-751"><a href="#cb173-751" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-751"><a href="#cb173-751" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-752"><a href="#cb173-752" aria-hidden="true" tabindex="-1"></a>Y_{it}=\alpha_i+\lambda_t+\beta D_{it}+X_i\times\lambda_t+u_{it}</span>
-<span id="cb173-753"><a href="#cb173-753" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-753"><a href="#cb173-753" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-754"><a href="#cb173-754" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-755"><a href="#cb173-755" aria-hidden="true" tabindex="-1"></a><span class="in">```{r twfe-interactions}</span></span>
 <span id="cb173-756"><a href="#cb173-756" aria-hidden="true" tabindex="-1"></a>twfe_interact <span class="ot">&lt;-</span> <span class="fu">feols</span>(</span>
@@ -9195,9 +9220,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb173-907"><a href="#cb173-907" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-908"><a href="#cb173-908" aria-hidden="true" tabindex="-1"></a>La idea es estimar:</span>
 <span id="cb173-909"><a href="#cb173-909" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb173-910"><a href="#cb173-910" aria-hidden="true" tabindex="-1"></a><span class="sc">\[</span></span>
+<span id="cb173-910"><a href="#cb173-910" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-911"><a href="#cb173-911" aria-hidden="true" tabindex="-1"></a>m_0(X)=E<span class="co">[</span><span class="ot">\Delta Y\mid D=0,X</span><span class="co">]</span></span>
-<span id="cb173-912"><a href="#cb173-912" aria-hidden="true" tabindex="-1"></a><span class="sc">\]</span></span>
+<span id="cb173-912"><a href="#cb173-912" aria-hidden="true" tabindex="-1"></a>$$</span>
 <span id="cb173-913"><a href="#cb173-913" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb173-914"><a href="#cb173-914" aria-hidden="true" tabindex="-1"></a>Luego se predice qué habría ocurrido a los tratados en ausencia de tratamiento.</span>
 <span id="cb173-915"><a href="#cb173-915" aria-hidden="true" tabindex="-1"></a></span>

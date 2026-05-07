@@ -64,20 +64,20 @@ La idea básica de diferencias en diferencias es comparar cómo cambia un outcom
 
 En el caso clásico con dos grupos y dos periodos:
 
-\[
+$$
 ATT =
 \left(E[Y_{post}\mid D=1]-E[Y_{pre}\mid D=1]\right)
 -
 \left(E[Y_{post}\mid D=0]-E[Y_{pre}\mid D=0]\right)
-\]
+$$
 
 El supuesto clave es la hipótesis de **tendencias paralelas**:
 
-\[
+$$
 E[Y_{post}(0)-Y_{pre}(0)\mid D=1]
 =
 E[Y_{post}(0)-Y_{pre}(0)\mid D=0]
-\]
+$$
 
 Es decir, en ausencia del tratamiento, el grupo tratado habría evolucionado como el grupo de control.
 
@@ -230,9 +230,9 @@ Convención habitual en `did::att_gt()`:
 
 El modelo TWFE básico es:
 
-\[
+$$
 Y_{it}=\alpha_i + \lambda_t + \beta D_{it}+u_{it}
-\]
+$$
 
 donde:
 
@@ -263,9 +263,9 @@ modelsummary(
 
 El event study TWFE usa dummies de tiempo relativo al tratamiento:
 
-\[
+$$
 Y_{it}=\alpha_i+\lambda_t+\sum_{k \neq -1}\beta_k 1\{t-G_i=k\}+u_{it}
-\]
+$$
 
 ```{r twfe-event-study}
 es_twfe <- feols(
@@ -477,9 +477,9 @@ summary(att_preview)
 
 En un diseño escalonado, distintas unidades reciben el tratamiento en distintos momentos. El parámetro natural ya no es un único ATT, sino:
 
-\[
+$$
 ATT(g,t)
-\]
+$$
 
 donde:
 
@@ -669,15 +669,15 @@ anticipation_table
 
 Meter covariables no es un acto mecánico. Cambia la hipótesis de identificación. Sin covariables, se pide tendencias paralelas incondicionales:
 
-\[
+$$
 E[\Delta Y(0)\mid D=1] = E[\Delta Y(0)\mid D=0]
-\]
+$$
 
 Con covariables, se pide tendencias paralelas condicionales:
 
-\[
+$$
 E[\Delta Y(0)\mid D=1,X] = E[\Delta Y(0)\mid D=0,X]
-\]
+$$
 
 ## 8.1 Qué covariables usar
 
@@ -746,9 +746,9 @@ modelsummary(
 
 Si creemos que las tendencias varían por género o sector, podemos permitir tendencias específicas por año:
 
-\[
+$$
 Y_{it}=\alpha_i+\lambda_t+\beta D_{it}+X_i\times\lambda_t+u_{it}
-\]
+$$
 
 ```{r twfe-interactions}
 twfe_interact <- feols(
@@ -905,9 +905,9 @@ RA estima el contrafactual de los tratados usando un modelo de outcome ajustado 
 
 La idea es estimar:
 
-\[
+$$
 m_0(X)=E[\Delta Y\mid D=0,X]
-\]
+$$
 
 Luego se predice qué habría ocurrido a los tratados en ausencia de tratamiento.
 
