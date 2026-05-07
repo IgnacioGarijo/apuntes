@@ -1,0 +1,1918 @@
+---
+title: "Manual completo de Regression Discontinuity Design (RDD) en R"
+subtitle: "Guía aplicada con datos sintéticos, gráficos, tablas, robustez e interpretación"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# 1. Objetivo del manual
+
+Este manual explica cómo realizar un análisis de **Regression Discontinuity Design** o **RDD** en R desde cero.
+
+Está pensado para alguien que nunca ha estimado un RDD y necesita entender:
+
+- qué es un RDD;
+- qué efecto causal identifica;
+- qué supuestos necesita;
+- qué decisiones prácticas hay que tomar;
+- qué gráficos y tests hay que producir;
+- cuándo usar un diseño **sharp**, **fuzzy**, **kink** o **donut**;
+- cuándo usar modelos paramétricos o no paramétricos;
+- cómo interpretar resultados;
+- cómo hacer análisis de robustez;
+- cómo trabajar con múltiples cutoffs;
+- cómo tratar outcomes binarios, proporciones o logs;
+- cómo escribir un informe aplicado.
+
+El documento usa datos sintéticos para que todos los bloques de código funcionen al renderizar el `.qmd`.
+
+# 2. Paquetes
+
+```{r}
+# install.packages(c(
+#   "tidyverse", "rdrobust", "rddensity", "modelsummary",
+#   "fixest", "broom", "patchwork", "scales", "janitor"
+# ))
+
+library(tidyverse)
+library(rdrobust)
+library(rddensity)
+library(modelsummary)
+library(fixest)
+library(broom)
+library(patchwork)
+library(scales)
+library(janitor)
+```
+
+# 3. Qué es un RDD
+
+Un **Regression Discontinuity Design** es un diseño cuasi-experimental que explota una regla de asignación basada en un umbral.
+
+Ejemplos:
+
+- una beca si la nota es mayor o igual que 5;
+- una ayuda si la renta está por debajo de cierto umbral;
+- una inspección si un score de riesgo supera cierto punto;
+- una subvención si la población municipal es menor de 5.000 habitantes;
+- una política pública que se activa si un indicador supera cierto valor.
+
+La estructura básica es:
+
+- existe una variable continua llamada **running variable** o variable de asignación, \(X_i\);
+- existe un umbral o cutoff, \(c\);
+- el tratamiento cambia de forma discontinua al cruzar el umbral.
+
+En un RDD sharp típico:
+
+\[
+D_i = 1(X_i \ge c)
+\]
+
+La lógica es que unidades justo por debajo y justo por encima del cutoff son muy parecidas. Si observamos un salto en el outcome justo en el cutoff, podemos interpretarlo como efecto causal del tratamiento bajo ciertos supuestos.
+
+# 4. Intuición causal
+
+Supongamos que una beca se concede si la nota es al menos 5.
+
+Una persona con nota 4.99 y otra con nota 5.01 probablemente son similares. La diferencia relevante es que una no recibe la beca y la otra sí.
+
+El RDD compara outcomes **localmente** alrededor del cutoff.
+
+El estimando sharp básico es:
+
+\[
+\tau_{SRD}
+=
+\lim_{x \downarrow c} E[Y_i \mid X_i=x]
+-
+\lim_{x \uparrow c} E[Y_i \mid X_i=x]
+\]
+
+Es decir:
+
+> diferencia entre el límite derecho y el límite izquierdo de la esperanza condicional del outcome en el cutoff.
+
+# 5. Qué efecto causal identifica un RDD
+
+Un RDD identifica un efecto **local**.
+
+No responde necesariamente:
+
+> ¿Cuál es el efecto medio del programa en toda la población?
+
+Sino:
+
+> ¿Cuál es el efecto para las unidades marginales alrededor del cutoff?
+
+Esto es fundamental.
+
+Si una política trata a municipios con población inferior a 5.000 habitantes, el RDD identifica el efecto para municipios alrededor de 5.000 habitantes. No identifica directamente el efecto para municipios de 300 habitantes ni para ciudades de 500.000.
+
+## 5.1. Estimando sharp
+
+En sharp RDD, cruzar el cutoff determina tratamiento.
+
+\[
+D_i = 1(X_i \ge c)
+\]
+
+El parámetro es:
+
+\[
+\tau_{SRD}
+=
+E[Y_i(1)-Y_i(0) \mid X_i=c]
+\]
+
+bajo continuidad de los outcomes potenciales en el cutoff.
+
+## 5.2. Estimando fuzzy
+
+En fuzzy RDD, cruzar el cutoff cambia la probabilidad de tratamiento, pero no determina tratamiento perfectamente.
+
+El estimando es:
+
+\[
+\tau_{FRD}
+=
+\frac{
+\lim_{x \downarrow c}E[Y_i\mid X_i=x]
+-
+\lim_{x \uparrow c}E[Y_i\mid X_i=x]
+}{
+\lim_{x \downarrow c}E[D_i\mid X_i=x]
+-
+\lim_{x \uparrow c}E[D_i\mid X_i=x]
+}
+\]
+
+Esto es un **Wald local**.
+
+Se interpreta como un efecto local para los **compliers** alrededor del cutoff: unidades cuya recepción del tratamiento cambia por estar a un lado u otro del umbral.
+
+# 6. Supuestos de identificación
+
+## 6.1. Continuidad de outcomes potenciales
+
+El supuesto central es que, en ausencia del tratamiento, no habría un salto en el outcome justo en el cutoff.
+
+Formalmente:
+
+\[
+E[Y_i(0)\mid X_i=x]
+\]
+
+debe ser continuo en \(c\).
+
+En sharp RDD, también suele formularse como continuidad de ambos outcomes potenciales:
+
+\[
+E[Y_i(0)\mid X_i=x]
+\quad\text{y}\quad
+E[Y_i(1)\mid X_i=x]
+\]
+
+en el cutoff.
+
+Intuición:
+
+> Las unidades no tratadas justo debajo y las tratadas justo encima deberían ser comparables, salvo por el tratamiento.
+
+## 6.2. No manipulación precisa de la running variable
+
+Las unidades no deben poder manipular perfectamente \(X_i\) para situarse justo a un lado del cutoff.
+
+Ejemplos problemáticos:
+
+- estudiantes que consiguen redondear su nota justo por encima del aprobado;
+- municipios que ajustan población declarada para entrar en una subvención;
+- empresas que manipulan ingresos para quedar bajo un umbral fiscal.
+
+Si hay manipulación precisa, las unidades a un lado y otro del cutoff pueden no ser comparables.
+
+## 6.3. No coincidencia de otras políticas en el mismo cutoff
+
+Si otra política cambia exactamente en el mismo umbral, el salto en \(Y\) puede deberse a varias cosas.
+
+Ejemplo:
+
+- a los 65 años se activa una pensión;
+- pero también cambia la cobertura sanitaria;
+- y además cambian incentivos fiscales.
+
+En ese caso, el RDD identifica el efecto conjunto del paquete institucional, no necesariamente de una política concreta.
+
+## 6.4. SUTVA y ausencia de spillovers
+
+El tratamiento de una unidad no debería afectar al outcome de otra unidad cerca del cutoff.
+
+Ejemplo de posible violación:
+
+- una política municipal afecta a municipios vecinos;
+- una beca cambia competencia entre estudiantes;
+- una inspección a unas empresas desplaza actividad hacia otras.
+
+## 6.5. Supuestos adicionales en fuzzy RDD
+
+En fuzzy RDD se interpreta el cutoff como un instrumento local.
+
+Necesitas:
+
+1. **Relevancia:** cruzar el cutoff cambia la probabilidad de tratamiento.
+2. **Exclusión local:** el cutoff afecta al outcome solo a través del tratamiento.
+3. **Monotonicidad:** cruzar el cutoff no reduce la probabilidad de tratamiento para algunas unidades mientras la aumenta para otras.
+4. **Continuidad local:** los potenciales outcomes y tratamientos son suaves alrededor del cutoff.
+
+# 7. Qué NO es un RDD
+
+No todo umbral genera un RDD creíble.
+
+Un RDD no es convincente si:
+
+- el cutoff se eligió después de ver outcomes;
+- las unidades pueden manipular con precisión la running variable;
+- el tratamiento no cambia realmente en el cutoff;
+- hay otras políticas cambiando exactamente en el mismo cutoff;
+- la running variable no está predeterminada;
+- hay muy pocas observaciones cerca del umbral;
+- el efecto se interpreta como si fuera para toda la población.
+
+# 8. Tipos principales de RDD
+
+## 8.1. Sharp RDD
+
+En un sharp RDD, cruzar el cutoff determina perfectamente el tratamiento.
+
+\[
+D_i = 1(X_i \ge c)
+\]
+
+Ejemplo:
+
+- si nota >= 5, recibes la beca;
+- si nota < 5, no la recibes.
+
+El salto en \(Y\) en el cutoff se interpreta directamente como efecto del tratamiento.
+
+## 8.2. Fuzzy RDD
+
+En fuzzy RDD, cruzar el cutoff no determina perfectamente el tratamiento, pero cambia la probabilidad de recibirlo.
+
+Ejemplo:
+
+- ser elegible aumenta mucho la probabilidad de participar;
+- pero algunos elegibles no participan;
+- algunos no elegibles entran por otras vías.
+
+Aquí el cutoff actúa como instrumento.
+
+## 8.3. Regression Kink Design
+
+En un kink design no se busca un salto en nivel, sino un cambio en la pendiente.
+
+Ejemplos:
+
+- una prestación cambia su tasa de crecimiento al llegar a cierto nivel de renta;
+- un impuesto cambia su tipo marginal al cruzar un umbral;
+- una fórmula de financiación cambia la pendiente de la asignación presupuestaria.
+
+## 8.4. Donut RDD
+
+Un donut RDD excluye observaciones muy cercanas al cutoff.
+
+Se usa cuando sospechamos:
+
+- manipulación local;
+- redondeo;
+- heaping;
+- error de medida justo en el umbral;
+- observaciones contaminadas cerca del cutoff.
+
+# 9. Árbol de decisión
+
+```text
+¿Hay una regla basada en un cutoff claro?
+  No → probablemente no hay RDD.
+  Sí →
+      ¿El tratamiento cambia en el cutoff?
+        No → no hay RDD útil.
+        Sí →
+            ¿El tratamiento cambia perfectamente de 0 a 1?
+              Sí → Sharp RDD.
+              No →
+                  ¿La probabilidad de tratamiento salta claramente?
+                    Sí → Fuzzy RDD.
+                    No → instrumento débil / no hay RDD convincente.
+
+¿El cambio es en nivel o en pendiente?
+  Nivel → RDD clásico.
+  Pendiente → Regression Kink Design.
+
+¿Hay manipulación o bunching cerca del cutoff?
+  Sí → considerar donut RDD o cuestionar validez.
+  No → continuar.
+
+¿La running variable es discreta?
+  Sí → usar gráficos por bins, sensibilidad y cautela.
+  No → RDD estándar más natural.
+```
+
+# 10. Flujo práctico recomendado
+
+Un análisis RDD aplicado debería seguir este orden:
+
+1. Entender la regla institucional.
+2. Definir running variable, cutoff y tratamiento.
+3. Centrar la running variable si ayuda a interpretar.
+4. Graficar outcome contra running variable.
+5. Comprobar si el tratamiento cambia en el cutoff.
+6. Elegir sharp o fuzzy.
+7. Estimar especificación principal no paramétrica local.
+8. Revisar bandwidth elegido.
+9. Testear manipulación de la running variable.
+10. Comprobar continuidad de covariables predeterminadas.
+11. Hacer robustez a bandwidth, kernel y orden polinómico.
+12. Hacer placebo cutoffs y placebo outcomes.
+13. Considerar donut si hay razones.
+14. Considerar clustering si corresponde.
+15. Interpretar como efecto local.
+16. Exportar tablas y gráficos.
+
+# 11. Crear datos sintéticos sharp RDD
+
+Generamos una base donde el tratamiento se asigna perfectamente al cruzar el cutoff.
+
+```{r}
+set.seed(123)
+
+n <- 3000
+cutoff <- 0
+
+df_sharp <- tibble(
+  id = 1:n,
+  x = runif(n, -2, 2),
+  z1 = rnorm(n),
+  z2 = rbinom(n, 1, 0.5)
+) |>
+  mutate(
+    treat = as.integer(x >= cutoff),
+    y0 = 2 + 1.5 * x + 0.8 * x^2 + 0.4 * z1 - 0.2 * z2 + rnorm(n, 0, 0.8),
+    tau = 1.5,
+    y = y0 + tau * treat
+  )
+
+glimpse(df_sharp)
+```
+
+El verdadero efecto causal local en el cutoff es `1.5`.
+
+# 12. Primer gráfico RDD
+
+Antes de estimar, siempre hay que graficar.
+
+```{r}
+ggplot(df_sharp, aes(x = x, y = y, color = factor(treat))) +
+  geom_point(alpha = 0.18) +
+  geom_vline(xintercept = cutoff, linetype = "dashed") +
+  geom_smooth(data = filter(df_sharp, x < cutoff), method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  geom_smooth(data = filter(df_sharp, x >= cutoff), method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  labs(
+    title = "RDD sharp: outcome frente a running variable",
+    x = "Running variable",
+    y = "Outcome",
+    color = "Tratado"
+  ) +
+  theme_minimal()
+```
+
+Interpretación:
+
+- buscamos un salto vertical en \(Y\) justo en el cutoff;
+- no buscamos pendientes iguales a ambos lados;
+- permitimos relaciones suaves distintas a izquierda y derecha;
+- lo importante es la discontinuidad en el punto de corte.
+
+# 13. Gráfico manual por bins
+
+Aunque `rdplot()` es muy cómodo, conviene saber construir un gráfico por bins manualmente.
+
+```{r}
+df_bins <- df_sharp |>
+  mutate(
+    bin = cut(x, breaks = seq(-2, 2, by = 0.10), include.lowest = TRUE)
+  ) |>
+  group_by(bin) |>
+  summarise(
+    x_mean = mean(x),
+    y_mean = mean(y),
+    n = n(),
+    .groups = "drop"
+  )
+
+ggplot(df_bins, aes(x = x_mean, y = y_mean)) +
+  geom_point(aes(size = n), alpha = 0.75) +
+  geom_vline(xintercept = cutoff, linetype = "dashed") +
+  labs(
+    title = "Gráfico RDD manual por bins",
+    x = "Media de running variable en bin",
+    y = "Media de outcome en bin",
+    size = "N"
+  ) +
+  theme_minimal()
+```
+
+Este gráfico ayuda a ver el salto sin mostrar todos los puntos individuales.
+
+# 14. RD plot automático con `rdplot`
+
+```{r}
+rdplot(
+  y = df_sharp$y,
+  x = df_sharp$x,
+  c = cutoff,
+  title = "RD plot automático - Sharp RDD",
+  x.label = "Running variable",
+  y.label = "Outcome"
+)
+```
+
+# 15. Estimación no paramétrica local con `rdrobust`
+
+La especificación principal moderna suele ser una regresión local polinómica, normalmente local lineal, con selección automática de bandwidth y corrección robusta de sesgo.
+
+```{r}
+rd_sharp <- rdrobust(
+  y = df_sharp$y,
+  x = df_sharp$x,
+  c = cutoff
+)
+
+summary(rd_sharp)
+```
+
+# 16. Extraer resultados a tabla
+
+```{r}
+sharp_table <- tibble(
+  estimador = c("Convencional", "Bias-corrected", "Robusto"),
+  tau = rd_sharp$coef[, 1],
+  se = rd_sharp$se[, 1],
+  z = rd_sharp$z[, 1],
+  p_value = rd_sharp$pv[, 1],
+  ci_low = rd_sharp$ci[, 1],
+  ci_high = rd_sharp$ci[, 2]
+)
+
+sharp_table
+```
+
+```{r}
+datasummary_df(sharp_table)
+```
+
+Líneas para exportar:
+
+```{r eval=FALSE}
+# write_csv(sharp_table, "salidas/rdd_sharp_resultados.csv")
+# datasummary_df(sharp_table, output = "salidas/rdd_sharp_resultados.html")
+# datasummary_df(sharp_table, output = "salidas/rdd_sharp_resultados.docx")
+```
+
+# 17. Cómo interpretar `rdrobust`
+
+Los elementos más importantes son:
+
+- `Coef.`: estimación del salto en el cutoff.
+- `Std. Err.`: error estándar.
+- `z`: estadístico de contraste.
+- `P>|z|`: p-valor.
+- Intervalo de confianza.
+- Bandwidths a izquierda y derecha.
+- Número de observaciones usadas en cada lado.
+
+Normalmente conviene reportar el resultado robusto a sesgo.
+
+# 18. Por qué usar métodos no paramétricos locales
+
+El RDD es local. La identificación viene de comparar observaciones cerca del cutoff.
+
+Una regresión global usando toda la muestra puede ser engañosa si la relación entre \(X\) e \(Y\) es no lineal.
+
+La idea no paramétrica local es:
+
+- usar observaciones cercanas al cutoff;
+- ponderar más las más cercanas;
+- ajustar una función a cada lado;
+- estimar el salto justo en el cutoff.
+
+# 19. Bandwidth: la decisión clave
+
+El **bandwidth** determina qué observaciones se usan alrededor del cutoff.
+
+- bandwidth pequeño: menos sesgo, más varianza;
+- bandwidth grande: más precisión, más riesgo de sesgo.
+
+| Bandwidth | Sesgo | Varianza | Riesgo |
+|---|---:|---:|---|
+| Pequeño | Bajo | Alta | Poca potencia |
+| Grande | Alto | Baja | Mala forma funcional |
+
+Nunca deberías elegir bandwidth mirando qué especificación da significatividad. Lo correcto es usar un criterio data-driven y después mostrar sensibilidad.
+
+```{r}
+bw_sharp <- rdbwselect(
+  y = df_sharp$y,
+  x = df_sharp$x,
+  c = cutoff
+)
+
+summary(bw_sharp)
+```
+
+# 20. Robustez a bandwidths
+
+```{r}
+bandwidths <- c(0.25, 0.40, 0.60, 0.80, 1.00)
+
+bw_results <- map_dfr(bandwidths, function(h) {
+  est <- rdrobust(
+    y = df_sharp$y,
+    x = df_sharp$x,
+    c = cutoff,
+    h = h
+  )
+
+  tibble(
+    bandwidth = h,
+    tau_robust = est$coef["Robust", 1],
+    se_robust = est$se["Robust", 1],
+    ci_low = est$ci["Robust", 1],
+    ci_high = est$ci["Robust", 2],
+    n_left = est$N_h[1],
+    n_right = est$N_h[2]
+  )
+})
+
+bw_results
+```
+
+```{r}
+ggplot(bw_results, aes(x = bandwidth, y = tau_robust)) +
+  geom_hline(yintercept = 1.5, linetype = "dotted") +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.03) +
+  labs(
+    title = "Robustez a bandwidth",
+    x = "Bandwidth",
+    y = "Estimación robusta del salto"
+  ) +
+  theme_minimal()
+```
+
+Interpretación:
+
+- estabilidad en signo y magnitud aumenta credibilidad;
+- sensibilidad extrema a bandwidth exige cautela;
+- bandwidths muy pequeños pueden ser imprecisos;
+- bandwidths muy grandes pueden introducir sesgo.
+
+# 21. Robustez a orden del polinomio
+
+La práctica moderna suele preferir local lineal (`p = 1`) o local cuadrático (`p = 2`) como sensibilidad.
+
+Evita polinomios globales de alto orden como especificación principal.
+
+```{r}
+poly_results <- map_dfr(c(1, 2), function(p_order) {
+  est <- rdrobust(
+    y = df_sharp$y,
+    x = df_sharp$x,
+    c = cutoff,
+    p = p_order
+  )
+
+  tibble(
+    p = p_order,
+    tau_robust = est$coef["Robust", 1],
+    se_robust = est$se["Robust", 1],
+    ci_low = est$ci["Robust", 1],
+    ci_high = est$ci["Robust", 2]
+  )
+})
+
+poly_results
+```
+
+```{r}
+datasummary_df(poly_results)
+```
+
+# 22. Robustez a kernel
+
+El kernel triangular suele ser el estándar porque da más peso a observaciones cercanas al cutoff.
+
+```{r}
+kernel_results <- map_dfr(c("triangular", "uniform", "epanechnikov"), function(k) {
+  est <- rdrobust(
+    y = df_sharp$y,
+    x = df_sharp$x,
+    c = cutoff,
+    kernel = k
+  )
+
+  tibble(
+    kernel = k,
+    tau_robust = est$coef["Robust", 1],
+    se_robust = est$se["Robust", 1],
+    ci_low = est$ci["Robust", 1],
+    ci_high = est$ci["Robust", 2]
+  )
+})
+
+kernel_results
+```
+
+# 23. Modelo paramétrico
+
+Un enfoque paramétrico estima algo como:
+
+\[
+Y_i = \alpha + \tau D_i + f(X_i-c) + D_i g(X_i-c) + u_i
+\]
+
+Permite distintas pendientes a cada lado del cutoff.
+
+```{r}
+df_sharp <- df_sharp |>
+  mutate(
+    x_c = x - cutoff,
+    right = as.integer(x >= cutoff)
+  )
+
+param_linear <- feols(
+  y ~ right + x_c + right:x_c,
+  data = df_sharp,
+  vcov = "hetero"
+)
+
+param_quad <- feols(
+  y ~ right + x_c + I(x_c^2) + right:x_c + right:I(x_c^2),
+  data = df_sharp,
+  vcov = "hetero"
+)
+
+modelsummary(
+  list(
+    "Lineal paramétrico" = param_linear,
+    "Cuadrático paramétrico" = param_quad
+  )
+)
+```
+
+```{r eval=FALSE}
+# modelsummary(
+#   list("Lineal" = param_linear, "Cuadrático" = param_quad),
+#   output = "salidas/rdd_parametrico.html"
+# )
+```
+
+# 24. Cuándo usar paramétrico y cuándo no paramétrico
+
+## 24.1. Usa no paramétrico local como especificación principal si:
+
+- tienes suficientes observaciones cerca del cutoff;
+- no quieres imponer forma funcional global;
+- quieres seguir la práctica moderna;
+- la relación entre \(X\) e \(Y\) parece no lineal;
+- el objetivo es inferencia local.
+
+## 24.2. Usa paramétrico como complemento si:
+
+- quieres una especificación transparente;
+- la relación parece aproximadamente lineal localmente;
+- usas una ventana estrecha;
+- quieres comparar sensibilidad.
+
+## 24.3. Evita:
+
+- polinomios globales de alto orden;
+- usar toda la muestra si hay observaciones muy lejos del cutoff;
+- elegir forma funcional porque da el resultado deseado.
+
+# 25. Paramétrico local dentro de bandwidth
+
+Una opción intermedia es estimar OLS solo dentro de una ventana local.
+
+```{r}
+h_local <- 0.6
+
+df_local <- df_sharp |>
+  filter(abs(x_c) <= h_local)
+
+param_local <- feols(
+  y ~ right + x_c + right:x_c,
+  data = df_local,
+  vcov = "hetero"
+)
+
+modelsummary(
+  list(
+    "Paramétrico global lineal" = param_linear,
+    "Paramétrico local h=0.6" = param_local
+  )
+)
+```
+
+# 26. Cutoff distinto de cero y normalización
+
+El cutoff no tiene que ser cero.
+
+```{r}
+df_cutoff_5000 <- tibble(
+  poblacion = runif(2000, 1000, 9000)
+) |>
+  mutate(
+    cutoff_pop = 5000,
+    x_c = poblacion - cutoff_pop,
+    treat_below = as.integer(poblacion < cutoff_pop),
+    y = 10 + 0.001 * poblacion + 2 * treat_below + rnorm(n())
+  )
+
+rd_pop <- rdrobust(
+  y = df_cutoff_5000$y,
+  x = df_cutoff_5000$poblacion,
+  c = 5000
+)
+
+summary(rd_pop)
+```
+
+Para gráficos y modelos paramétricos, suele ser cómodo trabajar con:
+
+\[
+X_i - c
+\]
+
+```{r}
+ggplot(df_cutoff_5000, aes(x = x_c, y = y)) +
+  geom_point(alpha = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(
+    title = "Running variable centrada en el cutoff",
+    x = "Población - cutoff",
+    y = "Outcome"
+  ) +
+  theme_minimal()
+```
+
+# 27. Tratamiento asignado por debajo del cutoff
+
+Muchas políticas tratan por debajo del umbral:
+
+- ayudas si renta <= umbral;
+- subvenciones si población < 5.000;
+- elegibilidad si vulnerabilidad supera un umbral, dependiendo de cómo se defina el score.
+
+Si defines tratamiento como estar por debajo:
+
+```{r}
+df_cutoff_5000 <- df_cutoff_5000 |>
+  mutate(
+    treated_below = as.integer(poblacion < 5000)
+  )
+```
+
+El signo del salto depende de si comparas derecha menos izquierda o defines el tratamiento como estar abajo. Siempre hay que explicar qué lado es tratado.
+
+# 28. Test de manipulación de la running variable
+
+Un supuesto clave es que no haya manipulación precisa de \(X\).
+
+```{r}
+density_test <- rddensity(
+  X = df_sharp$x,
+  c = cutoff
+)
+
+summary(density_test)
+```
+
+Interpretación:
+
+- Hipótesis nula: no hay discontinuidad en la densidad en el cutoff.
+- Si el p-valor es bajo, hay evidencia de sorting/manipulación.
+- Si no rechazas, no demuestras validez, pero reduces una preocupación importante.
+
+## 28.1. Gráfico de densidad
+
+```{r}
+rdplotdensity(
+  rdd = density_test,
+  X = df_sharp$x
+)
+```
+
+# 29. Balance de covariables predeterminadas
+
+Comprobamos si covariables no afectadas por tratamiento saltan en el cutoff.
+
+```{r}
+cov_z1 <- rdrobust(
+  y = df_sharp$z1,
+  x = df_sharp$x,
+  c = cutoff
+)
+
+cov_z2 <- rdrobust(
+  y = df_sharp$z2,
+  x = df_sharp$x,
+  c = cutoff
+)
+
+cov_balance <- tibble(
+  variable = c("z1", "z2"),
+  tau = c(cov_z1$coef["Robust", 1], cov_z2$coef["Robust", 1]),
+  se = c(cov_z1$se["Robust", 1], cov_z2$se["Robust", 1]),
+  p_value = c(cov_z1$pv["Robust", 1], cov_z2$pv["Robust", 1]),
+  ci_low = c(cov_z1$ci["Robust", 1], cov_z2$ci["Robust", 1]),
+  ci_high = c(cov_z1$ci["Robust", 2], cov_z2$ci["Robust", 2])
+)
+
+cov_balance
+```
+
+```{r}
+datasummary_df(cov_balance)
+```
+
+Interpretación:
+
+- No queremos discontinuidades en variables predeterminadas.
+- Si varias covariables saltan justo en el cutoff, puede haber sorting.
+- Un p-valor alto no prueba continuidad, pero ayuda.
+
+# 30. Covariables en la estimación principal
+
+En RDD, las covariables no son necesarias para identificación si el diseño es válido. Se usan para:
+
+- mejorar precisión;
+- ajustar pequeños desequilibrios;
+- comprobar robustez.
+
+No deberían cambiar drásticamente el resultado.
+
+```{r}
+rd_covs <- rdrobust(
+  y = df_sharp$y,
+  x = df_sharp$x,
+  c = cutoff,
+  covs = as.matrix(df_sharp[, c("z1", "z2")])
+)
+
+summary(rd_covs)
+```
+
+Comparación:
+
+```{r}
+cov_compare <- tibble(
+  modelo = c("Sin covariables", "Con covariables"),
+  tau = c(rd_sharp$coef["Robust", 1], rd_covs$coef["Robust", 1]),
+  se = c(rd_sharp$se["Robust", 1], rd_covs$se["Robust", 1]),
+  ci_low = c(rd_sharp$ci["Robust", 1], rd_covs$ci["Robust", 1]),
+  ci_high = c(rd_sharp$ci["Robust", 2], rd_covs$ci["Robust", 2])
+)
+
+cov_compare
+```
+
+Regla práctica:
+
+> En un buen RDD, añadir covariables debería mejorar precisión, no transformar completamente el estimador.
+
+# 31. Placebo cutoffs
+
+Estimamos falsos cutoffs donde no debería haber tratamiento.
+
+```{r}
+placebo_cutoffs <- c(-1.0, -0.5, 0.5, 1.0)
+
+placebo_results <- map_dfr(placebo_cutoffs, function(c0) {
+  est <- rdrobust(
+    y = df_sharp$y,
+    x = df_sharp$x,
+    c = c0
+  )
+
+  tibble(
+    cutoff_placebo = c0,
+    tau_robust = est$coef["Robust", 1],
+    se_robust = est$se["Robust", 1],
+    ci_low = est$ci["Robust", 1],
+    ci_high = est$ci["Robust", 2],
+    p_value = est$pv["Robust", 1]
+  )
+})
+
+placebo_results
+```
+
+```{r}
+ggplot(placebo_results, aes(x = factor(cutoff_placebo), y = tau_robust)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Placebo cutoffs",
+    x = "Cutoff falso",
+    y = "Salto estimado"
+  ) +
+  theme_minimal()
+```
+
+# 32. Placebo outcomes
+
+Un placebo outcome es una variable que no debería verse afectada por el tratamiento.
+
+Ejemplo: outcome medido antes del tratamiento o variable histórica.
+
+```{r}
+set.seed(42)
+
+df_sharp <- df_sharp |>
+  mutate(
+    y_pre_placebo = 2 + 1.3 * x + 0.4 * x^2 + rnorm(n(), 0, 0.8)
+  )
+
+rd_placebo_y <- rdrobust(
+  y = df_sharp$y_pre_placebo,
+  x = df_sharp$x,
+  c = cutoff
+)
+
+summary(rd_placebo_y)
+```
+
+Si encuentras un salto claro en un outcome que no debería responder al tratamiento, es mala señal.
+
+# 33. Donut RDD
+
+Excluimos observaciones muy cercanas al cutoff.
+
+```{r}
+donut_radius <- 0.10
+
+df_donut <- df_sharp |>
+  filter(abs(x - cutoff) > donut_radius)
+
+rd_donut <- rdrobust(
+  y = df_donut$y,
+  x = df_donut$x,
+  c = cutoff
+)
+
+summary(rd_donut)
+```
+
+Comparación:
+
+```{r}
+donut_compare <- tibble(
+  modelo = c("Principal", "Donut |x| > 0.10"),
+  tau = c(rd_sharp$coef["Robust", 1], rd_donut$coef["Robust", 1]),
+  se = c(rd_sharp$se["Robust", 1], rd_donut$se["Robust", 1]),
+  ci_low = c(rd_sharp$ci["Robust", 1], rd_donut$ci["Robust", 1]),
+  ci_high = c(rd_sharp$ci["Robust", 2], rd_donut$ci["Robust", 2])
+)
+
+donut_compare
+```
+
+```{r}
+datasummary_df(donut_compare)
+```
+
+Interpretación:
+
+- Si el resultado cambia mucho, puede haber manipulación o error local.
+- Si es estable, aumenta credibilidad.
+- Donut debe estar justificado institucionalmente.
+
+# 34. Datos sintéticos con manipulación cerca del cutoff
+
+```{r}
+set.seed(321)
+
+x_raw <- runif(n, -2, 2)
+
+x_manip <- ifelse(
+  x_raw > -0.15 & x_raw < 0,
+  x_raw + runif(n, 0.10, 0.25),
+  x_raw
+)
+
+df_manip <- tibble(
+  id = 1:n,
+  x = x_manip,
+  treat = as.integer(x >= cutoff),
+  y = 2 + 1.2 * x + 1.5 * treat + rnorm(n)
+)
+
+dens_manip <- rddensity(
+  X = df_manip$x,
+  c = cutoff
+)
+
+summary(dens_manip)
+```
+
+```{r}
+rdplotdensity(
+  rdd = dens_manip,
+  X = df_manip$x
+)
+```
+
+# 35. Donut en datos manipulados
+
+```{r}
+rd_manip <- rdrobust(
+  y = df_manip$y,
+  x = df_manip$x,
+  c = cutoff
+)
+
+df_manip_donut <- df_manip |>
+  filter(abs(x - cutoff) > 0.15)
+
+rd_manip_donut <- rdrobust(
+  y = df_manip_donut$y,
+  x = df_manip_donut$x,
+  c = cutoff
+)
+
+manip_compare <- tibble(
+  modelo = c("Principal con posible manipulación", "Donut excluyendo |x| <= 0.15"),
+  tau = c(rd_manip$coef["Robust", 1], rd_manip_donut$coef["Robust", 1]),
+  se = c(rd_manip$se["Robust", 1], rd_manip_donut$se["Robust", 1]),
+  ci_low = c(rd_manip$ci["Robust", 1], rd_manip_donut$ci["Robust", 1]),
+  ci_high = c(rd_manip$ci["Robust", 2], rd_manip_donut$ci["Robust", 2])
+)
+
+manip_compare
+```
+
+# 36. Fuzzy RDD
+
+Generamos un caso donde cruzar el cutoff aumenta la probabilidad de tratamiento, pero no lo determina perfectamente.
+
+```{r}
+set.seed(456)
+
+df_fuzzy <- tibble(
+  id = 1:n,
+  x = runif(n, -2, 2),
+  z1 = rnorm(n)
+) |>
+  mutate(
+    eligible = as.integer(x >= cutoff),
+    p_treat = if_else(eligible == 1, 0.75, 0.25),
+    treat = rbinom(n, 1, p_treat),
+    y0 = 1 + 1.2 * x + 0.5 * x^2 + 0.3 * z1 + rnorm(n, 0, 0.8),
+    tau = 2.0,
+    y = y0 + tau * treat
+  )
+
+glimpse(df_fuzzy)
+```
+
+# 37. Primer paso fuzzy
+
+Antes de estimar fuzzy RDD, hay que comprobar que la probabilidad de tratamiento salta.
+
+```{r}
+rdplot(
+  y = df_fuzzy$treat,
+  x = df_fuzzy$x,
+  c = cutoff,
+  title = "Fuzzy RDD: salto en probabilidad de tratamiento",
+  x.label = "Running variable",
+  y.label = "Probabilidad de tratamiento"
+)
+```
+
+```{r}
+first_stage <- rdrobust(
+  y = df_fuzzy$treat,
+  x = df_fuzzy$x,
+  c = cutoff
+)
+
+summary(first_stage)
+```
+
+Interpretación:
+
+- sin salto en tratamiento, no hay fuzzy RDD convincente;
+- si el salto es pequeño, hay preocupación de instrumento débil;
+- siempre hay que reportar el primer paso.
+
+# 38. Estimar fuzzy RDD con `rdrobust`
+
+```{r}
+rd_fuzzy <- rdrobust(
+  y = df_fuzzy$y,
+  x = df_fuzzy$x,
+  c = cutoff,
+  fuzzy = df_fuzzy$treat
+)
+
+summary(rd_fuzzy)
+```
+
+Tabla:
+
+```{r}
+fuzzy_table <- tibble(
+  estimador = c("Convencional", "Bias-corrected", "Robusto"),
+  tau = rd_fuzzy$coef[, 1],
+  se = rd_fuzzy$se[, 1],
+  p_value = rd_fuzzy$pv[, 1],
+  ci_low = rd_fuzzy$ci[, 1],
+  ci_high = rd_fuzzy$ci[, 2]
+)
+
+fuzzy_table
+```
+
+```{r}
+datasummary_df(fuzzy_table)
+```
+
+# 39. Fuzzy RDD como IV/2SLS paramétrico
+
+También se puede entender fuzzy RDD como un IV local.
+
+- Instrumento: elegibilidad inducida por cutoff.
+- Variable endógena: tratamiento recibido.
+- Outcome: \(Y\).
+
+```{r}
+df_fuzzy <- df_fuzzy |>
+  mutate(
+    x_c = x - cutoff,
+    right = as.integer(x >= cutoff)
+  )
+
+df_fuzzy_local <- df_fuzzy |>
+  filter(abs(x_c) <= 0.8)
+
+fuzzy_iv <- feols(
+  y ~ x_c + right:x_c | 0 | treat ~ right,
+  data = df_fuzzy_local,
+  vcov = "hetero"
+)
+
+summary(fuzzy_iv)
+```
+
+```{r}
+modelsummary(
+  list("Fuzzy RDD paramétrico local IV" = fuzzy_iv)
+)
+```
+
+Esto no sustituye necesariamente a `rdrobust(fuzzy = ...)`, pero ayuda a entender el estimador.
+
+# 40. Cuándo usar sharp y cuándo fuzzy
+
+Usa **sharp RDD** si:
+
+- cruzar el cutoff determina perfectamente tratamiento;
+- no hay incumplimiento;
+- estar a un lado equivale a recibir tratamiento.
+
+Usa **fuzzy RDD** si:
+
+- el cutoff determina elegibilidad, no tratamiento perfecto;
+- hay non-compliance;
+- hay un salto claro en probabilidad de tratamiento.
+
+# 41. Regression Kink Design
+
+En un kink design buscamos un cambio de pendiente.
+
+```{r}
+set.seed(789)
+
+df_kink <- tibble(
+  id = 1:n,
+  x = runif(n, -2, 2)
+) |>
+  mutate(
+    right = as.integer(x >= cutoff),
+    slope_change = pmax(x - cutoff, 0),
+    y = 1 + 1.0 * x + 1.8 * slope_change + rnorm(n, 0, 0.5)
+  )
+
+ggplot(df_kink, aes(x = x, y = y)) +
+  geom_point(alpha = 0.18) +
+  geom_vline(xintercept = cutoff, linetype = "dashed") +
+  geom_smooth(data = filter(df_kink, x < cutoff), method = "lm", se = FALSE) +
+  geom_smooth(data = filter(df_kink, x >= cutoff), method = "lm", se = FALSE) +
+  labs(
+    title = "Regression Kink Design sintético",
+    x = "Running variable",
+    y = "Outcome"
+  ) +
+  theme_minimal()
+```
+
+Estimación paramétrica simple:
+
+```{r}
+kink_param <- feols(
+  y ~ x + I(pmax(x - cutoff, 0)),
+  data = df_kink,
+  vcov = "hetero"
+)
+
+modelsummary(kink_param)
+```
+
+El coeficiente de `pmax(x - cutoff, 0)` mide el cambio de pendiente después del cutoff.
+
+# 42. Outcomes binarios, proporciones, counts y logs
+
+## 42.1. Outcome binario
+
+En la práctica se puede usar RDD lineal local con outcome binario. El salto se interpreta como cambio en probabilidad.
+
+```{r}
+set.seed(101)
+
+df_binary <- df_sharp |>
+  mutate(
+    p = plogis(-0.5 + 1.0 * x + 0.7 * treat),
+    y_bin = rbinom(n(), 1, p)
+  )
+
+rd_binary <- rdrobust(
+  y = df_binary$y_bin,
+  x = df_binary$x,
+  c = cutoff
+)
+
+summary(rd_binary)
+```
+
+Interpretación: si el salto estimado es 0.08, equivale a 8 puntos porcentuales.
+
+## 42.2. Outcome en porcentaje
+
+```{r}
+set.seed(102)
+
+df_pct <- df_sharp |>
+  mutate(
+    y_pct = pmin(pmax(50 + 10 * x + 8 * treat + rnorm(n(), 0, 8), 0), 100)
+  )
+
+rd_pct <- rdrobust(
+  y = df_pct$y_pct,
+  x = df_pct$x,
+  c = cutoff
+)
+
+summary(rd_pct)
+```
+
+Interpretación: el efecto está en puntos porcentuales, no en porcentaje relativo.
+
+## 42.3. Outcome en logs
+
+```{r}
+set.seed(103)
+
+df_log <- df_sharp |>
+  mutate(
+    y_positive = exp(2 + 0.3 * x + 0.12 * treat + rnorm(n(), 0, 0.2)),
+    log_y = log(y_positive)
+  )
+
+rd_log <- rdrobust(
+  y = df_log$log_y,
+  x = df_log$x,
+  c = cutoff
+)
+
+summary(rd_log)
+```
+
+Interpretación aproximada: un coeficiente de 0.12 en log equivale a un aumento aproximado del 12%.
+
+Más exactamente:
+
+```{r}
+log_effect <- rd_log$coef["Robust", 1]
+100 * (exp(log_effect) - 1)
+```
+
+## 42.4. Outcome count
+
+Para counts, muchas veces se puede usar RDD lineal local como aproximación, especialmente si el interés es el salto en el conteo esperado.
+
+```{r}
+set.seed(104)
+
+df_count <- df_sharp |>
+  mutate(
+    lambda = exp(1 + 0.3 * x + 0.25 * treat),
+    y_count = rpois(n(), lambda)
+  )
+
+rd_count <- rdrobust(
+  y = df_count$y_count,
+  x = df_count$x,
+  c = cutoff
+)
+
+summary(rd_count)
+```
+
+# 43. Multiple cutoffs
+
+A veces existen varios cutoffs:
+
+- diferentes umbrales por región;
+- diferentes reglas por año;
+- tramos de población;
+- puntuaciones con cortes distintos por grupo.
+
+Una estrategia es normalizar la running variable:
+
+\[
+X_{ij}^{norm} = X_{ij} - c_j
+\]
+
+```{r}
+set.seed(555)
+
+df_multi <- tibble(
+  id = 1:4000,
+  grupo = sample(c("A", "B"), 4000, replace = TRUE),
+  x_raw = runif(4000, 0, 100)
+) |>
+  mutate(
+    cutoff_group = if_else(grupo == "A", 40, 60),
+    x_norm = x_raw - cutoff_group,
+    treat = as.integer(x_norm >= 0),
+    y = 5 + 0.04 * x_raw + 1.2 * treat + if_else(grupo == "B", 0.5, 0) + rnorm(n())
+  )
+
+rd_multi <- rdrobust(
+  y = df_multi$y,
+  x = df_multi$x_norm,
+  c = 0
+)
+
+summary(rd_multi)
+```
+
+Gráfico:
+
+```{r}
+ggplot(df_multi, aes(x = x_norm, y = y, color = grupo)) +
+  geom_point(alpha = 0.15) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_smooth(data = filter(df_multi, x_norm < 0), method = "lm", se = FALSE) +
+  geom_smooth(data = filter(df_multi, x_norm >= 0), method = "lm", se = FALSE) +
+  labs(
+    title = "RDD con múltiples cutoffs normalizados",
+    x = "Running variable normalizada",
+    y = "Outcome"
+  ) +
+  theme_minimal()
+```
+
+También puedes estimar por cutoff/grupo:
+
+```{r}
+multi_by_group <- df_multi |>
+  group_split(grupo) |>
+  map_dfr(function(d) {
+    est <- rdrobust(y = d$y, x = d$x_norm, c = 0)
+    tibble(
+      grupo = unique(d$grupo),
+      tau = est$coef["Robust", 1],
+      se = est$se["Robust", 1],
+      ci_low = est$ci["Robust", 1],
+      ci_high = est$ci["Robust", 2]
+    )
+  })
+
+multi_by_group
+```
+
+# 44. Running variable discreta
+
+A veces \(X\) es discreta: edad en años, nota redondeada, población agrupada.
+
+```{r}
+df_discrete <- df_sharp |>
+  mutate(
+    x_discrete = round(x, 1)
+  )
+
+ggplot(df_discrete, aes(x = x_discrete)) +
+  geom_histogram(binwidth = 0.1, boundary = 0) +
+  geom_vline(xintercept = cutoff, linetype = "dashed") +
+  labs(
+    title = "Running variable discreta",
+    x = "Running variable redondeada",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+Estimación:
+
+```{r}
+rd_discrete <- rdrobust(
+  y = df_discrete$y,
+  x = df_discrete$x_discrete,
+  c = cutoff
+)
+
+summary(rd_discrete)
+```
+
+Con running discreta conviene:
+
+- mostrar gráficos por bins;
+- hacer sensibilidad a ventanas;
+- ser conservador con inferencia;
+- comprobar cuántos valores distintos hay cerca del cutoff.
+
+# 45. RD in time
+
+A veces la running variable es tiempo: fecha, día, mes o año.
+
+Ejemplo: una reforma entra en vigor en una fecha concreta.
+
+Esto se parece a un RDD, pero es más delicado porque justo en una fecha pueden cambiar muchas otras cosas.
+
+Generamos un ejemplo simple:
+
+```{r}
+set.seed(777)
+
+df_time <- tibble(
+  day = -200:200
+) |>
+  mutate(
+    post = as.integer(day >= 0),
+    season = sin(day / 20),
+    y = 10 + 0.02 * day + season + 1.5 * post + rnorm(n(), 0, 0.8)
+  )
+
+ggplot(df_time, aes(day, y)) +
+  geom_point(alpha = 0.5) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_smooth(data = filter(df_time, day < 0), method = "lm", se = FALSE) +
+  geom_smooth(data = filter(df_time, day >= 0), method = "lm", se = FALSE) +
+  theme_minimal()
+```
+
+Estimación:
+
+```{r}
+rd_time <- rdrobust(
+  y = df_time$y,
+  x = df_time$day,
+  c = 0
+)
+
+summary(rd_time)
+```
+
+Advertencia:
+
+> RD in time exige justificar que no hay otros shocks coincidentes en la fecha del cutoff.
+
+# 46. Sensibilidad a ventanas temporales o de muestra
+
+No solo hay que hacer robustez a bandwidth. También puede ser razonable restringir la muestra.
+
+```{r}
+df_restricted <- df_sharp |>
+  filter(x >= -1.5, x <= 1.5)
+
+rd_restricted <- rdrobust(
+  y = df_restricted$y,
+  x = df_restricted$x,
+  c = cutoff
+)
+
+summary(rd_restricted)
+```
+
+# 47. Clustering
+
+Si los datos tienen estructura agrupada, por ejemplo estudiantes dentro de colegios o individuos dentro de municipios, puede ser necesario clusterizar.
+
+```{r}
+set.seed(222)
+
+df_cluster <- df_sharp |>
+  mutate(
+    municipio = sample(1:100, n(), replace = TRUE)
+  )
+
+rd_cluster <- rdrobust(
+  y = df_cluster$y,
+  x = df_cluster$x,
+  c = cutoff,
+  cluster = df_cluster$municipio
+)
+
+summary(rd_cluster)
+```
+
+Usa clustering cuando:
+
+- tratamiento o running se definen a nivel grupo;
+- hay shocks compartidos dentro de grupos;
+- hay correlación intra-cluster.
+
+# 48. Pocos clusters y potencia
+
+RDD suele tener menos potencia que otros diseños porque usa variación local.
+
+Problemas frecuentes:
+
+- pocas observaciones cerca del cutoff;
+- bandwidth estrecho;
+- outcome ruidoso;
+- fuzzy con primer paso débil;
+- pocos clusters;
+- tratamiento definido a nivel agregado.
+
+Si hay pocos clusters, los errores estándar convencionales pueden ser poco fiables. En ese caso, considera:
+
+- wild bootstrap;
+- inferencia por permutación si procede;
+- análisis gráfico transparente;
+- cautela en conclusiones.
+
+# 49. Local randomization approach
+
+Otra forma de pensar un RDD es como un experimento local en una ventana muy estrecha alrededor del cutoff.
+
+La idea:
+
+1. elegir una ventana pequeña alrededor de \(c\);
+2. comprobar balance de covariables;
+3. comparar tratados y controles dentro de esa ventana como si la asignación fuera casi aleatoria.
+
+Ejemplo simple:
+
+```{r}
+window_lr <- 0.25
+
+df_lr <- df_sharp |>
+  filter(abs(x - cutoff) <= window_lr)
+
+balance_lr <- df_lr |>
+  group_by(treat) |>
+  summarise(
+    n = n(),
+    z1_mean = mean(z1),
+    z2_mean = mean(z2),
+    y_mean = mean(y),
+    .groups = "drop"
+  )
+
+balance_lr
+```
+
+Diferencia simple en la ventana:
+
+```{r}
+lr_mod <- feols(
+  y ~ treat,
+  data = df_lr,
+  vcov = "hetero"
+)
+
+summary(lr_mod)
+```
+
+Este enfoque es útil como complemento, especialmente si puedes justificar una ventana local muy estrecha.
+
+# 50. Heterogeneidad en RDD
+
+Puedes preguntar si el efecto local cambia por subgrupos.
+
+```{r}
+rd_z2_0 <- rdrobust(
+  y = df_sharp$y[df_sharp$z2 == 0],
+  x = df_sharp$x[df_sharp$z2 == 0],
+  c = cutoff
+)
+
+rd_z2_1 <- rdrobust(
+  y = df_sharp$y[df_sharp$z2 == 1],
+  x = df_sharp$x[df_sharp$z2 == 1],
+  c = cutoff
+)
+
+hetero_table <- tibble(
+  subgrupo = c("z2 = 0", "z2 = 1"),
+  tau = c(rd_z2_0$coef["Robust", 1], rd_z2_1$coef["Robust", 1]),
+  se = c(rd_z2_0$se["Robust", 1], rd_z2_1$se["Robust", 1]),
+  ci_low = c(rd_z2_0$ci["Robust", 1], rd_z2_1$ci["Robust", 1]),
+  ci_high = c(rd_z2_0$ci["Robust", 2], rd_z2_1$ci["Robust", 2])
+)
+
+hetero_table
+```
+
+```{r}
+ggplot(hetero_table, aes(x = subgrupo, y = tau)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Heterogeneidad del efecto local por subgrupo",
+    x = "Subgrupo",
+    y = "Efecto local estimado"
+  ) +
+  theme_minimal()
+```
+
+Cuidado:
+
+- necesitas suficiente muestra cerca del cutoff;
+- aumenta la varianza;
+- evita búsqueda indiscriminada de subgrupos significativos.
+
+# 51. Comparación final de robustez
+
+```{r}
+robust_summary <- bind_rows(
+  tibble(
+    especificacion = "Principal rdrobust",
+    tau = rd_sharp$coef["Robust", 1],
+    se = rd_sharp$se["Robust", 1],
+    ci_low = rd_sharp$ci["Robust", 1],
+    ci_high = rd_sharp$ci["Robust", 2]
+  ),
+  tibble(
+    especificacion = "Con covariables",
+    tau = rd_covs$coef["Robust", 1],
+    se = rd_covs$se["Robust", 1],
+    ci_low = rd_covs$ci["Robust", 1],
+    ci_high = rd_covs$ci["Robust", 2]
+  ),
+  tibble(
+    especificacion = "Donut",
+    tau = rd_donut$coef["Robust", 1],
+    se = rd_donut$se["Robust", 1],
+    ci_low = rd_donut$ci["Robust", 1],
+    ci_high = rd_donut$ci["Robust", 2]
+  ),
+  tibble(
+    especificacion = "Fuzzy",
+    tau = rd_fuzzy$coef["Robust", 1],
+    se = rd_fuzzy$se["Robust", 1],
+    ci_low = rd_fuzzy$ci["Robust", 1],
+    ci_high = rd_fuzzy$ci["Robust", 2]
+  )
+)
+
+robust_summary
+```
+
+```{r}
+datasummary_df(robust_summary)
+```
+
+```{r eval=FALSE}
+# write_csv(robust_summary, "salidas/rdd_resumen_robustez.csv")
+# datasummary_df(robust_summary, output = "salidas/rdd_resumen_robustez.html")
+```
+
+# 52. Gráfico final de especificaciones
+
+```{r}
+ggplot(robust_summary, aes(x = reorder(especificacion, tau), y = tau)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  coord_flip() +
+  labs(
+    title = "Comparación de especificaciones RDD",
+    x = "Especificación",
+    y = "Efecto estimado"
+  ) +
+  theme_minimal()
+```
+
+# 53. Checklist de validez de un RDD
+
+Antes de confiar en un RDD, revisa:
+
+1. ¿La regla institucional está clara?
+2. ¿El cutoff es conocido y no elegido ex post?
+3. ¿La running variable se mide antes del tratamiento?
+4. ¿El tratamiento cambia realmente en el cutoff?
+5. ¿Sharp o fuzzy?
+6. ¿Hay suficientes observaciones cerca del cutoff?
+7. ¿La densidad de la running variable es continua?
+8. ¿Las covariables predeterminadas son continuas?
+9. ¿El resultado es robusto a bandwidths?
+10. ¿El resultado es robusto a kernel y orden polinómico?
+11. ¿Hay evidencia de manipulación?
+12. ¿Tiene sentido hacer donut?
+13. ¿La interpretación se limita a unidades marginales?
+14. ¿La inferencia está bien especificada, incluyendo clustering si corresponde?
+15. ¿Hay otros cambios institucionales en el mismo cutoff?
+
+# 54. Plantilla rápida de RDD sharp
+
+```{r eval=FALSE}
+library(tidyverse)
+library(rdrobust)
+library(rddensity)
+library(modelsummary)
+
+# Variables:
+# y = outcome
+# x = running variable
+# c0 = cutoff
+
+c0 <- 0
+
+# 1. Gráfico
+rdplot(y = df$y, x = df$x, c = c0)
+
+# 2. Estimación principal
+rd_main <- rdrobust(y = df$y, x = df$x, c = c0)
+summary(rd_main)
+
+# 3. Manipulación
+dens <- rddensity(X = df$x, c = c0)
+summary(dens)
+rdplotdensity(dens, X = df$x)
+
+# 4. Covariables predeterminadas
+rd_cov1 <- rdrobust(y = df$cov1, x = df$x, c = c0)
+summary(rd_cov1)
+
+# 5. Robustez bandwidth
+bandwidths <- c(0.5, 1, 1.5)
+
+bw_results <- purrr::map_dfr(bandwidths, function(h) {
+  est <- rdrobust(y = df$y, x = df$x, c = c0, h = h)
+  tibble(
+    h = h,
+    tau = est$coef["Robust", 1],
+    se = est$se["Robust", 1],
+    ci_low = est$ci["Robust", 1],
+    ci_high = est$ci["Robust", 2]
+  )
+})
+
+bw_results
+```
+
+# 55. Plantilla rápida de fuzzy RDD
+
+```{r eval=FALSE}
+# d = tratamiento recibido
+# z = elegibilidad inducida por cutoff: normalmente 1(x >= c0)
+
+# 1. Primer paso
+rd_first_stage <- rdrobust(y = df$d, x = df$x, c = c0)
+summary(rd_first_stage)
+
+# 2. Fuzzy RDD
+rd_fuzzy <- rdrobust(
+  y = df$y,
+  x = df$x,
+  c = c0,
+  fuzzy = df$d
+)
+
+summary(rd_fuzzy)
+```
+
+# 56. Plantilla rápida de donut RDD
+
+```{r eval=FALSE}
+donut <- 0.05
+
+df_donut <- df |>
+  filter(abs(x - c0) > donut)
+
+rd_donut <- rdrobust(
+  y = df_donut$y,
+  x = df_donut$x,
+  c = c0
+)
+
+summary(rd_donut)
+```
+
+# 57. Plantilla rápida de kink design
+
+```{r eval=FALSE}
+df <- df |>
+  mutate(
+    x_c = x - c0,
+    kink = pmax(x_c, 0)
+  )
+
+kink_mod <- feols(
+  y ~ x_c + kink,
+  data = df,
+  vcov = "hetero"
+)
+
+summary(kink_mod)
+```
+
+# 58. Cómo escribir resultados en un informe
+
+Una estructura razonable:
+
+1. Regla institucional.
+2. Running variable y cutoff.
+3. Tipo de diseño: sharp/fuzzy/kink.
+4. Gráfico descriptivo.
+5. Estimación principal.
+6. Diagnósticos:
+   - densidad;
+   - covariables;
+   - primer paso si fuzzy.
+7. Robustez:
+   - bandwidth;
+   - kernel;
+   - polinomio;
+   - donut;
+   - placebos.
+8. Interpretación local.
+9. Limitaciones.
+
+## 58.1. Texto modelo para sharp RDD
+
+> Estimamos un diseño de regresión discontinua explotando el umbral institucional \(c\) en la variable de asignación \(X\). La especificación principal usa regresiones locales polinómicas a ambos lados del punto de corte, con selección de bandwidth basada en procedimientos data-driven e inferencia robusta a sesgo. Dado que el tratamiento cambia de forma determinística al cruzar el cutoff, el salto estimado en el outcome se interpreta como el efecto causal local del tratamiento bajo continuidad de los outcomes potenciales y ausencia de manipulación precisa de la running variable.
+
+## 58.2. Texto modelo para fuzzy RDD
+
+> El cutoff genera un salto en la probabilidad de tratamiento, pero no determina perfectamente la participación. Por ello estimamos un fuzzy RDD, equivalente a un Wald local, que identifica un efecto local para las unidades compliers alrededor del umbral. Reportamos tanto el primer paso como la estimación fuzzy del efecto causal local.
+
+## 58.3. Texto modelo para robustez
+
+> Evaluamos la sensibilidad del resultado a distintas ventanas de estimación, kernels y órdenes polinómicos. Además, realizamos tests de manipulación de la running variable, contrastes de continuidad de covariables predeterminadas, placebo cutoffs y una especificación donut. Los resultados deben interpretarse como evidencia local alrededor del cutoff.
+
+# 59. Errores comunes
+
+1. Interpretar el RDD como efecto medio para toda la población.
+2. No graficar los datos.
+3. Usar polinomios globales de alto orden.
+4. Elegir bandwidth mirando significatividad.
+5. Ignorar manipulación de la running variable.
+6. No comprobar que el tratamiento salta en fuzzy RDD.
+7. Usar sharp cuando en realidad hay non-compliance.
+8. Usar fuzzy sin primer paso claro.
+9. Meter covariables post-tratamiento.
+10. No hacer robustez a bandwidth.
+11. No interpretar el efecto como local.
+12. Olvidar clustering cuando corresponde.
+13. Hacer donut sin justificarlo.
+14. Confundir salto en pendiente con salto en nivel.
+15. No comprobar otros cambios institucionales en el cutoff.
+
+# 60. Referencias prácticas
+
+Para profundizar:
+
+- Lee y Lemieux: revisión aplicada clásica de RDD.
+- Calonico, Cattaneo y Titiunik: inferencia robusta para RDD.
+- Calonico, Cattaneo, Farrell y Titiunik: bandwidths, cobertura y covariables.
+- Cattaneo, Jansson y Ma: manipulación de la running variable y `rddensity`.
+- Documentación de `rdrobust`, `rddensity` y `rdplot`.

@@ -1,0 +1,1589 @@
+---
+title: "Manual práctico de data wrangling en R"
+subtitle: "Importación, limpieza, transformación y preparación de datos con tidyverse"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# 1. Objetivo del manual
+
+Este manual está pensado como guía práctica de **data wrangling en R** para ejercicios de evaluación de políticas públicas, bases administrativas y datos municipales.
+
+El objetivo es que puedas:
+
+- leer archivos `.csv` con distintos formatos;
+- inspeccionar una base;
+- limpiar nombres y tipos de variables;
+- tratar valores perdidos;
+- detectar e imputar outliers;
+- manipular strings;
+- crear variables;
+- fusionar bases;
+- agregar información;
+- generar tablas y gráficos exploratorios;
+- exportar resultados.
+
+Una diferencia importante respecto a una simple chuleta de código es que este manual crea una **base sintética** después de la sección de lectura de CSV y la reutiliza en todos los ejemplos, para que al renderizar el `.qmd` los chunks funcionen.
+
+# 2. Paquetes
+
+```{r}
+# Instala paquetes si no los tienes:
+# install.packages(c("tidyverse", "janitor", "lubridate", "stringr", "readr", "broom", "modelsummary"))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(readr)
+library(broom)
+library(modelsummary)
+```
+
+# 3. Filosofía general del data wrangling
+
+Un flujo razonable de limpieza suele ser:
+
+```text
+Importar → inspeccionar → limpiar nombres → revisar tipos → tratar missings/outliers → strings → joins → variables → agregaciones → exportar
+```
+
+En R, un pipeline típico es:
+
+```{r eval=FALSE}
+df <- read_csv2("datos.csv") |>
+  clean_names() |>
+  mutate(...) |>
+  filter(...) |>
+  group_by(...) |>
+  summarise(...)
+```
+
+La regla práctica es:
+
+> No empieces un análisis econométrico hasta entender la unidad de observación, los identificadores, los tipos de variables, los duplicados y los valores perdidos.
+
+# 4. Lectura de archivos CSV
+
+Esta sección usa ejemplos con `eval=FALSE` porque dependen de archivos externos. Después crearemos una base sintética para todos los ejemplos ejecutables.
+
+## 4.1. CSV estándar: separador coma y decimal punto
+
+```{r eval=FALSE}
+df <- read_csv("datos.csv")
+```
+
+`read_csv()` espera columnas separadas por coma y decimales con punto.
+
+## 4.2. CSV europeo: separador punto y coma y decimal coma
+
+Muy habitual en España.
+
+```{r eval=FALSE}
+df <- read_csv2("datos.csv")
+```
+
+Versión explícita:
+
+```{r eval=FALSE}
+df <- read_delim(
+  file = "datos.csv",
+  delim = ";",                         # carácter que separa columnas
+  locale = locale(decimal_mark = ",")  # carácter usado como separador decimal
+)
+```
+
+Base R:
+
+```{r eval=FALSE}
+df <- read.csv2("datos.csv")
+```
+
+## 4.3. CSV con coma como separador y coma decimal
+
+```{r eval=FALSE}
+df <- read_delim(
+  file = "datos.csv",
+  delim = ",",
+  locale = locale(decimal_mark = ",")
+)
+```
+
+## 4.4. CSV con tabuladores
+
+```{r eval=FALSE}
+df <- read_tsv("datos.tsv")
+df <- read_delim("datos.csv", delim = "\t")
+```
+
+## 4.5. Problemas de encoding
+
+```{r eval=FALSE}
+df <- read_csv2(
+  file = "datos.csv",
+  locale = locale(encoding = "UTF-8")
+)
+
+df <- read_csv2(
+  file = "datos.csv",
+  locale = locale(encoding = "Latin1")
+)
+
+guess_encoding("datos.csv")
+```
+
+## 4.6. Inspeccionar cómo se ha leído el archivo
+
+```{r eval=FALSE}
+glimpse(df)     # estructura compacta: nombres, tipos y ejemplos
+spec(df)        # especificación de lectura; funciona bien con objetos leídos por readr
+problems(df)    # problemas detectados al parsear columnas
+head(df)        # primeras filas
+View(df)        # visor de RStudio
+```
+
+Nota importante:
+
+- `spec()` y `problems()` funcionan especialmente bien con objetos creados por `readr`, como `read_csv()` o `read_csv2()`.
+- Si una base ha sido creada manualmente o viene de otro paquete, `spec()` puede no mostrar información útil o dar error. En ese caso usa `glimpse()`, `summary()` y `sapply(df, class)`.
+
+## 4.7. Forzar tipos de columna
+
+Es muy importante leer códigos administrativos como texto.
+
+```{r eval=FALSE}
+df <- read_csv2(
+  file = "datos.csv",
+  col_types = cols(
+    codigo_municipio = col_character(), # evita perder ceros iniciales como 08019
+    year = col_integer(),
+    poblacion = col_double(),
+    provincia = col_character()
+  )
+)
+```
+
+## 4.8. Leer todos los CSV de una carpeta
+
+```{r eval=FALSE}
+files <- list.files(
+  path = "datos",
+  pattern = "\\.csv$",
+  full.names = TRUE
+)
+
+df_all <- files |>
+  set_names() |>
+  map_dfr(read_csv2, .id = "archivo")
+```
+
+# 5. Crear una base sintética para los ejemplos
+
+A partir de aquí usaremos una base sintética con estructura de municipio-año. Tiene códigos municipales, provincia, población, residuos, tratamiento PaP, strings de fracciones, missing values y outliers.
+
+```{r}
+set.seed(123)
+
+municipios <- tibble(
+  codigo_municipio = str_pad(as.character(1:120), width = 5, pad = "0"),
+  municipio = paste("Municipio", 1:120),
+  provincia_codigo = sample(c("08", "17", "25", "43"), 120, replace = TRUE),
+  provincia = case_when(
+    provincia_codigo == "08" ~ "Barcelona",
+    provincia_codigo == "17" ~ "Girona",
+    provincia_codigo == "25" ~ "Lleida",
+    provincia_codigo == "43" ~ "Tarragona"
+  ),
+  poblacion_base = round(exp(rnorm(120, log(7000), 0.9))),
+  renta_media = round(rnorm(120, 24000, 4000)),
+  zona_costera = rbinom(120, 1, 0.35)
+)
+
+adopcion <- municipios |>
+  mutate(
+    ever_pap = rbinom(n(), 1, 0.45),
+    anyo_inicio_pap = if_else(
+      ever_pap == 1,
+      sample(2012:2020, n(), replace = TRUE),
+      NA_integer_
+    )
+  ) |>
+  select(codigo_municipio, ever_pap, anyo_inicio_pap)
+
+years <- 2008:2023
+
+df <- expand_grid(
+  codigo_municipio = municipios$codigo_municipio,
+  year = years
+) |>
+  left_join(municipios, by = "codigo_municipio") |>
+  left_join(adopcion, by = "codigo_municipio") |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    tendencia_pob = 1 + 0.006 * (year - min(year)),
+    poblacion = round(poblacion_base * tendencia_pob + rnorm(n(), 0, poblacion_base * 0.03)),
+    tratamiento = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap),
+    rel_time = if_else(tratamiento == 1, year - anyo_inicio_pap, NA_integer_),
+    residuos_total = poblacion * runif(n(), 0.35, 0.75) + rnorm(n(), 0, 300),
+    residuos_selectiva = residuos_total * (0.28 + 0.015 * (year - min(year)) + 0.12 * tratamiento + rnorm(n(), 0, 0.04)),
+    residuos_selectiva = pmax(residuos_selectiva, 0),
+    pct_selectiva = 100 * residuos_selectiva / residuos_total
+  ) |>
+  ungroup() |>
+  mutate(
+    frac_recogidas_pap = case_when(
+      tratamiento == 0 ~ NA_character_,
+      tratamiento == 1 & runif(n()) < 0.40 ~ "Orgánica, Papel y cartón, Envases",
+      tratamiento == 1 & runif(n()) < 0.65 ~ "Orgánica, Vidrio, Resto",
+      tratamiento == 1 ~ "Orgánica, Papel y cartón, Vidrio, Envases, Resto"
+    )
+  )
+
+set.seed(456)
+idx_na_pob <- sample(1:nrow(df), 20)
+idx_na_renta <- sample(1:nrow(df), 25)
+idx_outlier_pob <- sample(1:nrow(df), 3)
+
+df$poblacion[idx_na_pob] <- NA
+df$renta_media[idx_na_renta] <- NA
+df$poblacion[idx_outlier_pob] <- df$poblacion[idx_outlier_pob] * 12
+
+df_sucio <- df |>
+  rename(
+    `Código Municipio` = codigo_municipio,
+    `Nombre Municipio` = municipio,
+    `Año` = year,
+    `Población Total` = poblacion,
+    `Residuos Totales (kg)` = residuos_total,
+    `% Recogida Selectiva` = pct_selectiva
+  )
+
+glimpse(df)
+```
+
+# 6. Limpieza inicial de nombres y estructura
+
+## 6.1. Limpiar nombres de columnas
+
+`clean_names()` viene del paquete `janitor`. Convierte nombres con espacios, tildes, símbolos o mayúsculas en nombres cómodos para trabajar en R.
+
+```{r}
+names(df_sucio)
+```
+
+```{r}
+df_limpio_nombres <- df_sucio |>
+  clean_names()
+
+names(df_limpio_nombres)
+```
+
+Si `clean_names()` da error, normalmente es porque no se cargó `janitor`.
+
+```{r eval=FALSE}
+install.packages("janitor")
+library(janitor)
+```
+
+## 6.2. Renombrar variables
+
+```{r}
+df_renombrado <- df |>
+  rename(
+    residuos_totales = residuos_total,
+    porcentaje_selectiva = pct_selectiva
+  )
+
+names(df_renombrado) |> head()
+```
+
+## 6.3. Seleccionar columnas
+
+```{r}
+df_select <- df |>
+  select(codigo_municipio, municipio, year, provincia, poblacion, residuos_total)
+
+head(df_select)
+```
+
+Eliminar columnas:
+
+```{r}
+df_sin_columnas <- df |>
+  select(-frac_recogidas_pap)
+
+glimpse(df_sin_columnas)
+```
+
+Seleccionar por patrón:
+
+```{r}
+df_residuos <- df |>
+  select(codigo_municipio, year, starts_with("residuos"), contains("selectiva"))
+
+head(df_residuos)
+```
+
+## 6.4. Reordenar columnas
+
+```{r}
+df_relocate <- df |>
+  relocate(codigo_municipio, municipio, provincia, year)
+
+head(df_relocate)
+```
+
+# 7. Inspección rápida de la base
+
+```{r}
+dim(df)
+names(df)
+glimpse(df)
+summary(df$poblacion)
+```
+
+Número de missing por variable:
+
+```{r}
+df |>
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+Valores distintos en variables de texto:
+
+```{r}
+df |>
+  summarise(across(where(is.character), n_distinct))
+```
+
+Frecuencias:
+
+```{r}
+df |>
+  count(provincia, sort = TRUE)
+```
+
+Frecuencias con porcentaje:
+
+```{r}
+df |>
+  count(provincia) |>
+  mutate(pct = 100 * n / sum(n))
+```
+
+# 8. Tipos de variables y conversiones
+
+## 8.1. Character a numeric
+
+A veces los números vienen como texto, especialmente si hay comas decimales.
+
+```{r}
+df_texto <- tibble(
+  valor_texto = c("1.234,56", "987,10", "12.500,00")
+)
+
+df_texto |>
+  mutate(
+    valor_num = parse_number(
+      valor_texto,
+      locale = locale(
+        decimal_mark = ",",  # separador decimal
+        grouping_mark = "."  # separador de miles
+      )
+    )
+  )
+```
+
+## 8.2. Numeric a character para códigos
+
+```{r}
+codigos <- tibble(
+  codigo_num = c(8019, 17001, 25040)
+)
+
+codigos |>
+  mutate(
+    codigo_chr = as.character(codigo_num),
+    codigo_pad = str_pad(codigo_chr, width = 5, pad = "0")
+  )
+```
+
+`str_pad()` añade caracteres a la izquierda o derecha hasta alcanzar una longitud determinada.
+
+## 8.3. Character a factor
+
+```{r}
+df_factor <- df |>
+  mutate(
+    provincia_factor = factor(provincia)
+  )
+
+levels(df_factor$provincia_factor)
+```
+
+Ordenar categorías:
+
+```{r}
+df_tamano <- df |>
+  mutate(
+    tamano_municipio = case_when(
+      poblacion < 1000 ~ "pequeno",
+      poblacion < 10000 ~ "mediano",
+      poblacion >= 10000 ~ "grande",
+      TRUE ~ NA_character_
+    ),
+    tamano_municipio = factor(
+      tamano_municipio,
+      levels = c("pequeno", "mediano", "grande")
+    )
+  )
+
+count(df_tamano, tamano_municipio)
+```
+
+## 8.4. Fechas
+
+```{r}
+fechas <- tibble(
+  fecha_texto = c("15/03/2021", "01/12/2020", "30/06/2019")
+)
+
+fechas |>
+  mutate(
+    fecha = dmy(fecha_texto),
+    year = year(fecha),
+    month = month(fecha)
+  )
+```
+
+Funciones habituales:
+
+```{r}
+ymd("2021-03-15")
+dmy("15/03/2021")
+mdy("03/15/2021")
+```
+
+# 9. Valores perdidos
+
+Los valores perdidos (`NA`) pueden significar dato no observado, cero real mal codificado, política no aplicable o error de lectura.
+
+## 9.1. Detectar missing values
+
+```{r}
+df |>
+  summarise(across(everything(), ~ sum(is.na(.))))
+```
+
+Por filas:
+
+```{r}
+df_missing_filas <- df |>
+  mutate(n_missing = rowSums(is.na(across(everything()))))
+
+df_missing_filas |>
+  count(n_missing)
+```
+
+## 9.2. Filtrar missing
+
+```{r}
+df_sin_na_pob <- df |>
+  filter(!is.na(poblacion))
+
+nrow(df)
+nrow(df_sin_na_pob)
+```
+
+## 9.3. Reemplazar missing por un valor fijo
+
+Esto solo tiene sentido si el `NA` significa realmente ausencia.
+
+```{r}
+df_replace_na <- df |>
+  mutate(
+    frac_recogidas_pap = replace_na(frac_recogidas_pap, "sin PaP")
+  )
+
+count(df_replace_na, frac_recogidas_pap) |> head()
+```
+
+## 9.4. Imputar por media o mediana
+
+La mediana es más robusta a outliers que la media.
+
+```{r}
+mediana_pob <- median(df$poblacion, na.rm = TRUE)
+
+df_imp_mediana <- df |>
+  mutate(
+    poblacion_imp = if_else(
+      is.na(poblacion),
+      mediana_pob,
+      poblacion
+    )
+  )
+
+sum(is.na(df_imp_mediana$poblacion_imp))
+```
+
+## 9.5. Imputar por grupo
+
+```{r}
+df_imp_grupo <- df |>
+  group_by(provincia, year) |>
+  mutate(
+    poblacion_imp = if_else(
+      is.na(poblacion),
+      median(poblacion, na.rm = TRUE),
+      poblacion
+    )
+  ) |>
+  ungroup()
+
+sum(is.na(df_imp_grupo$poblacion_imp))
+```
+
+## 9.6. Imputar con predicción de un modelo lineal
+
+Si una variable continua tiene missing, puedes predecirla con otras variables observadas. Esto no es causal: es una imputación predictiva.
+
+```{r}
+mod_pob <- lm(
+  poblacion ~ renta_media + zona_costera + provincia + year,
+  data = df
+)
+
+df_imp_lm <- df |>
+  mutate(
+    pred_poblacion = predict(mod_pob, newdata = df),
+    poblacion_imp_lm = if_else(
+      is.na(poblacion),
+      pred_poblacion,
+      poblacion
+    )
+  )
+
+sum(is.na(df_imp_lm$poblacion_imp_lm))
+```
+
+Si también hay missing en predictores como `renta_media`, `predict()` puede devolver `NA`.
+
+## 9.7. Imputar una variable binaria con logit
+
+Si la variable con missing es binaria, una opción es estimar un **logit** y sustituir los missing por la probabilidad predicha o por una dummy basada en esa probabilidad.
+
+Creamos missing artificiales en `zona_costera`.
+
+```{r}
+set.seed(999)
+
+df_logit_imp <- df |>
+  mutate(
+    zona_costera_miss = zona_costera,
+    zona_costera_miss = if_else(
+      row_number() %in% sample(row_number(), 80),
+      NA_integer_,
+      zona_costera_miss
+    )
+  )
+
+sum(is.na(df_logit_imp$zona_costera_miss))
+```
+
+Estimamos un logit con observaciones no missing.
+
+```{r}
+mod_logit <- glm(
+  zona_costera_miss ~ provincia + year + tratamiento + pct_selectiva,
+  data = df_logit_imp,
+  family = binomial(link = "logit")
+)
+```
+
+Predecimos probabilidades e imputamos.
+
+```{r}
+df_logit_imp <- df_logit_imp |>
+  mutate(
+    pred_zona_costera = predict(
+      mod_logit,
+      newdata = df_logit_imp,
+      type = "response" # devuelve probabilidades entre 0 y 1
+    ),
+
+    zona_costera_imp_prob = if_else(
+      is.na(zona_costera_miss),
+      pred_zona_costera,
+      as.numeric(zona_costera_miss)
+    ),
+
+    zona_costera_imp_dummy = if_else(
+      is.na(zona_costera_miss),
+      as.integer(pred_zona_costera >= 0.5),
+      zona_costera_miss
+    )
+  )
+
+df_logit_imp |>
+  summarise(
+    missing_original = sum(is.na(zona_costera_miss)),
+    missing_prob = sum(is.na(zona_costera_imp_prob)),
+    missing_dummy = sum(is.na(zona_costera_imp_dummy))
+  )
+```
+
+Cuándo usar cada opción:
+
+- `zona_costera_imp_prob`: útil si quieres conservar una probabilidad predicha.
+- `zona_costera_imp_dummy`: útil si necesitas una variable binaria final.
+
+Advertencias:
+
+- esto no sustituye una estrategia formal de imputación múltiple;
+- documenta siempre qué variables usaste para imputar;
+- evita usar outcomes post-tratamiento como predictores si luego harás análisis causal.
+
+# 10. Outliers
+
+Un outlier es un valor extremadamente alejado del resto. Puede ser un error o una unidad real excepcional.
+
+## 10.1. Inspección visual
+
+```{r}
+ggplot(df, aes(y = poblacion)) +
+  geom_boxplot() +
+  labs(title = "Boxplot de población") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(df, aes(x = poblacion)) +
+  geom_histogram(bins = 40) +
+  labs(title = "Histograma de población") +
+  theme_minimal()
+```
+
+## 10.2. Método IQR
+
+El IQR es el rango intercuartílico: `Q3 - Q1`.
+
+```{r}
+q1 <- quantile(df$poblacion, 0.25, na.rm = TRUE)
+q3 <- quantile(df$poblacion, 0.75, na.rm = TRUE)
+iqr <- q3 - q1
+
+lim_inf <- q1 - 1.5 * iqr
+lim_sup <- q3 + 1.5 * iqr
+
+df_outliers_iqr <- df |>
+  filter(poblacion < lim_inf | poblacion > lim_sup)
+
+df_outliers_iqr |>
+  select(codigo_municipio, municipio, year, poblacion) |>
+  head()
+```
+
+## 10.3. Método por percentiles
+
+```{r}
+p01 <- quantile(df$poblacion, 0.01, na.rm = TRUE)
+p99 <- quantile(df$poblacion, 0.99, na.rm = TRUE)
+
+df |>
+  filter(poblacion < p01 | poblacion > p99) |>
+  select(codigo_municipio, municipio, year, poblacion) |>
+  head()
+```
+
+## 10.4. Winsorización
+
+La **winsorización** consiste en limitar los valores extremos a un percentil determinado. No elimina observaciones, sino que reduce la influencia de valores extremos.
+
+Ejemplo: valores menores que p01 se sustituyen por p01; valores mayores que p99 se sustituyen por p99.
+
+```{r}
+df_winsor <- df |>
+  mutate(
+    poblacion_w = pmin(
+      pmax(poblacion, p01), # sube valores menores que p01 hasta p01
+      p99                  # baja valores mayores que p99 hasta p99
+    )
+  )
+
+summary(df$poblacion)
+summary(df_winsor$poblacion_w)
+```
+
+## 10.5. Imputación de outliers por mediana
+
+```{r}
+mediana_pob <- median(df$poblacion, na.rm = TRUE)
+
+df_outlier_imp <- df |>
+  mutate(
+    poblacion_imp_outlier = if_else(
+      poblacion > p99,
+      mediana_pob,
+      poblacion
+    )
+  )
+
+summary(df_outlier_imp$poblacion_imp_outlier)
+```
+
+## 10.6. Imputación usando años vecinos
+
+En panel, una opción razonable para un outlier puntual es reemplazarlo por la media del año anterior y posterior del mismo municipio.
+
+```{r}
+df_vecinos <- df |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    poblacion_lag = lag(poblacion),
+    poblacion_lead = lead(poblacion),
+    poblacion_imp_vecinos = if_else(
+      poblacion > p99 & !is.na(poblacion_lag) & !is.na(poblacion_lead),
+      (poblacion_lag + poblacion_lead) / 2,
+      poblacion
+    )
+  ) |>
+  ungroup()
+
+summary(df_vecinos$poblacion_imp_vecinos)
+```
+
+# 11. Manipulación de strings con `stringr`
+
+## 11.1. Minúsculas, mayúsculas y formato título
+
+```{r}
+df_strings <- df |>
+  mutate(
+    municipio_lower = str_to_lower(municipio),
+    provincia_upper = str_to_upper(provincia),
+    municipio_title = str_to_title(municipio)
+  )
+
+df_strings |>
+  select(municipio, municipio_lower, provincia_upper) |>
+  head()
+```
+
+## 11.2. Quitar espacios
+
+```{r}
+texto_espacios <- tibble(
+  nombre = c("  Barcelona", "Girona   ", " Sant   Cugat   del   Vallès ")
+)
+
+texto_espacios |>
+  mutate(
+    trim = str_trim(nombre),     # elimina espacios al inicio y final
+    squish = str_squish(nombre)  # además reduce múltiples espacios internos a uno
+  )
+```
+
+## 11.3. Detectar patrones
+
+```{r}
+df |>
+  mutate(
+    tiene_organica = str_detect(
+      string = frac_recogidas_pap,
+      pattern = regex("orgánica|organica", ignore_case = TRUE)
+    )
+  ) |>
+  count(tiene_organica)
+```
+
+## 11.4. Crear dummies desde strings
+
+```{r}
+df_frac <- df |>
+  mutate(
+    frac_clean = replace_na(frac_recogidas_pap, ""),
+    frac_clean = str_to_lower(frac_clean),
+    frac_clean = str_squish(frac_clean),
+    frac_clean = chartr("áéíóúÁÉÍÓÚ", "aeiouAEIOU", frac_clean),
+    pap_organica = as.integer(str_detect(frac_clean, "organica")),
+    pap_papel = as.integer(str_detect(frac_clean, "papel|paper|carton")),
+    pap_vidrio = as.integer(str_detect(frac_clean, "vidrio|vidre")),
+    pap_envases = as.integer(str_detect(frac_clean, "envases|envasos")),
+    pap_resto = as.integer(str_detect(frac_clean, "resto|resta"))
+  )
+
+df_frac |>
+  select(frac_recogidas_pap, pap_organica, pap_papel, pap_vidrio, pap_envases, pap_resto) |>
+  head(10)
+```
+
+## 11.5. Sustituir caracteres
+
+```{r}
+texto_tildes <- tibble(
+  municipio = c("L'Hospitalet de Llobregat", "Sant Cugat del Vallès", "Móra d'Ebre")
+)
+
+texto_tildes |>
+  mutate(
+    municipio_sin_tildes = chartr("áéíóúàèòÁÉÍÓÚÀÈÒ", "aeiouaeoAEIOUAEO", municipio),
+    municipio_guion = str_replace_all(municipio_sin_tildes, " ", "_")
+  )
+```
+
+## 11.6. Eliminar caracteres
+
+```{r}
+codigos_sucios <- tibble(
+  codigo = c("08.019", "17-001", "CP:25040", "43 012")
+)
+
+codigos_sucios |>
+  mutate(
+    solo_numeros = str_remove_all(codigo, "[^0-9]"),
+    codigo_5 = str_pad(solo_numeros, width = 5, pad = "0")
+  )
+```
+
+## 11.7. Extraer partes de un string
+
+```{r}
+df |>
+  mutate(
+    provincia_desde_codigo = str_sub(codigo_municipio, 1, 2),
+    ultimos_tres = str_sub(codigo_municipio, -3, -1)
+  ) |>
+  select(codigo_municipio, provincia_desde_codigo, ultimos_tres) |>
+  head()
+```
+
+Extraer años de texto:
+
+```{r}
+texto_anyos <- tibble(
+  descripcion = c("Inicio PaP en 2015", "Adopta desde 2020", "Sin información")
+)
+
+texto_anyos |>
+  mutate(
+    anyo_extraido = str_extract(descripcion, "\\d{4}")
+  )
+```
+
+## 11.8. Separar columnas
+
+```{r}
+codigo_nombre <- tibble(
+  codigo_nombre = c("08019 - Barcelona", "17001 - Girona", "43148 - Tarragona")
+)
+
+codigo_nombre |>
+  separate(
+    col = codigo_nombre,
+    into = c("codigo", "municipio"),
+    sep = " - "
+  )
+```
+
+## 11.9. Unir columnas
+
+```{r}
+df |>
+  select(codigo_municipio, year) |>
+  unite(
+    col = id_municipio_year,
+    codigo_municipio,
+    year,
+    sep = "_",
+    remove = FALSE
+  ) |>
+  head()
+```
+
+## 11.10. Contar ocurrencias
+
+```{r}
+df_frac <- df_frac |>
+  mutate(
+    n_fracciones_pap = if_else(
+      frac_clean == "",
+      0L,
+      str_count(frac_clean, ",") + 1L
+    )
+  )
+
+df_frac |>
+  count(n_fracciones_pap)
+```
+
+## 11.11. Pasar strings a formato largo
+
+```{r}
+df_fracciones_long <- df |>
+  filter(!is.na(frac_recogidas_pap)) |>
+  select(codigo_municipio, year, frac_recogidas_pap) |>
+  separate_longer_delim(frac_recogidas_pap, delim = ",") |>
+  mutate(
+    frac_recogidas_pap = str_squish(frac_recogidas_pap)
+  )
+
+df_fracciones_long |> head()
+```
+
+## 11.12. Normalizar strings para joins
+
+```{r}
+df_keys <- df |>
+  mutate(
+    municipio_key = str_to_lower(municipio),
+    municipio_key = str_squish(municipio_key),
+    municipio_key = chartr("áéíóúÁÉÍÓÚ", "aeiouAEIOU", municipio_key),
+    municipio_key = str_remove(municipio_key, "^el "),
+    municipio_key = str_remove(municipio_key, "^la ")
+  )
+
+df_keys |>
+  select(municipio, municipio_key) |>
+  distinct() |>
+  head()
+```
+
+# 12. Crear variables nuevas con `mutate`
+
+## 12.1. Variables binarias
+
+```{r}
+df_vars <- df |>
+  mutate(
+    alta_selectiva = as.integer(pct_selectiva >= 50)
+  )
+
+count(df_vars, alta_selectiva)
+```
+
+## 12.2. Variables categóricas con `case_when`
+
+```{r}
+df_vars <- df_vars |>
+  mutate(
+    tamano_municipio = case_when(
+      poblacion < 1000 ~ "pequeno",
+      poblacion < 10000 ~ "mediano",
+      poblacion >= 10000 ~ "grande",
+      TRUE ~ NA_character_
+    )
+  )
+
+count(df_vars, tamano_municipio)
+```
+
+## 12.3. Ratios y porcentajes
+
+```{r}
+df_vars <- df_vars |>
+  mutate(
+    pct_selectiva_recalculada = if_else(
+      residuos_total > 0,
+      100 * residuos_selectiva / residuos_total,
+      NA_real_
+    )
+  )
+
+df_vars |>
+  select(pct_selectiva, pct_selectiva_recalculada) |>
+  head()
+```
+
+## 12.4. Logs
+
+```{r}
+df_vars <- df_vars |>
+  mutate(
+    log_residuos = log(residuos_total),
+    log_residuos_1p = log1p(residuos_total)
+  )
+```
+
+`log1p(x)` calcula `log(1+x)` y es útil si hay ceros.
+
+## 12.5. Variables lag/lead en panel
+
+```{r}
+df_panel <- df |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    residuos_lag = lag(residuos_total),
+    residuos_lead = lead(residuos_total),
+    crecimiento_residuos = residuos_total - lag(residuos_total)
+  ) |>
+  ungroup()
+
+df_panel |>
+  select(codigo_municipio, year, residuos_total, residuos_lag, residuos_lead, crecimiento_residuos) |>
+  head(10)
+```
+
+## 12.6. Primera fecha de tratamiento
+
+```{r}
+df_cohorte <- df |>
+  group_by(codigo_municipio) |>
+  mutate(
+    first_treat_year = if_else(
+      any(tratamiento == 1, na.rm = TRUE),
+      min(year[tratamiento == 1], na.rm = TRUE),
+      0L
+    ),
+    rel_time = if_else(first_treat_year > 0, year - first_treat_year, NA_integer_)
+  ) |>
+  ungroup()
+
+df_cohorte |>
+  count(first_treat_year) |>
+  arrange(first_treat_year)
+```
+
+# 13. Filtrar observaciones
+
+```{r}
+df_2021 <- df |>
+  filter(year == 2021)
+
+nrow(df_2021)
+```
+
+```{r}
+df_bg <- df |>
+  filter(provincia %in% c("Barcelona", "Girona"))
+
+count(df_bg, provincia)
+```
+
+Excluir missing:
+
+```{r}
+df_no_missing_pob <- df |>
+  filter(!is.na(poblacion))
+
+sum(is.na(df_no_missing_pob$poblacion))
+```
+
+Filtro por grupo: municipios con todos los años observados.
+
+```{r}
+years_all <- sort(unique(df$year))
+
+df_balanced <- df |>
+  group_by(codigo_municipio) |>
+  filter(n_distinct(year) == length(years_all)) |>
+  ungroup()
+
+n_distinct(df_balanced$codigo_municipio)
+```
+
+# 14. Ordenar y detectar duplicados
+
+```{r}
+df_ordered <- df |>
+  arrange(codigo_municipio, year)
+
+head(df_ordered)
+```
+
+Duplicados por clave:
+
+```{r}
+df |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+```
+
+Crear duplicados artificiales:
+
+```{r}
+df_con_dup <- bind_rows(
+  df,
+  df |> slice(1:5)
+)
+
+df_con_dup |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+```
+
+Eliminar duplicados exactos:
+
+```{r}
+df_sin_dup_exactos <- df_con_dup |>
+  distinct()
+
+nrow(df_con_dup)
+nrow(df_sin_dup_exactos)
+```
+
+Resolver duplicados por clave:
+
+```{r}
+df_resuelto <- df_con_dup |>
+  group_by(codigo_municipio, year) |>
+  summarise(
+    across(where(is.numeric), ~ mean(.x, na.rm = TRUE)),
+    across(where(is.character), first),
+    .groups = "drop"
+  )
+
+df_resuelto |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+```
+
+# 15. Joins y fusiones de bases
+
+```{r}
+base_residuos <- df |>
+  select(codigo_municipio, year, residuos_total, residuos_selectiva, pct_selectiva)
+
+base_pap <- df |>
+  select(codigo_municipio, year, tratamiento, anyo_inicio_pap, frac_recogidas_pap)
+```
+
+`left_join()` conserva todas las filas de la izquierda.
+
+```{r}
+df_join <- base_residuos |>
+  left_join(base_pap, by = c("codigo_municipio", "year"))
+
+glimpse(df_join)
+```
+
+Otros joins:
+
+```{r eval=FALSE}
+inner_join(base_residuos, base_pap, by = c("codigo_municipio", "year"))
+full_join(base_residuos, base_pap, by = c("codigo_municipio", "year"))
+anti_join(base_residuos, base_pap, by = c("codigo_municipio", "year"))
+semi_join(base_residuos, base_pap, by = c("codigo_municipio", "year"))
+```
+
+Comprobar claves antes del join:
+
+```{r}
+base_residuos |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+
+base_pap |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+```
+
+Ver qué no cruza:
+
+```{r}
+anti_join(base_residuos, base_pap, by = c("codigo_municipio", "year")) |> head()
+anti_join(base_pap, base_residuos, by = c("codigo_municipio", "year")) |> head()
+```
+
+# 16. Agregaciones y resúmenes
+
+Resumen por año:
+
+```{r}
+tabla_year <- df |>
+  group_by(year) |>
+  summarise(
+    n_municipios = n_distinct(codigo_municipio),
+    residuos_total = sum(residuos_total, na.rm = TRUE),
+    pct_selectiva_media = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tabla_year
+```
+
+Resumen por provincia-año:
+
+```{r}
+tabla_prov_year <- df |>
+  group_by(provincia, year) |>
+  summarise(
+    residuos_total = sum(residuos_total, na.rm = TRUE),
+    residuos_selectiva = sum(residuos_selectiva, na.rm = TRUE),
+    pct_selectiva_agregada = 100 * residuos_selectiva / residuos_total,
+    .groups = "drop"
+  )
+
+tabla_prov_year |> head()
+```
+
+Contar municipios tratados por año:
+
+```{r}
+df |>
+  group_by(year) |>
+  summarise(
+    n_tratados = n_distinct(codigo_municipio[tratamiento == 1]),
+    .groups = "drop"
+  )
+```
+
+Nuevas adopciones:
+
+```{r}
+tabla_adopciones <- df |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    adopta_este_anyo = tratamiento == 1 & lag(tratamiento, default = 0) == 0
+  ) |>
+  ungroup() |>
+  group_by(year) |>
+  summarise(
+    nuevas_adopciones = sum(adopta_este_anyo, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tabla_adopciones
+```
+
+Municipios nunca tratados:
+
+```{r}
+df |>
+  group_by(codigo_municipio) |>
+  summarise(
+    ever_treated = any(tratamiento == 1, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  count(ever_treated)
+```
+
+# 17. Pivotar datos: largo y ancho
+
+De ancho a largo:
+
+```{r}
+df_long <- df |>
+  select(codigo_municipio, year, residuos_total, residuos_selectiva) |>
+  pivot_longer(
+    cols = starts_with("residuos_"),
+    names_to = "tipo_residuo",
+    values_to = "cantidad"
+  )
+
+df_long |> head()
+```
+
+De largo a ancho:
+
+```{r}
+df_wide <- df_long |>
+  pivot_wider(
+    names_from = tipo_residuo,
+    values_from = cantidad
+  )
+
+df_wide |> head()
+```
+
+Tabla año por provincia:
+
+```{r}
+tabla_wide <- df |>
+  group_by(provincia, year) |>
+  summarise(
+    pct_selectiva = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  pivot_wider(
+    names_from = provincia,
+    values_from = pct_selectiva
+  )
+
+tabla_wide |> head()
+```
+
+# 18. Visualización exploratoria
+
+Series temporales:
+
+```{r}
+p_trends <- df |>
+  group_by(year, tratamiento) |>
+  summarise(
+    pct_selectiva = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(year, pct_selectiva, color = factor(tratamiento))) +
+  geom_line() +
+  geom_point() +
+  labs(
+    x = "Año",
+    y = "% recogida selectiva",
+    color = "Tratamiento"
+  ) +
+  theme_minimal()
+
+p_trends
+```
+
+Scatter plot:
+
+```{r}
+p_scatter <- ggplot(df, aes(x = residuos_total, y = pct_selectiva)) +
+  geom_point(alpha = 0.35) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    x = "Residuos totales",
+    y = "% recogida selectiva"
+  ) +
+  theme_minimal()
+
+p_scatter
+```
+
+Boxplot:
+
+```{r}
+ggplot(df, aes(x = provincia, y = pct_selectiva)) +
+  geom_boxplot() +
+  labs(
+    x = "Provincia",
+    y = "% recogida selectiva"
+  ) +
+  theme_minimal()
+```
+
+Histograma:
+
+```{r}
+ggplot(df, aes(x = poblacion)) +
+  geom_histogram(bins = 40) +
+  labs(title = "Distribución de población") +
+  theme_minimal()
+```
+
+# 19. Exportar resultados
+
+Exportar CSV:
+
+```{r eval=FALSE}
+write_csv2(df, "salidas/base_limpia.csv")
+write_csv(df, "salidas/base_limpia.csv")
+```
+
+Exportar tablas:
+
+```{r eval=FALSE}
+write_csv2(tabla_year, "salidas/tabla_resumen_year.csv")
+```
+
+Exportar gráficos:
+
+```{r eval=FALSE}
+ggsave(
+  filename = "salidas/tendencias_pct_selectiva.png",
+  plot = p_trends,
+  width = 8,
+  height = 5,
+  dpi = 300
+)
+```
+
+# 20. Mini-pipeline aplicado a residuos municipales
+
+Esta plantilla está escrita para copiar y adaptar a datos reales.
+
+```{r eval=FALSE}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(readr)
+
+pap <- read_csv2("PaP.csv") |> clean_names()
+residuos <- read_csv2("Estadisticas_residuos.csv") |> clean_names()
+
+pap <- pap |>
+  mutate(codigo_municipio = str_pad(as.character(codigo_municipio), 5, pad = "0"))
+
+residuos <- residuos |>
+  mutate(codigo_municipio = str_pad(as.character(codigo_municipio), 5, pad = "0"))
+
+pap |> count(codigo_municipio, year) |> filter(n > 1)
+residuos |> count(codigo_municipio, year) |> filter(n > 1)
+
+df <- residuos |>
+  left_join(pap, by = c("codigo_municipio", "year"))
+
+df <- df |>
+  mutate(
+    provincia_codigo = str_sub(codigo_municipio, 1, 2),
+    provincia = case_when(
+      provincia_codigo == "08" ~ "Barcelona",
+      provincia_codigo == "17" ~ "Girona",
+      provincia_codigo == "25" ~ "Lleida",
+      provincia_codigo == "43" ~ "Tarragona",
+      TRUE ~ NA_character_
+    )
+  )
+
+df <- df |>
+  mutate(
+    frac_recogidas_pap = replace_na(frac_recogidas_pap, ""),
+    frac_clean = str_to_lower(frac_recogidas_pap),
+    frac_clean = str_squish(frac_clean),
+    frac_clean = chartr("áéíóúàèòÁÉÍÓÚÀÈÒ", "aeiouaeoAEIOUAEO", frac_clean),
+    n_fracciones_pap = if_else(frac_clean == "", 0L, str_count(frac_clean, ",") + 1L),
+    pap_organica = as.integer(str_detect(frac_clean, "organica|organic|org")),
+    pap_papel_carton = as.integer(str_detect(frac_clean, "paper|papel|carton")),
+    pap_vidrio = as.integer(str_detect(frac_clean, "vidre|vidrio")),
+    pap_envases = as.integer(str_detect(frac_clean, "envas")),
+    pap_resto = as.integer(str_detect(frac_clean, "resta|resto"))
+  )
+
+df <- df |>
+  mutate(
+    tratamiento = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap)
+  )
+
+df <- df |>
+  group_by(codigo_municipio) |>
+  mutate(
+    G = if_else(
+      any(tratamiento == 1, na.rm = TRUE),
+      min(year[tratamiento == 1], na.rm = TRUE),
+      0L
+    ),
+    rel_time = if_else(G > 0, year - G, NA_integer_)
+  ) |>
+  ungroup()
+
+# write_csv2(df, "salidas/base_limpia.csv")
+```
+
+# 21. Checklist final de limpieza
+
+```{r}
+dim(df)
+glimpse(df)
+
+df |>
+  summarise(across(everything(), ~ sum(is.na(.))))
+
+df |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+
+range(df$year, na.rm = TRUE)
+n_distinct(df$codigo_municipio)
+
+df |>
+  group_by(year) |>
+  summarise(n_tratados = n_distinct(codigo_municipio[tratamiento == 1]), .groups = "drop") |>
+  head()
+
+df |>
+  group_by(codigo_municipio) |>
+  summarise(ever_treated = any(tratamiento == 1), .groups = "drop") |>
+  count(ever_treated)
+```
+
+# 22. Errores comunes
+
+1. Leer códigos administrativos como números y perder ceros iniciales.
+2. No comprobar duplicados antes de un `join`.
+3. Usar `mean()` o `sum()` sin `na.rm = TRUE`.
+4. Confundir missing con cero.
+5. No limpiar strings antes de crear dummies.
+6. Calcular medias simples de porcentajes cuando corresponde ratio agregado.
+7. Contar filas en vez de unidades únicas.
+8. Crear tratamiento con una fecha mal parseada.
+9. Usar variables post-tratamiento como covariables en análisis causal.
+10. Exportar CSV con separador/decimal incorrecto.
+11. No guardar una base intermedia limpia antes del análisis.
+12. No documentar imputaciones, winsorizaciones o decisiones de limpieza.
+
+# 23. Plantilla mínima para examen
+
+```{r eval=FALSE}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(readr)
+
+pap <- read_csv2("PaP.csv") |> clean_names()
+residuos <- read_csv2("Estadisticas_residuos.csv") |> clean_names()
+
+pap <- pap |>
+  mutate(codigo_municipio = str_pad(as.character(codigo_municipio), 5, pad = "0"))
+
+residuos <- residuos |>
+  mutate(codigo_municipio = str_pad(as.character(codigo_municipio), 5, pad = "0"))
+
+pap |> count(codigo_municipio, year) |> filter(n > 1)
+residuos |> count(codigo_municipio, year) |> filter(n > 1)
+
+df <- residuos |>
+  left_join(pap, by = c("codigo_municipio", "year"))
+
+df <- df |>
+  mutate(
+    provincia_codigo = str_sub(codigo_municipio, 1, 2),
+    provincia = case_when(
+      provincia_codigo == "08" ~ "Barcelona",
+      provincia_codigo == "17" ~ "Girona",
+      provincia_codigo == "25" ~ "Lleida",
+      provincia_codigo == "43" ~ "Tarragona",
+      TRUE ~ NA_character_
+    )
+  )
+
+df <- df |>
+  mutate(
+    frac_recogidas_pap = replace_na(frac_recogidas_pap, ""),
+    frac_clean = str_to_lower(frac_recogidas_pap),
+    frac_clean = str_squish(frac_clean),
+    frac_clean = chartr("áéíóúàèòÁÉÍÓÚÀÈÒ", "aeiouaeoAEIOUAEO", frac_clean),
+    n_fracciones_pap = if_else(frac_clean == "", 0L, str_count(frac_clean, ",") + 1L),
+    pap_organica = as.integer(str_detect(frac_clean, "organica|organic|org")),
+    pap_papel_carton = as.integer(str_detect(frac_clean, "paper|papel|carton")),
+    pap_vidrio = as.integer(str_detect(frac_clean, "vidre|vidrio")),
+    pap_envases = as.integer(str_detect(frac_clean, "envas")),
+    pap_resto = as.integer(str_detect(frac_clean, "resta|resto"))
+  )
+
+df <- df |>
+  mutate(
+    tratamiento = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap)
+  )
+
+df <- df |>
+  group_by(codigo_municipio) |>
+  mutate(
+    G = if_else(
+      any(tratamiento == 1, na.rm = TRUE),
+      min(year[tratamiento == 1], na.rm = TRUE),
+      0L
+    ),
+    rel_time = if_else(G > 0, year - G, NA_integer_)
+  ) |>
+  ungroup()
+
+# write_csv2(df, "salidas/base_limpia.csv")
+```

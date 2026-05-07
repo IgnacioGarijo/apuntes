@@ -1,0 +1,1297 @@
+---
+title: "Resolución sintética del examen: evaluación del sistema PaP de recogida de residuos"
+subtitle: "Informe en Quarto con datos simulados, limpieza, gráficos y análisis econométrico DiD"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# Nota previa
+
+Este informe reproduce la estructura del examen usando **datos sintéticos**, ya que aquí no se dispone de los ficheros originales `PaP.csv`, `Estadisticas_residuos.csv` ni del diseño de registro.
+
+El objetivo es resolver todas las preguntas de forma reproducible, generando una base artificial con la misma lógica:
+
+- municipios de Cataluña observados entre 2000 y 2023;
+- datos anuales de residuos;
+- información sobre adopción del sistema de recogida puerta a puerta (PaP);
+- adopción escalonada en distintos años;
+- municipios nunca tratados;
+- características demográficas y de tratamiento;
+- efectos simulados del PaP sobre residuos totales y porcentaje de recogida selectiva.
+
+En un examen real bastaría con sustituir la sección de generación de datos sintéticos por la importación real de los CSV.
+
+# 0. Paquetes y configuración
+
+```{r}
+# install.packages(c(
+#   "tidyverse", "janitor", "lubridate", "stringr",
+#   "fixest", "did", "modelsummary", "broom", "scales"
+# ))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(fixest)
+library(did)
+library(modelsummary)
+library(broom)
+library(scales)
+
+theme_set(theme_minimal())
+set.seed(1234)
+```
+
+# 1. Generación de datos sintéticos
+
+En el examen original se proporcionan dos ficheros:
+
+- `PaP.csv`;
+- `Estadisticas_residuos.csv`.
+
+Como no disponemos de esos datos, creamos dos bases sintéticas y luego las exportamos a CSV con formato europeo, es decir, separador `;` y coma decimal. Después las volvemos a importar con `read_csv2()` para reproducir el flujo real del examen.
+
+## 1.1. Base municipal
+
+```{r}
+n_muni <- 947
+years <- 2000:2023
+
+municipios <- tibble(
+  codigo_municipio_base = str_pad(as.character(1:n_muni), width = 5, pad = "0"),
+  municipio = paste("Municipio", str_pad(1:n_muni, 3, pad = "0")),
+  provincia_codigo = sample(
+    c("08", "17", "25", "43"),
+    size = n_muni,
+    replace = TRUE,
+    prob = c(0.55, 0.20, 0.12, 0.13)
+  ),
+  codigo_municipio = paste0(provincia_codigo, str_sub(codigo_municipio_base, 3, 5)),
+  comarca = paste("Comarca", sample(1:35, n_muni, replace = TRUE)),
+  poblacion_base = round(exp(rnorm(n_muni, log(3500), 1.05))),
+  renta_media = round(rnorm(n_muni, 24500, 4200)),
+  densidad = round(exp(rnorm(n_muni, log(180), 1.1)), 1),
+  zona_costera = rbinom(n_muni, 1, 0.28),
+  rural = as.integer(poblacion_base < 2500)
+) |>
+  mutate(
+    provincia = case_when(
+      provincia_codigo == "08" ~ "Barcelona",
+      provincia_codigo == "17" ~ "Girona",
+      provincia_codigo == "25" ~ "Lleida",
+      provincia_codigo == "43" ~ "Tarragona"
+    ),
+    poblacion_base = if_else(row_number() == 10, poblacion_base * 25, poblacion_base),
+    poblacion_base = if_else(row_number() == 20, poblacion_base * 18, poblacion_base)
+  )
+
+glimpse(municipios)
+```
+
+## 1.2. Base de adopción PaP
+
+```{r}
+adopcion <- municipios |>
+  mutate(
+    prob_adopta = plogis(
+      -0.7 +
+        0.55 * rural +
+        0.25 * zona_costera -
+        0.00002 * poblacion_base +
+        if_else(provincia == "Girona", 0.25, 0) +
+        if_else(provincia == "Barcelona", -0.10, 0)
+    ),
+    ever_pap = rbinom(n(), 1, prob_adopta),
+    anyo_inicio_pap = if_else(
+      ever_pap == 1,
+      sample(2004:2021, n(), replace = TRUE),
+      NA_integer_
+    )
+  ) |>
+  select(codigo_municipio, anyo_inicio_pap, ever_pap)
+
+pap_raw <- expand_grid(
+  codigo_municipio = municipios$codigo_municipio,
+  year = years
+) |>
+  left_join(municipios |> select(codigo_municipio, municipio, provincia), by = "codigo_municipio") |>
+  left_join(adopcion, by = "codigo_municipio") |>
+  mutate(
+    pap_activo = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap),
+    n_frac_latente = case_when(
+      pap_activo == 0 ~ 0L,
+      year - anyo_inicio_pap <= 1 ~ sample(2:3, n(), replace = TRUE),
+      year - anyo_inicio_pap <= 4 ~ sample(3:4, n(), replace = TRUE),
+      TRUE ~ sample(4:5, n(), replace = TRUE)
+    ),
+    frac_recogidas_pap = case_when(
+      pap_activo == 0 ~ NA_character_,
+      n_frac_latente == 2 ~ "Orgánica, Resto",
+      n_frac_latente == 3 ~ "Orgánica, Papel y cartón, Envases",
+      n_frac_latente == 4 ~ "Orgánica, Papel y cartón, Envases, Vidrio",
+      n_frac_latente == 5 ~ "Orgánica, Papel y cartón, Envases, Vidrio, Resto",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  select(codigo_municipio, year, frac_recogidas_pap, anyo_inicio_pap)
+
+pap_raw |> head()
+```
+
+## 1.3. Base de estadísticas de residuos
+
+```{r}
+estadisticas_raw <- expand_grid(
+  codigo_municipio = municipios$codigo_municipio,
+  year = years
+) |>
+  left_join(municipios, by = "codigo_municipio") |>
+  left_join(adopcion, by = "codigo_municipio") |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    tratamiento_real = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap),
+    rel_time = if_else(tratamiento_real == 1, year - anyo_inicio_pap, NA_integer_),
+    trend_pop = 1 + rnorm(1, 0.004, 0.006) * (year - min(year)),
+    poblacion = round(poblacion_base * trend_pop + rnorm(n(), 0, pmax(25, poblacion_base * 0.025))),
+    residuos_pc_base = 0.42 + 0.0000015 * renta_media + 0.04 * zona_costera - 0.02 * rural,
+    efecto_pap_residuos_pc = if_else(tratamiento_real == 1, -0.015 * pmin(rel_time, 5), 0),
+    residuos_total_tn = pmax(
+      20,
+      poblacion * (residuos_pc_base + efecto_pap_residuos_pc + rnorm(n(), 0, 0.035))
+    ),
+    tendencia_selectiva = 28 + 0.75 * (year - min(year)),
+    efecto_pap_selectiva = if_else(
+      tratamiento_real == 1,
+      4 + 2.2 * pmin(rel_time, 5) + 2.5 * rural,
+      0
+    ),
+    pct_selectiva = pmin(
+      pmax(
+        tendencia_selectiva +
+          efecto_pap_selectiva +
+          1.5 * zona_costera -
+          0.00008 * poblacion_base +
+          rnorm(n(), 0, 5),
+        5
+      ),
+      95
+    ),
+    residuos_selectiva_tn = residuos_total_tn * pct_selectiva / 100
+  ) |>
+  ungroup() |>
+  select(
+    codigo_municipio, municipio, year, comarca,
+    poblacion, renta_media, densidad, zona_costera, rural,
+    residuos_total_tn, residuos_selectiva_tn, pct_selectiva
+  )
+
+set.seed(777)
+idx_out <- sample(1:nrow(estadisticas_raw), 3)
+idx_na <- sample(1:nrow(estadisticas_raw), 25)
+
+estadisticas_raw$poblacion[idx_out] <- estadisticas_raw$poblacion[idx_out] * 14
+estadisticas_raw$renta_media[idx_na] <- NA
+
+estadisticas_raw |> head()
+```
+
+## 1.4. Exportar e importar como CSV europeo
+
+```{r}
+dir.create("datos_sinteticos", showWarnings = FALSE)
+
+write_csv2(pap_raw, "datos_sinteticos/PaP.csv")
+write_csv2(estadisticas_raw, "datos_sinteticos/Estadisticas_residuos.csv")
+
+pap <- read_csv2("datos_sinteticos/PaP.csv") |>
+  clean_names()
+
+residuos <- read_csv2("datos_sinteticos/Estadisticas_residuos.csv") |>
+  clean_names()
+
+glimpse(pap)
+glimpse(residuos)
+```
+
+# Bloque 1
+
+# 2. Pregunta 1.a
+
+**Enunciado.** Importe ambos ficheros CSV, teniendo en cuenta que los valores numéricos usan la coma como separador de decimales, y fusione la información en un único fichero. ¿Detecta usted algún valor atípico —outlier— en las variables demográficas de la base de datos? Si es así, ¿podría imputar un valor en el/los atípicos?
+
+## 2.1. Importación y fusión
+
+En datos reales usaría:
+
+```{r eval=FALSE}
+pap <- read_csv2("C:/Users/Usuario/Desktop/Examen/enunciado/PaP.csv") |>
+  clean_names()
+
+residuos <- read_csv2("C:/Users/Usuario/Desktop/Examen/enunciado/Estadisticas_residuos.csv") |>
+  clean_names()
+```
+
+Comprobamos duplicados en la clave municipio-año.
+
+```{r}
+pap |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+
+residuos |>
+  count(codigo_municipio, year) |>
+  filter(n > 1)
+```
+
+Fusionamos por código de municipio y año.
+
+```{r}
+df <- residuos |>
+  left_join(
+    pap,
+    by = c("codigo_municipio", "year")
+  )
+
+glimpse(df)
+```
+
+```{r}
+tibble(
+  base = c("residuos", "pap", "fusionada"),
+  filas = c(nrow(residuos), nrow(pap), nrow(df)),
+  columnas = c(ncol(residuos), ncol(pap), ncol(df))
+)
+```
+
+## 2.2. Detección de outliers demográficos
+
+Considero variables demográficas: `poblacion`, `renta_media` y `densidad`.
+
+```{r}
+df |>
+  summarise(
+    poblacion_min = min(poblacion, na.rm = TRUE),
+    poblacion_p50 = median(poblacion, na.rm = TRUE),
+    poblacion_p99 = quantile(poblacion, 0.99, na.rm = TRUE),
+    poblacion_max = max(poblacion, na.rm = TRUE),
+    renta_min = min(renta_media, na.rm = TRUE),
+    renta_p50 = median(renta_media, na.rm = TRUE),
+    renta_max = max(renta_media, na.rm = TRUE),
+    densidad_min = min(densidad, na.rm = TRUE),
+    densidad_p50 = median(densidad, na.rm = TRUE),
+    densidad_max = max(densidad, na.rm = TRUE)
+  )
+```
+
+```{r}
+p_box_pob <- ggplot(df, aes(y = poblacion)) +
+  geom_boxplot() +
+  labs(
+    title = "Detección visual de outliers en población",
+    y = "Población"
+  )
+
+p_box_pob
+```
+
+Detectamos outliers con la regla del rango intercuartílico.
+
+```{r}
+q1_pob <- quantile(df$poblacion, 0.25, na.rm = TRUE)
+q3_pob <- quantile(df$poblacion, 0.75, na.rm = TRUE)
+iqr_pob <- q3_pob - q1_pob
+
+lim_sup_pob <- q3_pob + 1.5 * iqr_pob
+
+outliers_pob <- df |>
+  filter(poblacion > lim_sup_pob) |>
+  select(codigo_municipio, municipio, year, poblacion) |>
+  arrange(desc(poblacion))
+
+outliers_pob |> head(20)
+```
+
+## 2.3. Imputación de outliers
+
+Dado que tenemos panel municipal, una imputación razonable para un outlier puntual de población es reemplazarlo por la media de los años adyacentes del mismo municipio, si ambos existen.
+
+```{r}
+df <- df |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    poblacion_lag = lag(poblacion),
+    poblacion_lead = lead(poblacion),
+    poblacion_outlier = poblacion > lim_sup_pob,
+    poblacion_imp = case_when(
+      poblacion_outlier & !is.na(poblacion_lag) & !is.na(poblacion_lead) ~
+        (poblacion_lag + poblacion_lead) / 2,
+      TRUE ~ as.numeric(poblacion)
+    )
+  ) |>
+  ungroup()
+
+df |>
+  filter(poblacion_outlier) |>
+  select(codigo_municipio, municipio, year, poblacion, poblacion_lag, poblacion_lead, poblacion_imp) |>
+  head(20)
+```
+
+En un informe real explicaría:
+
+> Se detectan valores atípicos en población mediante la regla IQR. Dado que la población municipal suele evolucionar suavemente en el tiempo, se imputa el valor atípico como la media entre el año anterior y el posterior del mismo municipio cuando ambos están disponibles.
+
+# 3. Pregunta 1.b
+
+**Enunciado.** A partir de la variable `frac_recogidas_pap`, construya una variable que indique el número de fracciones distintas recogidas con el sistema PaP y una serie de variables dummies que indiquen con uno o cero si el municipio recoge o no cada fracción de residuo con el sistema PaP. ¿Cuántos municipios recogen la fracción orgánica a través del sistema PaP cada año?
+
+## 3.1. Limpieza del string de fracciones
+
+```{r}
+df <- df |>
+  mutate(
+    frac_recogidas_pap = replace_na(frac_recogidas_pap, ""),
+    frac_clean = str_to_lower(frac_recogidas_pap),
+    frac_clean = str_squish(frac_clean),
+    frac_clean = chartr("áéíóúàèòÁÉÍÓÚÀÈÒ", "aeiouaeoAEIOUAEO", frac_clean)
+  )
+```
+
+## 3.2. Número de fracciones
+
+```{r}
+df <- df |>
+  mutate(
+    n_fracciones_pap = if_else(
+      frac_clean == "",
+      0L,
+      str_count(frac_clean, ",") + 1L
+    )
+  )
+
+df |>
+  count(n_fracciones_pap)
+```
+
+## 3.3. Dummies por fracción
+
+```{r}
+df <- df |>
+  mutate(
+    pap_organica = as.integer(str_detect(frac_clean, "organica")),
+    pap_papel_carton = as.integer(str_detect(frac_clean, "papel|paper|carton")),
+    pap_envases = as.integer(str_detect(frac_clean, "envases|envasos")),
+    pap_vidrio = as.integer(str_detect(frac_clean, "vidrio|vidre")),
+    pap_resto = as.integer(str_detect(frac_clean, "resto|resta"))
+  )
+
+df |>
+  select(frac_recogidas_pap, n_fracciones_pap, pap_organica, pap_papel_carton, pap_envases, pap_vidrio, pap_resto) |>
+  distinct() |>
+  head(10)
+```
+
+## 3.4. Municipios con orgánica PaP por año
+
+```{r}
+tabla_organica <- df |>
+  group_by(year) |>
+  summarise(
+    municipios_organica_pap = n_distinct(codigo_municipio[pap_organica == 1]),
+    .groups = "drop"
+  )
+
+tabla_organica
+```
+
+```{r}
+ggplot(tabla_organica, aes(x = year, y = municipios_organica_pap)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Municipios que recogen orgánica mediante PaP por año",
+    x = "Año",
+    y = "Número de municipios"
+  )
+```
+
+# 4. Pregunta 1.c
+
+**Enunciado.** Indique, para el año 2021, cuál fue la provincia con mayor porcentaje de recogida selectiva sobre el total de residuos municipales recogidos. La provincia está contenida en los dos primeros dígitos del código municipal: “08” = Barcelona; “17” = Girona; “25” = Lleida; “43” = Tarragona.
+
+## 4.1. Crear provincia a partir del código municipal
+
+```{r}
+df <- df |>
+  mutate(
+    provincia_codigo_enunciado = str_sub(codigo_municipio, 1, 2),
+    provincia_enunciado = case_when(
+      provincia_codigo_enunciado == "08" ~ "Barcelona",
+      provincia_codigo_enunciado == "17" ~ "Girona",
+      provincia_codigo_enunciado == "25" ~ "Lleida",
+      provincia_codigo_enunciado == "43" ~ "Tarragona",
+      TRUE ~ NA_character_
+    )
+  )
+```
+
+## 4.2. Porcentaje provincial agregado en 2021
+
+Para una provincia, el porcentaje agregado debe calcularse como:
+
+```text
+100 * suma(residuos selectivos) / suma(residuos totales)
+```
+
+```{r}
+tabla_prov_2021 <- df |>
+  filter(year == 2021) |>
+  group_by(provincia_enunciado) |>
+  summarise(
+    residuos_total_tn = sum(residuos_total_tn, na.rm = TRUE),
+    residuos_selectiva_tn = sum(residuos_selectiva_tn, na.rm = TRUE),
+    pct_selectiva_provincial = 100 * residuos_selectiva_tn / residuos_total_tn,
+    .groups = "drop"
+  ) |>
+  arrange(desc(pct_selectiva_provincial))
+
+tabla_prov_2021
+```
+
+```{r}
+prov_max_2021 <- tabla_prov_2021 |> slice_max(pct_selectiva_provincial, n = 1)
+
+prov_max_2021
+```
+
+```{r results='asis'}
+cat(
+  "En 2021, la provincia con mayor porcentaje agregado de recogida selectiva es **",
+  prov_max_2021$provincia_enunciado,
+  "**, con un porcentaje de ",
+  round(prov_max_2021$pct_selectiva_provincial, 2),
+  "%.
+",
+  sep = ""
+)
+```
+
+# 5. Pregunta 1.d
+
+**Enunciado.** Genere una variable dummy llamada `tratamiento` que tome el valor 1 si, para cada año, un municipio tiene en funcionamiento un sistema PaP. ¿Cuántos municipios adoptan el sistema PaP cada año? ¿Cuántos municipios no adoptan nunca el sistema PaP?
+
+## 5.1. Crear dummy de tratamiento
+
+```{r}
+df <- df |>
+  mutate(
+    tratamiento = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap)
+  )
+```
+
+## 5.2. Municipios que adoptan cada año
+
+```{r}
+tabla_adopciones <- df |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    adopta_este_anyo = tratamiento == 1 & lag(tratamiento, default = 0) == 0
+  ) |>
+  ungroup() |>
+  group_by(year) |>
+  summarise(
+    n_adoptan = sum(adopta_este_anyo, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+tabla_adopciones
+```
+
+```{r}
+ggplot(tabla_adopciones, aes(x = year, y = n_adoptan)) +
+  geom_col() +
+  labs(
+    title = "Número de municipios que adoptan PaP cada año",
+    x = "Año",
+    y = "Nuevas adopciones"
+  )
+```
+
+## 5.3. Municipios nunca tratados
+
+```{r}
+tabla_nunca_tratados <- df |>
+  group_by(codigo_municipio) |>
+  summarise(
+    ever_treated = any(tratamiento == 1, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  summarise(
+    municipios_nunca_tratados = sum(!ever_treated),
+    municipios_alguna_vez_tratados = sum(ever_treated)
+  )
+
+tabla_nunca_tratados
+```
+
+# Bloque 2
+
+# 6. Pregunta 2.a.1
+
+**Enunciado.** Realice gráficos que permitan responder: ¿el porcentaje de residuos recogidos de forma selectiva aumenta tras la adopción del sistema PaP?
+
+## 6.1. Evolución bruta por tratamiento activo
+
+```{r}
+graf_selectiva_trat <- df |>
+  group_by(year, tratamiento) |>
+  summarise(
+    pct_selectiva_media = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = year, y = pct_selectiva_media, color = factor(tratamiento))) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  labs(
+    title = "Porcentaje medio de recogida selectiva según tratamiento activo",
+    x = "Año",
+    y = "% recogida selectiva",
+    color = "PaP activo"
+  )
+
+graf_selectiva_trat
+```
+
+## 6.2. Event study descriptivo relativo al inicio de PaP
+
+```{r}
+graf_event_desc <- df |>
+  filter(!is.na(anyo_inicio_pap)) |>
+  mutate(rel_time = year - anyo_inicio_pap) |>
+  filter(rel_time >= -5, rel_time <= 8) |>
+  group_by(rel_time) |>
+  summarise(
+    pct_selectiva_media = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  ggplot(aes(x = rel_time, y = pct_selectiva_media)) +
+  geom_vline(xintercept = -1, linetype = "dashed") +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  labs(
+    title = "Evolución descriptiva alrededor de la adopción del PaP",
+    x = "Años desde adopción",
+    y = "% recogida selectiva medio"
+  )
+
+graf_event_desc
+```
+
+Interpretación descriptiva:
+
+> En los datos sintéticos se observa un aumento del porcentaje de recogida selectiva tras la adopción del sistema PaP. No obstante, este gráfico no controla por tendencias comunes ni por diferencias entre municipios, por lo que la respuesta causal se aborda en el Bloque 3.
+
+# 7. Pregunta 2.a.2
+
+**Enunciado.** Realice gráficos que permitan responder: ¿a mayor cantidad de residuos recogidos menor es el porcentaje de residuos recogidos de forma selectiva?
+
+## 7.1. Relación entre residuos totales y porcentaje selectivo
+
+```{r}
+graf_scatter <- ggplot(df, aes(x = residuos_total_tn, y = pct_selectiva)) +
+  geom_point(alpha = 0.20) +
+  geom_smooth(method = "lm", se = TRUE) +
+  scale_x_continuous(labels = label_number(big.mark = ".", decimal.mark = ",")) +
+  labs(
+    title = "Relación entre residuos totales y porcentaje de recogida selectiva",
+    x = "Residuos totales recogidos (toneladas)",
+    y = "% recogida selectiva"
+  )
+
+graf_scatter
+```
+
+## 7.2. Relación en logs
+
+```{r}
+graf_scatter_log <- df |>
+  mutate(log_residuos_total = log(residuos_total_tn)) |>
+  ggplot(aes(x = log_residuos_total, y = pct_selectiva)) +
+  geom_point(alpha = 0.20) +
+  geom_smooth(method = "lm", se = TRUE) +
+  labs(
+    title = "Relación entre log residuos totales y porcentaje selectivo",
+    x = "Log residuos totales",
+    y = "% recogida selectiva"
+  )
+
+graf_scatter_log
+```
+
+Estimación descriptiva simple:
+
+```{r}
+mod_desc <- feols(
+  pct_selectiva ~ log(residuos_total_tn),
+  data = df,
+  vcov = "hetero"
+)
+
+modelsummary(
+  list("Descriptivo" = mod_desc),
+  statistic = "({std.error})"
+)
+```
+
+# Bloque 3
+
+# 8. Preparación para análisis econométrico
+
+**Enunciado general.** Utilice análisis econométrico y aporte tablas y/o gráficos para responder. Centre sus respuestas en efectos a corto plazo, máximo 5 años tras el inicio del tratamiento.
+
+Dado que la adopción del PaP es escalonada, el estimador principal será Callaway y Sant'Anna (`did::att_gt()`), que estima efectos por cohorte y periodo `ATT(g,t)`.
+
+```{r}
+df_did <- df |>
+  mutate(
+    id = as.integer(factor(codigo_municipio)),
+    G = if_else(
+      is.na(anyo_inicio_pap),
+      0L,
+      as.integer(anyo_inicio_pap)
+    ),
+    rel_time_did = if_else(G > 0L, year - G, NA_integer_),
+    log_residuos_total = log(residuos_total_tn),
+    log_poblacion = log(poblacion_imp),
+    log_densidad = log(densidad)
+  ) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    poblacion_pre = poblacion_imp[year == min(year)][1],
+    log_poblacion_pre = log(poblacion_pre),
+    renta_pre = if_else(
+      is.na(renta_media[year == min(year)][1]),
+      median(renta_media, na.rm = TRUE),
+      renta_media[year == min(year)][1]
+    ),
+    densidad_pre = densidad[year == min(year)][1],
+    rural_pre = rural[year == min(year)][1],
+    zona_costera_pre = zona_costera[year == min(year)][1]
+  ) |>
+  ungroup() |>
+  filter(!is.na(log_residuos_total), !is.na(pct_selectiva), !is.na(log_poblacion_pre), !is.na(renta_pre))
+```
+
+# 9. Pregunta 3.a
+
+**Enunciado.** ¿Qué impacto causal tiene el establecimiento del sistema PaP sobre la cantidad de residuos totales recogidos y sobre el porcentaje de residuos recogidos de manera selectiva?
+
+## 9.1. Estimador principal: DiD escalonado con DR
+
+```{r}
+att_residuos_dr <- att_gt(
+  yname = "log_residuos_total",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ log_poblacion_pre + renta_pre + densidad_pre + rural_pre + zona_costera_pre,
+  data = df_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 100,
+  cband = TRUE
+)
+
+att_selectiva_dr <- att_gt(
+  yname = "pct_selectiva",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ log_poblacion_pre + renta_pre + densidad_pre + rural_pre + zona_costera_pre,
+  data = df_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 100,
+  cband = TRUE
+)
+```
+
+## 9.2. Agregación simple del efecto total
+
+```{r}
+agg_residuos_simple <- aggte(att_residuos_dr, type = "simple")
+agg_selectiva_simple <- aggte(att_selectiva_dr, type = "simple")
+
+summary(agg_residuos_simple)
+summary(agg_selectiva_simple)
+```
+
+```{r}
+tabla_impacto_simple <- tibble(
+  outcome = c("Log residuos totales", "% recogida selectiva"),
+  att = c(agg_residuos_simple$overall.att, agg_selectiva_simple$overall.att),
+  se = c(agg_residuos_simple$overall.se, agg_selectiva_simple$overall.se)
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se,
+    interpretacion = c(
+      paste0(round(100 * (exp(att[1]) - 1), 2), "% aprox."),
+      paste0(round(att[2], 2), " puntos porcentuales")
+    )
+  )
+
+tabla_impacto_simple
+```
+
+```{r}
+datasummary_df(tabla_impacto_simple)
+```
+
+```{r results='asis'}
+cat(
+  "- Para residuos totales, el ATT estimado en logaritmos es ",
+  round(tabla_impacto_simple$att[1], 3),
+  ", equivalente aproximadamente a ",
+  round(100 * (exp(tabla_impacto_simple$att[1]) - 1), 2),
+  "%.
+",
+  "- Para el porcentaje de recogida selectiva, el ATT estimado es ",
+  round(tabla_impacto_simple$att[2], 2),
+  " puntos porcentuales.
+",
+  sep = ""
+)
+```
+
+## 9.3. Comparación con TWFE como benchmark
+
+```{r}
+twfe_residuos <- feols(
+  log_residuos_total ~ tratamiento | id + year,
+  data = df_did,
+  cluster = ~id
+)
+
+twfe_selectiva <- feols(
+  pct_selectiva ~ tratamiento | id + year,
+  data = df_did,
+  cluster = ~id
+)
+
+modelsummary(
+  list(
+    "TWFE log residuos" = twfe_residuos,
+    "TWFE % selectiva" = twfe_selectiva
+  ),
+  statistic = "({std.error})",
+  stars = TRUE
+)
+```
+
+Nota:
+
+> En diseños escalonados, TWFE puede mezclar comparaciones no deseadas si hay efectos heterogéneos por cohorte o por tiempo desde tratamiento. Por eso se usa como benchmark, no como especificación principal.
+
+# 10. Pregunta 3.b
+
+**Enunciado.** ¿Varía el impacto en función de los años que han pasado desde la puesta en marcha del sistema PaP o en función del año en que se adopta el PaP?
+
+## 10.1. Efectos dinámicos hasta 5 años tras adopción
+
+```{r}
+dyn_residuos <- aggte(att_residuos_dr, type = "dynamic")
+dyn_selectiva <- aggte(att_selectiva_dr, type = "dynamic")
+
+tabla_dyn_residuos <- tibble(
+  event_time = dyn_residuos$egt,
+  att = dyn_residuos$att.egt,
+  se = dyn_residuos$se.egt
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se,
+    outcome = "Log residuos totales"
+  ) |>
+  filter(event_time >= -5, event_time <= 5)
+
+tabla_dyn_selectiva <- tibble(
+  event_time = dyn_selectiva$egt,
+  att = dyn_selectiva$att.egt,
+  se = dyn_selectiva$se.egt
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se,
+    outcome = "% recogida selectiva"
+  ) |>
+  filter(event_time >= -5, event_time <= 5)
+
+tabla_dinamica <- bind_rows(tabla_dyn_residuos, tabla_dyn_selectiva)
+
+tabla_dinamica
+```
+
+```{r}
+ggplot(tabla_dinamica, aes(x = event_time, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = -1, linetype = "dotted") +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  geom_line() +
+  facet_wrap(~ outcome, scales = "free_y") +
+  labs(
+    title = "Event study: efectos dinámicos del PaP",
+    subtitle = "Ventana de -5 a +5 años respecto al inicio del tratamiento",
+    x = "Años desde adopción",
+    y = "ATT"
+  )
+```
+
+Interpretación:
+
+> Los coeficientes previos al tratamiento sirven como diagnóstico de tendencias pretratamiento. Los coeficientes posteriores muestran cómo evoluciona el impacto tras la adopción. En los datos sintéticos, el efecto sobre recogida selectiva aumenta durante los primeros años, mientras que el efecto sobre residuos totales es menor y tiende a ser negativo en logaritmos.
+
+## 10.2. Efectos por cohorte de adopción
+
+```{r}
+group_residuos <- aggte(att_residuos_dr, type = "group")
+group_selectiva <- aggte(att_selectiva_dr, type = "group")
+
+tabla_group_residuos <- tibble(
+  cohort = group_residuos$egt,
+  att = group_residuos$att.egt,
+  se = group_residuos$se.egt
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se,
+    outcome = "Log residuos totales"
+  )
+
+tabla_group_selectiva <- tibble(
+  cohort = group_selectiva$egt,
+  att = group_selectiva$att.egt,
+  se = group_selectiva$se.egt
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se,
+    outcome = "% recogida selectiva"
+  )
+
+tabla_cohortes <- bind_rows(tabla_group_residuos, tabla_group_selectiva)
+
+tabla_cohortes
+```
+
+```{r}
+ggplot(tabla_cohortes, aes(x = cohort, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.2) +
+  facet_wrap(~ outcome, scales = "free_y") +
+  labs(
+    title = "Efectos medios por cohorte de adopción",
+    x = "Año de adopción del PaP",
+    y = "ATT medio por cohorte"
+  )
+```
+
+# 11. Pregunta 3.c
+
+**Enunciado.** ¿Varía el impacto en función de las características del municipio o de las características del tratamiento aplicado?
+
+Analizamos heterogeneidad por tamaño municipal, ruralidad e intensidad del tratamiento.
+
+## 11.1. Heterogeneidad por tamaño municipal
+
+```{r}
+df_did <- df_did |>
+  mutate(
+    grupo_tamano = case_when(
+      poblacion_pre < 2000 ~ "Pequeño",
+      poblacion_pre < 10000 ~ "Mediano",
+      TRUE ~ "Grande"
+    )
+  )
+
+count(df_did, grupo_tamano)
+```
+
+```{r}
+# Función robusta para estimar ATT por subgrupo.
+# En submuestras pequeñas puede ocurrir que alguna cohorte no tenga controles válidos
+# o que la matriz sea singular. En ese caso devolvemos NA en vez de detener el render.
+estimar_att_simple_subgrupo <- function(data_subgrupo, etiqueta) {
+
+  n_mun <- n_distinct(data_subgrupo$codigo_municipio)
+  n_trat <- data_subgrupo |>
+    group_by(codigo_municipio) |>
+    summarise(ever = any(G > 0), .groups = "drop") |>
+    summarise(n = sum(ever)) |>
+    pull(n)
+
+  n_ctrl <- data_subgrupo |>
+    group_by(codigo_municipio) |>
+    summarise(never = all(G == 0), .groups = "drop") |>
+    summarise(n = sum(never)) |>
+    pull(n)
+
+  if (n_mun < 30 || n_trat < 5 || n_ctrl < 5) {
+    return(tibble(
+      grupo = etiqueta,
+      att = NA_real_,
+      se = NA_real_,
+      nota = paste0("No estimado: muestra insuficiente. N municipios=", n_mun,
+                    ", tratados=", n_trat, ", nunca tratados=", n_ctrl)
+    ))
+  }
+
+  out <- tryCatch({
+    att_obj <- att_gt(
+      yname = "pct_selectiva",
+      tname = "year",
+      idname = "id",
+      gname = "G",
+      xformla = ~ renta_pre + densidad_pre + zona_costera_pre,
+      data = data_subgrupo,
+      panel = TRUE,
+      control_group = "notyettreated",
+      est_method = "dr",
+      bstrap = TRUE,
+      biters = 50,
+      cband = FALSE,
+      faster_mode = FALSE
+    )
+
+    agg_obj <- aggte(att_obj, type = "simple")
+
+    tibble(
+      grupo = etiqueta,
+      att = agg_obj$overall.att,
+      se = agg_obj$overall.se,
+      nota = "Estimado"
+    )
+  }, error = function(e) {
+    tibble(
+      grupo = etiqueta,
+      att = NA_real_,
+      se = NA_real_,
+      nota = paste("No estimado:", e$message)
+    )
+  })
+
+  out
+}
+
+tabla_hetero_tamano <- bind_rows(
+  estimar_att_simple_subgrupo(df_did |> filter(grupo_tamano == "Pequeño"), "Pequeño"),
+  estimar_att_simple_subgrupo(df_did |> filter(grupo_tamano == "Mediano"), "Mediano"),
+  estimar_att_simple_subgrupo(df_did |> filter(grupo_tamano == "Grande"), "Grande")
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+tabla_hetero_tamano
+```
+
+```{r}
+ggplot(tabla_hetero_tamano |> filter(!is.na(att)), aes(x = grupo, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Heterogeneidad del efecto sobre recogida selectiva por tamaño municipal",
+    x = "Grupo de tamaño",
+    y = "ATT sobre % recogida selectiva"
+  )
+```
+
+## 11.2. Heterogeneidad por ruralidad
+
+```{r}
+tabla_hetero_rural <- bind_rows(
+  estimar_att_simple_subgrupo(df_did |> filter(rural_pre == 1), "Rural"),
+  estimar_att_simple_subgrupo(df_did |> filter(rural_pre == 0), "No rural")
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+tabla_hetero_rural
+```
+
+```{r}
+ggplot(tabla_hetero_rural |> filter(!is.na(att)), aes(x = grupo, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Heterogeneidad del efecto por ruralidad",
+    x = "Tipo de municipio",
+    y = "ATT sobre % recogida selectiva"
+  )
+```
+
+## 11.3. Heterogeneidad por intensidad del tratamiento
+
+```{r}
+df_intensidad <- df |>
+  group_by(codigo_municipio) |>
+  summarise(
+    max_fracciones_pap = max(n_fracciones_pap, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  mutate(
+    intensidad_pap = case_when(
+      max_fracciones_pap == 0 ~ "Nunca tratado",
+      max_fracciones_pap <= 3 ~ "Baja intensidad",
+      max_fracciones_pap >= 4 ~ "Alta intensidad"
+    )
+  )
+
+df_did <- df_did |>
+  left_join(df_intensidad, by = "codigo_municipio")
+```
+
+Gráfico descriptivo:
+
+```{r}
+graf_intensidad <- df_did |>
+  filter(tratamiento == 1, rel_time_did >= 0, rel_time_did <= 5) |>
+  group_by(intensidad_pap, rel_time_did) |>
+  summarise(
+    pct_selectiva_media = mean(pct_selectiva, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+  filter(intensidad_pap != "Nunca tratado") |>
+  ggplot(aes(x = rel_time_did, y = pct_selectiva_media, color = intensidad_pap)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  labs(
+    title = "Evolución descriptiva postratamiento por intensidad PaP",
+    x = "Años desde adopción",
+    y = "% recogida selectiva",
+    color = "Intensidad"
+  )
+
+graf_intensidad
+```
+
+Estimación formal por submuestras.
+
+```{r}
+tabla_hetero_intensidad <- bind_rows(
+  estimar_att_simple_subgrupo(
+    df_did |> filter(intensidad_pap %in% c("Baja intensidad", "Nunca tratado")),
+    "Baja intensidad"
+  ),
+  estimar_att_simple_subgrupo(
+    df_did |> filter(intensidad_pap %in% c("Alta intensidad", "Nunca tratado")),
+    "Alta intensidad"
+  )
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+tabla_hetero_intensidad
+```
+
+```{r}
+ggplot(tabla_hetero_intensidad |> filter(!is.na(att)), aes(x = grupo, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Heterogeneidad por intensidad del tratamiento",
+    x = "Intensidad máxima del PaP",
+    y = "ATT sobre % recogida selectiva"
+  )
+```
+
+# 12. Robustez adicional: IPW y RA
+
+```{r}
+att_selectiva_ipw <- att_gt(
+  yname = "pct_selectiva",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ log_poblacion_pre + renta_pre + densidad_pre + rural_pre + zona_costera_pre,
+  data = df_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "ipw",
+  bstrap = TRUE,
+  biters = 50,
+  cband = FALSE
+)
+
+att_selectiva_reg <- att_gt(
+  yname = "pct_selectiva",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ log_poblacion_pre + renta_pre + densidad_pre + rural_pre + zona_costera_pre,
+  data = df_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "reg",
+  bstrap = TRUE,
+  biters = 50,
+  cband = FALSE
+)
+
+agg_selectiva_ipw <- aggte(att_selectiva_ipw, type = "simple")
+agg_selectiva_reg <- aggte(att_selectiva_reg, type = "simple")
+
+tabla_robustez_metodos <- tibble(
+  metodo = c("DR", "IPW", "RA"),
+  att = c(
+    agg_selectiva_simple$overall.att,
+    agg_selectiva_ipw$overall.att,
+    agg_selectiva_reg$overall.att
+  ),
+  se = c(
+    agg_selectiva_simple$overall.se,
+    agg_selectiva_ipw$overall.se,
+    agg_selectiva_reg$overall.se
+  )
+) |>
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+tabla_robustez_metodos
+```
+
+```{r}
+ggplot(tabla_robustez_metodos, aes(x = metodo, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  labs(
+    title = "Robustez del efecto sobre recogida selectiva según método",
+    x = "Método",
+    y = "ATT sobre % recogida selectiva"
+  )
+```
+
+# 13. Tablas finales
+
+```{r}
+tabla_resultados_finales <- bind_rows(
+  tabla_impacto_simple |>
+    transmute(
+      bloque = "Impacto causal principal",
+      variable = outcome,
+      estimacion = att,
+      error_estandar = se,
+      ci_low,
+      ci_high,
+      interpretacion
+    ),
+  tabla_hetero_tamano |>
+    transmute(
+      bloque = "Heterogeneidad por tamaño",
+      variable = grupo,
+      estimacion = att,
+      error_estandar = se,
+      ci_low,
+      ci_high,
+      interpretacion = paste0(round(att, 2), " pp")
+    ),
+  tabla_hetero_rural |>
+    transmute(
+      bloque = "Heterogeneidad por ruralidad",
+      variable = grupo,
+      estimacion = att,
+      error_estandar = se,
+      ci_low,
+      ci_high,
+      interpretacion = paste0(round(att, 2), " pp")
+    ),
+  tabla_hetero_intensidad |>
+    transmute(
+      bloque = "Heterogeneidad por intensidad",
+      variable = grupo,
+      estimacion = att,
+      error_estandar = se,
+      ci_low,
+      ci_high,
+      interpretacion = paste0(round(att, 2), " pp")
+    )
+)
+
+tabla_resultados_finales
+```
+
+```{r}
+datasummary_df(tabla_resultados_finales)
+```
+
+Líneas para guardar salidas:
+
+```{r eval=FALSE}
+dir.create("salidas", showWarnings = FALSE)
+
+write_csv2(tabla_resultados_finales, "salidas/tabla_resultados_finales.csv")
+write_csv2(tabla_organica, "salidas/municipios_organica_pap_por_anyo.csv")
+write_csv2(tabla_adopciones, "salidas/adopciones_pap_por_anyo.csv")
+```
+
+# 14. Conclusiones
+
+Con los datos sintéticos generados, se obtiene el siguiente patrón:
+
+1. **Limpieza y preparación:** se importan correctamente dos CSV con coma decimal, se fusionan por municipio-año, se detectan outliers demográficos y se imputa la población atípica usando información temporal del mismo municipio.
+
+2. **Fracciones PaP:** a partir de `frac_recogidas_pap` se construye el número de fracciones y dummies para orgánica, papel/cartón, envases, vidrio y resto. El número de municipios con orgánica PaP aumenta conforme se expande la política.
+
+3. **Provincia 2021:** el porcentaje provincial agregado de recogida selectiva se calcula como ratio entre residuos selectivos totales y residuos municipales totales. La provincia líder se identifica en la tabla correspondiente.
+
+4. **Adopción PaP:** se construye la dummy `tratamiento`, se cuentan adopciones anuales y municipios nunca tratados.
+
+5. **Análisis descriptivo:** los gráficos muestran una mejora clara del porcentaje de recogida selectiva tras la adopción del PaP y una asociación entre volumen total de residuos y porcentaje selectivo.
+
+6. **Análisis causal:** dado que la adopción es escalonada, se usa un estimador DiD moderno de Callaway y Sant'Anna con método doubly robust. En los datos sintéticos, el PaP aumenta de forma relevante el porcentaje de recogida selectiva y reduce modestamente los residuos totales en logaritmos.
+
+7. **Dinámica:** el efecto sobre recogida selectiva crece durante los primeros cinco años tras la adopción.
+
+8. **Heterogeneidad:** los efectos varían por características municipales y por intensidad del tratamiento, siendo mayores en municipios rurales/pequeños y con más fracciones recogidas.
+
+# 15. Cómo renderizar
+
+```{r eval=FALSE}
+quarto::quarto_render("resolucion_examen_pap_sintetico.qmd")
+```
+
+O desde terminal:
+
+```bash
+quarto render resolucion_examen_pap_sintetico.qmd
+```

@@ -1,0 +1,1745 @@
+---
+title: "Manual práctico de Diferencias en Diferencias en R"
+subtitle: "TWFE, diseños escalonados, covariables, IPW, RA, DR, event studies, inferencia y exportación de resultados"
+author: "Apuntes de microeconometría aplicada"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 4
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+    df-print: paged
+execute:
+  warning: false
+  message: false
+---
+
+# Objetivo del manual
+
+Este manual es una guía aplicada para estimar modelos de **diferencias en diferencias** en R. Está pensado como documento de referencia: cada sección explica la intuición econométrica, qué estimador se está usando, qué hay que comprobar y ofrece código directamente reutilizable.
+
+El documento cubre:
+
+- DiD clásico 2x2.
+- TWFE sin covariables y con covariables.
+- Diseños con adopción escalonada.
+- Estimadores modernos: IPW, Regression Adjustment y Doubly Robust.
+- Event studies.
+- Diagnósticos: pretrends, balance, overlap, anticipación.
+- Inferencia: clustering, bootstrap y bandas simultáneas.
+- Tablas y gráficos listos para exportar.
+- Heterogeneidad del efecto tratamiento.
+
+# Paquetes y configuración inicial
+
+```{r setup}
+library(tidyverse)
+library(fixest)
+library(did)
+library(DRDID)
+library(modelsummary)
+library(broom)
+library(gt)
+library(bacondecomp)
+# library(fwildclusterboot)
+library(cobalt)
+
+set.seed(123)
+```
+
+Algunos paquetes adicionales útiles, pero no estrictamente necesarios:
+
+```{r optional-packages, eval=FALSE}
+# install.packages("bacondecomp")      # Descomposición Goodman-Bacon
+# install.packages("fwildclusterboot") # Wild cluster bootstrap
+# install.packages("cobalt")           # Balance de covariables
+```
+
+# 1. Qué es diferencias en diferencias
+
+La idea básica de diferencias en diferencias es comparar cómo cambia un outcome en un grupo tratado antes y después de una intervención, y restarle cómo cambia el outcome en un grupo comparable no tratado.
+
+En el caso clásico con dos grupos y dos periodos:
+
+\[
+ATT =
+\left(E[Y_{post}\mid D=1]-E[Y_{pre}\mid D=1]\right)
+-
+\left(E[Y_{post}\mid D=0]-E[Y_{pre}\mid D=0]\right)
+\]
+
+El supuesto clave es la hipótesis de **tendencias paralelas**:
+
+\[
+E[Y_{post}(0)-Y_{pre}(0)\mid D=1]
+=
+E[Y_{post}(0)-Y_{pre}(0)\mid D=0]
+\]
+
+Es decir, en ausencia del tratamiento, el grupo tratado habría evolucionado como el grupo de control.
+
+## 1.1 Simulación de un DiD 2x2
+
+```{r simulate-2x2}
+n <- 1000
+
+df_2x2 <- tibble(
+  id = rep(1:n, each = 2),
+  post = rep(c(0, 1), times = n),
+  treated = rep(rbinom(n, 1, 0.5), each = 2),
+  x1 = rep(rnorm(n), each = 2),
+  x2 = rep(rbinom(n, 1, 0.4), each = 2)
+) %>%
+  mutate(
+    D = treated * post,
+    alpha_i = rep(rnorm(n), each = 2),
+    time_effect = 0.5 * post,
+    treatment_effect = 2,
+    y = alpha_i + time_effect + 0.8 * x1 + 0.5 * x2 + treatment_effect * D + rnorm(n)
+  )
+
+head(df_2x2)
+```
+
+## 1.2 Visualizar la lógica DiD
+
+```{r plot-2x2-trends, fig.width=7, fig.height=4}
+df_2x2 %>%
+  group_by(treated, post) %>%
+  summarise(ybar = mean(y), .groups = "drop") %>%
+  mutate(group = if_else(treated == 1, "Tratados", "Controles"),
+         periodo = if_else(post == 1, "Post", "Pre")) %>%
+  ggplot(aes(x = post, y = ybar, color = group, group = group)) +
+  geom_line(linewidth = 1) +
+  geom_point(size = 3) +
+  scale_x_continuous(breaks = c(0, 1), labels = c("Pre", "Post")) +
+  labs(x = NULL, y = "Media del outcome", color = NULL,
+       title = "Diferencias en diferencias 2x2") +
+  theme_minimal()
+```
+
+## 1.3 Cálculo manual del DiD
+
+```{r did-manual}
+did_cells <- df_2x2 %>%
+  group_by(treated, post) %>%
+  summarise(ybar = mean(y), .groups = "drop")
+
+did_cells
+
+att_manual <-
+  (did_cells %>% filter(treated == 1, post == 1) %>% pull(ybar) -
+   did_cells %>% filter(treated == 1, post == 0) %>% pull(ybar)) -
+  (did_cells %>% filter(treated == 0, post == 1) %>% pull(ybar) -
+   did_cells %>% filter(treated == 0, post == 0) %>% pull(ybar))
+
+att_manual
+```
+
+## 1.4 DiD como regresión
+
+```{r did-regression-2x2}
+mod_2x2 <- feols(y ~ treated * post, data = df_2x2, cluster = ~id)
+summary(mod_2x2)
+```
+
+La interacción `treated:post` es el estimador DiD.
+
+## 1.5 Tabla de resultados
+
+```{r table-2x2}
+modelsummary(
+  list("DiD 2x2" = mod_2x2),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Para guardar la tabla, descomenta una de estas líneas:
+# modelsummary(list("DiD 2x2" = mod_2x2), output = "resultados/did_2x2.html")
+# modelsummary(list("DiD 2x2" = mod_2x2), output = "resultados/did_2x2.docx")
+# modelsummary(list("DiD 2x2" = mod_2x2), output = "resultados/did_2x2.tex")
+```
+
+# 2. Estructura de datos necesaria
+
+Para estimar DiD necesitamos, como mínimo:
+
+- una variable de unidad (`id`), si tenemos panel;
+- una variable temporal (`year`, `month`, etc.);
+- un outcome (`y`);
+- una variable de tratamiento (`D`);
+- una variable de grupo de tratamiento o cohorte (`G`) si hay adopción escalonada;
+- covariables pretratamiento si queremos tendencias paralelas condicionales.
+
+## 2.1 Simulación de un panel con adopción escalonada
+
+```{r simulate-staggered}
+n_id <- 1200
+years <- 2010:2020
+
+unit_data <- tibble(
+  id = 1:n_id,
+  gender = sample(c("Mujer", "Hombre"), n_id, replace = TRUE),
+  sector = sample(c("Industria", "Servicios", "Construccion"), n_id, replace = TRUE,
+                  prob = c(0.3, 0.5, 0.2)),
+  size0 = rlnorm(n_id, meanlog = 2, sdlog = 0.5),
+  x1 = rnorm(n_id),
+  x2 = rbinom(n_id, 1, 0.4),
+  G = sample(c(0, 2015, 2016, 2017, 2018), n_id, replace = TRUE,
+             prob = c(0.35, 0.15, 0.18, 0.17, 0.15))
+)
+
+df <- crossing(id = 1:n_id, year = years) %>%
+  left_join(unit_data, by = "id") %>%
+  mutate(
+    treated_ever = as.integer(G > 0),
+    D = as.integer(G > 0 & year >= G),
+    rel_time = if_else(G > 0, year - G, NA_integer_),
+    unit_fe = rep(rnorm(n_id), each = length(years)),
+    year_fe = 0.15 * (year - min(year)),
+    # Tendencias heterogeneas por sector y genero
+    trend_sector = case_when(
+      sector == "Industria" ~ 0.05 * (year - min(year)),
+      sector == "Servicios" ~ 0.02 * (year - min(year)),
+      TRUE ~ 0.00 * (year - min(year))
+    ),
+    trend_gender = if_else(gender == "Mujer", 0.03 * (year - min(year)), 0),
+    dynamic_te = case_when(
+      D == 1 & rel_time == 0 ~ 0.8,
+      D == 1 & rel_time == 1 ~ 1.2,
+      D == 1 & rel_time >= 2 ~ 1.8,
+      TRUE ~ 0
+    ),
+    y = unit_fe + year_fe + trend_sector + trend_gender +
+      0.4 * x1 + 0.3 * x2 + 0.05 * log(size0) + dynamic_te + rnorm(n(), sd = 1)
+  )
+
+head(df)
+```
+
+Convención habitual en `did::att_gt()`:
+
+- `G = 0` indica unidades nunca tratadas.
+- `G = año de tratamiento` indica la primera fecha de tratamiento.
+
+# 3. TWFE sin covariables
+
+El modelo TWFE básico es:
+
+\[
+Y_{it}=\alpha_i + \lambda_t + \beta D_{it}+u_{it}
+\]
+
+donde:
+
+- `alpha_i` son efectos fijos de unidad;
+- `lambda_t` son efectos fijos de tiempo;
+- `D_it` indica tratamiento.
+
+```{r twfe-basic}
+twfe_basic <- feols(y ~ D | id + year, data = df, cluster = ~id)
+summary(twfe_basic)
+```
+
+## 3.1 Tabla TWFE básica
+
+```{r table-twfe-basic}
+modelsummary(
+  list("TWFE sin covariables" = twfe_basic),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar si se desea:
+# modelsummary(list("TWFE sin covariables" = twfe_basic), output = "resultados/twfe_basico.html")
+```
+
+## 3.2 Event study TWFE básico
+
+El event study TWFE usa dummies de tiempo relativo al tratamiento:
+
+\[
+Y_{it}=\alpha_i+\lambda_t+\sum_{k \neq -1}\beta_k 1\{t-G_i=k\}+u_{it}
+\]
+
+```{r twfe-event-study}
+es_twfe <- feols(
+  y ~ i(rel_time, ref = -1) | id + year,
+  data = df %>% filter(G > 0),
+  cluster = ~id
+)
+
+summary(es_twfe)
+```
+
+```{r plot-twfe-event-study, fig.width=8, fig.height=5}
+iplot(es_twfe,
+      xlab = "Tiempo relativo al tratamiento",
+      ylab = "Efecto estimado",
+      main = "Event study TWFE")
+```
+
+> Advertencia: este event study TWFE puede ser problemático en diseños escalonados con efectos heterogéneos. Sirve como benchmark descriptivo, no necesariamente como especificación principal.
+
+## 3.3 Exportar resultados del event study TWFE
+
+```{r export-twfe-event-study}
+es_twfe_tidy <- tidy(es_twfe, conf.int = TRUE)
+es_twfe_tidy
+
+# Guardar tabla:
+# readr::write_csv(es_twfe_tidy, "resultados/event_study_twfe.csv")
+
+# Guardar grafico:
+# png("resultados/event_study_twfe.png", width = 900, height = 600)
+# iplot(es_twfe,
+#       xlab = "Tiempo relativo al tratamiento",
+#       ylab = "Efecto estimado",
+#       main = "Event study TWFE")
+# dev.off()
+```
+
+# 4. Diagnósticos: qué mirar antes de interpretar DiD
+
+## 4.1 Gráficos de tendencias pretratamiento
+
+```{r trends-treated-control, fig.width=8, fig.height=5}
+df %>%
+  mutate(group = if_else(G == 0, "Nunca tratados", "Alguna vez tratados")) %>%
+  group_by(group, year) %>%
+  summarise(ybar = mean(y), .groups = "drop") %>%
+  ggplot(aes(year, ybar, color = group)) +
+  geom_line(linewidth = 1) +
+  geom_point() +
+  labs(x = NULL, y = "Media del outcome", color = NULL,
+       title = "Tendencias medias por grupo") +
+  theme_minimal()
+```
+
+Este gráfico no prueba tendencias paralelas, pero ayuda a detectar divergencias fuertes antes del tratamiento.
+
+## 4.2 Test de pretrends en event study TWFE
+
+```{r pretrend-test-twfe}
+# Coeficientes de leads en el event study TWFE.
+# El patron de nombres puede variar por version de fixest.
+names(coef(es_twfe))
+
+# Test conjunto manual aproximado de algunos leads concretos:
+# Ajusta los nombres de coeficientes a los que aparezcan en coefnames(es_twfe).
+wald(es_twfe, "rel_time::(-5|-4|-3|-2)")
+```
+
+Interpretación:
+
+- Rechazar igualdad a cero de los leads sugiere problemas de pretrends.
+- No rechazar no valida automáticamente el diseño: los tests pueden tener baja potencia.
+
+## 4.3 Balance en covariables pretratamiento
+
+```{r balance-pre}
+df_pre <- df %>%
+  filter(year < 2015) %>%
+  group_by(id) %>%
+  summarise(
+    treated_ever = max(treated_ever),
+    x1 = first(x1),
+    x2 = first(x2),
+    size0 = first(size0),
+    gender = first(gender),
+    sector = first(sector),
+    .groups = "drop"
+  )
+
+df_pre %>%
+  group_by(treated_ever) %>%
+  summarise(
+    x1_mean = mean(x1),
+    x2_mean = mean(x2),
+    size0_mean = mean(size0),
+    n = n(),
+    .groups = "drop"
+  )
+```
+
+```{r balance-table}
+balance_mods <- list(
+  "x1" = lm(x1 ~ treated_ever, data = df_pre),
+  "x2" = lm(x2 ~ treated_ever, data = df_pre),
+  "size0" = lm(size0 ~ treated_ever, data = df_pre)
+)
+
+modelsummary(
+  balance_mods,
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar:
+# modelsummary(balance_mods, output = "resultados/balance_covariables.html")
+```
+
+## 4.4 Overlap del propensity score
+
+Esto es especialmente importante para IPW y DR.
+
+```{r overlap-pscore, fig.width=8, fig.height=5}
+ps_model <- glm(
+  treated_ever ~ x1 + x2 + log(size0) + gender + sector,
+  data = df_pre,
+  family = binomial()
+)
+
+df_pre <- df_pre %>%
+  mutate(pscore = predict(ps_model, type = "response"))
+
+summary(df_pre$pscore)
+
+ggplot(df_pre, aes(pscore, fill = factor(treated_ever))) +
+  geom_density(alpha = 0.4) +
+  labs(x = "Propensity score", y = "Densidad", fill = "Tratado alguna vez",
+       title = "Overlap del propensity score") +
+  theme_minimal()
+```
+
+Si apenas hay solapamiento entre tratados y controles, IPW/DR pueden volverse inestables y RA puede extrapolar.
+
+# 5. Inferencia en DiD
+
+La inferencia es crucial porque los outcomes suelen estar serialmente correlacionados dentro de unidad. En DiD aplicado, normalmente se clusterizan errores estándar a nivel de unidad o al nivel al que se asigna el tratamiento.
+
+## 5.1 Cluster por unidad
+
+```{r inference-cluster-id}
+twfe_cluster_id <- feols(y ~ D | id + year, data = df, cluster = ~id)
+summary(twfe_cluster_id)
+```
+
+## 5.2 Cluster por cohorte o grupo de tratamiento
+
+Si el tratamiento se asigna a nivel de grupo, por ejemplo sector-region, el cluster debería reflejar ese nivel.
+
+```{r inference-cluster-group}
+twfe_cluster_G <- feols(y ~ D | id + year, data = df, cluster = ~G)
+summary(twfe_cluster_G)
+```
+
+Advertencia: si hay pocos clusters, la inferencia convencional puede ser demasiado optimista.
+
+## 5.3 Multi-way clustering
+
+```{r inference-multiway}
+twfe_multiway <- feols(y ~ D | id + year, data = df, cluster = ~id + year)
+summary(twfe_multiway)
+```
+
+## 5.4 Wild cluster bootstrap
+
+```{r wild-bootstrap, eval=FALSE}
+library(fwildclusterboot)
+
+boottest(
+  twfe_basic,
+  clustid = "id",
+  param = "D",
+  B = 9999
+)
+```
+
+## 5.5 Inferencia en `did`
+
+`did::att_gt()` usa bootstrap multiplier y permite bandas simultáneas para event studies.
+
+```{r did-inference-preview}
+att_preview <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+summary(att_preview)
+```
+
+# 6. Diseño escalonado: por qué cambia todo
+
+En un diseño escalonado, distintas unidades reciben el tratamiento en distintos momentos. El parámetro natural ya no es un único ATT, sino:
+
+\[
+ATT(g,t)
+\]
+
+donde:
+
+- `g` es la cohorte de tratamiento;
+- `t` es el periodo calendario.
+
+El problema de TWFE en diseños escalonados es que puede comparar unidades tratadas tempranamente contra unidades tratadas más tarde, o incluso usar unidades ya tratadas como controles. Si los efectos son heterogéneos por cohorte o por tiempo desde tratamiento, el coeficiente TWFE puede mezclar efectos de forma difícil de interpretar.
+
+## 6.1 Estimación Callaway & Sant'Anna sin covariables
+
+```{r cs-no-x}
+att_cs <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+summary(att_cs)
+```
+
+## 6.2 Agregación simple
+
+```{r cs-simple}
+agg_cs_simple <- aggte(att_cs, type = "simple")
+summary(agg_cs_simple)
+```
+
+## 6.3 Event study moderno con `did`
+
+```{r cs-dynamic}
+agg_cs_dynamic <- aggte(att_cs, type = "dynamic")
+summary(agg_cs_dynamic)
+```
+
+```{r plot-cs-dynamic, fig.width=8, fig.height=5}
+ggdid(agg_cs_dynamic) +
+  labs(title = "Event study Callaway & Sant'Anna sin covariables")
+```
+```{r}
+es_df <- tibble(
+  event_time = agg_cs_dynamic$egt,
+  att = agg_cs_dynamic$att.egt,
+  se = agg_cs_dynamic$se.egt
+) %>%
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+ggplot(es_df, aes(x = event_time, y = att)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = -1, linetype = "dotted") +
+  geom_ribbon(
+    aes(ymin = ci_low, ymax = ci_high),
+    alpha = 0.2
+  ) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Event study - Callaway & Sant'Anna",
+    x = "Tiempo relativo al tratamiento",
+    y = "ATT dinámico"
+  ) +
+  theme_minimal()
+```
+
+## 6.4 Efectos por cohorte
+
+```{r cs-group}
+agg_cs_group <- aggte(att_cs, type = "group")
+summary(agg_cs_group)
+```
+
+```{r plot-cs-group, fig.width=8, fig.height=5}
+ggdid(agg_cs_group) +
+  labs(title = "Efectos agregados por cohorte")
+```
+
+## 6.5 Efectos por calendario
+
+```{r cs-calendar}
+agg_cs_calendar <- aggte(att_cs, type = "calendar")
+summary(agg_cs_calendar)
+```
+
+## 6.6 Exportar tablas y gráficos de `did`
+
+```{r export-cs-results}
+# Los objetos de did no siempre son tan directos como modelos fixest.
+# Podemos extraer resultados principales manualmente.
+
+cs_simple_table <- tibble(
+  estimador = "Callaway-Santanna sin covariables",
+  tipo = "simple",
+  att = agg_cs_simple$overall.att,
+  se = agg_cs_simple$overall.se,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+cs_simple_table
+
+# Exportar tabla:
+# readr::write_csv(cs_simple_table, "resultados/cs_simple.csv")
+# gt::gtsave(gt(cs_simple_table), "resultados/cs_simple.html")
+
+# Guardar grafico:
+# ggsave("resultados/cs_event_study.png", width = 8, height = 5, dpi = 300)
+```
+
+# 7. Anticipación del tratamiento
+
+La hipótesis estándar de DiD presupone que las unidades no cambian su comportamiento antes de recibir el tratamiento. Pero muchas veces puede haber anticipación: si las unidades saben que serán tratadas, pueden ajustar su conducta antes.
+
+Ejemplos:
+
+- empresas que anticipan una subvención;
+- trabajadores que anticipan un cambio regulatorio;
+- municipios que preparan inversiones antes de una política.
+
+## 7.1 Event study como diagnóstico de anticipación
+
+Los leads del event study ayudan a detectar anticipación, aunque no la prueban de forma definitiva.
+
+```{r anticipation-event-study, fig.width=8, fig.height=5}
+ggdid(agg_cs_dynamic) +
+  labs(title = "Leads del event study como diagnostico de anticipacion")
+```
+
+## 7.2 Permitir anticipación en `att_gt()`
+
+Si creemos que hay anticipación de un periodo, podemos indicar que el tratamiento empieza efectivamente antes para fines de identificación.
+
+```{r cs-anticipation}
+att_cs_ant1 <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  anticipation = 1,
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_cs_ant1_dynamic <- aggte(att_cs_ant1, type = "dynamic")
+summary(agg_cs_ant1_dynamic)
+```
+
+```{r plot-cs-anticipation, fig.width=8, fig.height=5}
+ggdid(agg_cs_ant1_dynamic) +
+  labs(title = "Event study permitiendo un periodo de anticipacion")
+```
+
+## 7.3 Comparar con y sin anticipación
+
+```{r compare-anticipation}
+anticipation_table <- tibble(
+  especificacion = c("Sin anticipacion", "Anticipacion = 1"),
+  att = c(agg_cs_simple$overall.att,
+          aggte(att_cs_ant1, type = "simple")$overall.att),
+  se = c(agg_cs_simple$overall.se,
+         aggte(att_cs_ant1, type = "simple")$overall.se)
+) %>%
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+anticipation_table
+
+# Exportar:
+# readr::write_csv(anticipation_table, "resultados/comparacion_anticipacion.csv")
+```
+
+# 8. Covariables en DiD
+
+Meter covariables no es un acto mecánico. Cambia la hipótesis de identificación. Sin covariables, se pide tendencias paralelas incondicionales:
+
+\[
+E[\Delta Y(0)\mid D=1] = E[\Delta Y(0)\mid D=0]
+\]
+
+Con covariables, se pide tendencias paralelas condicionales:
+
+\[
+E[\Delta Y(0)\mid D=1,X] = E[\Delta Y(0)\mid D=0,X]
+\]
+
+## 8.1 Qué covariables usar
+
+Buenas candidatas:
+
+- covariables pretratamiento;
+- niveles baseline de variables dinámicas;
+- outcomes pretratamiento;
+- características que afectan selección al tratamiento y evolución del outcome.
+
+Evitar:
+
+- covariables post-tratamiento;
+- variables afectadas por el tratamiento;
+- kitchen sink controls sin justificación;
+- variables que destruyen overlap.
+
+## 8.2 Estandarización
+
+Estandarizar no cambia la identificación. Puede ayudar para interpretación, estabilidad numérica o modelos flexibles.
+
+```{r standardize-x}
+df <- df %>%
+  mutate(
+    x1_std = as.numeric(scale(x1)),
+    log_size0 = log(size0),
+    log_size0_std = as.numeric(scale(log_size0))
+  )
+```
+
+# 9. TWFE con covariables
+
+## 9.1 Covariables time-varying en TWFE
+
+```{r twfe-x}
+twfe_x <- feols(
+  y ~ D + x1_std + x2 + log_size0_std | id + year,
+  data = df,
+  cluster = ~id
+)
+
+summary(twfe_x)
+```
+
+Con efectos fijos individuales, las covariables invariantes en el tiempo se absorben. Si `gender` no cambia dentro de `id`, no puedes estimar su efecto directo junto con efectos fijos de individuo.
+
+## 9.2 Tabla comparando TWFE sin y con covariables
+
+```{r table-twfe-x}
+modelsummary(
+  list(
+    "TWFE sin X" = twfe_basic,
+    "TWFE con X" = twfe_x
+  ),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar:
+# modelsummary(list("TWFE sin X" = twfe_basic, "TWFE con X" = twfe_x),
+#              output = "resultados/twfe_con_sin_x.html")
+```
+
+## 9.3 Covariables invariantes interactuadas con efectos temporales
+
+Si creemos que las tendencias varían por género o sector, podemos permitir tendencias específicas por año:
+
+\[
+Y_{it}=\alpha_i+\lambda_t+\beta D_{it}+X_i\times\lambda_t+u_{it}
+\]
+
+```{r twfe-interactions}
+twfe_interact <- feols(
+  y ~ D + i(year, gender) + i(year, sector) | id + year,
+  data = df,
+  cluster = ~id
+)
+
+summary(twfe_interact)
+```
+
+## 9.4 Tabla TWFE con interacciones
+
+```{r table-twfe-interactions}
+modelsummary(
+  list(
+    "TWFE" = twfe_basic,
+    "TWFE + X" = twfe_x,
+    "TWFE + genero/sector x año" = twfe_interact
+  ),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar:
+# modelsummary(list("TWFE" = twfe_basic,
+#                   "TWFE + X" = twfe_x,
+#                   "TWFE + genero/sector x año" = twfe_interact),
+#              output = "resultados/twfe_comparacion.html")
+```
+
+## 9.5 Event study TWFE con interacciones
+
+```{r twfe-event-study-interactions}
+es_twfe_interact <- feols(
+  y ~ i(rel_time, ref = -1) + i(year, gender) + i(year, sector) | id + year,
+  data = df %>% filter(G > 0),
+  cluster = ~id
+)
+
+summary(es_twfe_interact)
+```
+
+```{r plot-twfe-event-study-interactions, fig.width=8, fig.height=5}
+iplot(es_twfe_interact,
+      xlab = "Tiempo relativo al tratamiento",
+      ylab = "Efecto estimado",
+      main = "Event study TWFE con tendencias por genero y sector")
+```
+
+```{r export-twfe-event-study-interactions}
+es_twfe_interact_tidy <- tidy(es_twfe_interact, conf.int = TRUE)
+es_twfe_interact_tidy
+
+# Exportar:
+# readr::write_csv(es_twfe_interact_tidy, "resultados/event_study_twfe_interacciones.csv")
+```
+
+# 10. IPW: Inverse Probability Weighting
+
+IPW no modela directamente el outcome. Estima la probabilidad de tratamiento condicional en covariables y pondera los controles para que se parezcan a los tratados.
+
+Para ATT, los controles con características más parecidas a los tratados reciben más peso.
+
+## 10.1 IPW en DiD 2x2 con `DRDID`
+
+```{r ipw-2x2}
+ipw_2x2 <- ipwdid(
+  yname = "y",
+  tname = "post",
+  idname = "id",
+  dname = "treated",
+  xformla = ~ x1 + x2,
+  data = df_2x2,
+  panel = TRUE
+)
+
+summary(ipw_2x2)
+```
+
+## 10.2 IPW en diseño escalonado con `did::att_gt()`
+
+```{r ipw-staggered}
+att_ipw <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + gender + sector,
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "ipw",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+summary(att_ipw)
+```
+
+## 10.3 Agregación IPW
+
+```{r ipw-aggregate}
+agg_ipw_simple <- aggte(att_ipw, type = "simple")
+summary(agg_ipw_simple)
+```
+
+## 10.4 Event study IPW
+
+```{r ipw-dynamic}
+agg_ipw_dynamic <- aggte(att_ipw, type = "dynamic")
+summary(agg_ipw_dynamic)
+```
+
+```{r plot-ipw-dynamic, fig.width=8, fig.height=5}
+ggdid(agg_ipw_dynamic) +
+  labs(title = "Event study IPW")
+```
+
+## 10.5 Tabla y exportación IPW
+
+```{r table-ipw}
+ipw_table <- tibble(
+  estimador = "IPW",
+  att = agg_ipw_simple$overall.att,
+  se = agg_ipw_simple$overall.se,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ipw_table
+
+# Exportar tabla:
+# readr::write_csv(ipw_table, "resultados/ipw_att_simple.csv")
+# gt::gtsave(gt(ipw_table), "resultados/ipw_att_simple.html")
+
+# Exportar grafico despues de imprimirlo:
+# ggsave("resultados/ipw_event_study.png", width = 8, height = 5, dpi = 300)
+```
+
+## 10.6 Qué comprobar en IPW
+
+- Overlap del propensity score.
+- Distribución de pesos.
+- Balance tras ponderar.
+- Sensibilidad a trimming.
+- Si algunos controles tienen pesos enormes, el estimador puede depender de pocas observaciones.
+
+# 11. RA: Regression Adjustment
+
+RA estima el contrafactual de los tratados usando un modelo de outcome ajustado en los controles.
+
+La idea es estimar:
+
+\[
+m_0(X)=E[\Delta Y\mid D=0,X]
+\]
+
+Luego se predice qué habría ocurrido a los tratados en ausencia de tratamiento.
+
+## 11.1 RA en 2x2 con `DRDID`
+
+```{r ra-2x2}
+ra_2x2 <- ordid(
+  yname = "y",
+  tname = "post",
+  idname = "id",
+  dname = "treated",
+  xformla = ~ x1 + x2,
+  data = df_2x2,
+  panel = TRUE
+)
+
+summary(ra_2x2)
+```
+
+## 11.2 RA en diseño escalonado con `did`
+
+```{r ra-staggered}
+att_ra <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + gender + sector,
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "reg",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+summary(att_ra)
+```
+
+## 11.3 Agregación RA
+
+```{r ra-aggregate}
+agg_ra_simple <- aggte(att_ra, type = "simple")
+summary(agg_ra_simple)
+```
+
+## 11.4 Event study RA
+
+```{r ra-dynamic}
+agg_ra_dynamic <- aggte(att_ra, type = "dynamic")
+summary(agg_ra_dynamic)
+```
+
+```{r plot-ra-dynamic, fig.width=8, fig.height=5}
+ggdid(agg_ra_dynamic) +
+  labs(title = "Event study Regression Adjustment")
+```
+
+## 11.5 Tabla y exportación RA
+
+```{r table-ra}
+ra_table <- tibble(
+  estimador = "RA",
+  att = agg_ra_simple$overall.att,
+  se = agg_ra_simple$overall.se,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+ra_table
+
+# Exportar:
+# readr::write_csv(ra_table, "resultados/ra_att_simple.csv")
+# gt::gtsave(gt(ra_table), "resultados/ra_att_simple.html")
+# ggsave("resultados/ra_event_study.png", width = 8, height = 5, dpi = 300)
+```
+
+## 11.6 Qué comprobar en RA
+
+- Especificación del modelo de outcome.
+- Si la relación entre outcome y covariables es lineal o no.
+- Posible extrapolación para tratados fuera del soporte de controles.
+- Robustez a añadir interacciones o transformaciones de covariables.
+
+# 12. DR: Doubly Robust DiD
+
+DR combina IPW y RA. Estima tanto:
+
+- el propensity score `p(X)`;
+- el modelo de outcome `m0(X)`.
+
+Tiene una propiedad importante: puede ser consistente si uno de los dos modelos auxiliares está bien especificado.
+
+## 12.1 DR en 2x2 con `DRDID`
+
+```{r dr-2x2}
+dr_2x2 <- drdid(
+  yname = "y",
+  tname = "post",
+  idname = "id",
+  dname = "treated",
+  xformla = ~ x1 + x2,
+  data = df_2x2,
+  panel = TRUE
+)
+
+summary(dr_2x2)
+```
+
+## 12.2 DR en diseño escalonado con `did`
+
+```{r dr-staggered}
+att_dr <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + gender + sector,
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+summary(att_dr)
+```
+
+## 12.3 Agregación DR
+
+```{r dr-aggregate}
+agg_dr_simple <- aggte(att_dr, type = "simple")
+summary(agg_dr_simple)
+```
+
+## 12.4 Event study DR
+
+```{r dr-dynamic}
+agg_dr_dynamic <- aggte(att_dr, type = "dynamic")
+summary(agg_dr_dynamic)
+```
+
+```{r plot-dr-dynamic, fig.width=8, fig.height=5}
+ggdid(agg_dr_dynamic) +
+  labs(title = "Event study Doubly Robust")
+```
+
+## 12.5 Tabla y exportación DR
+
+```{r table-dr}
+dr_table <- tibble(
+  estimador = "DR",
+  att = agg_dr_simple$overall.att,
+  se = agg_dr_simple$overall.se,
+  ci_low = att - 1.96 * se,
+  ci_high = att + 1.96 * se
+)
+
+dr_table
+
+# Exportar:
+# readr::write_csv(dr_table, "resultados/dr_att_simple.csv")
+# gt::gtsave(gt(dr_table), "resultados/dr_att_simple.html")
+# ggsave("resultados/dr_event_study.png", width = 8, height = 5, dpi = 300)
+```
+
+# 13. Comparación conjunta: TWFE, IPW, RA y DR
+
+## 13.1 Tabla resumen de estimadores agregados
+
+```{r comparison-table}
+comparison_table <- tibble(
+  estimador = c("TWFE", "TWFE + X", "TWFE + tendencias por genero/sector", "IPW", "RA", "DR"),
+  att = c(
+    coef(twfe_basic)["D"],
+    coef(twfe_x)["D"],
+    coef(twfe_interact)["D"],
+    agg_ipw_simple$overall.att,
+    agg_ra_simple$overall.att,
+    agg_dr_simple$overall.att
+  ),
+  se = c(
+    se(twfe_basic)["D"],
+    se(twfe_x)["D"],
+    se(twfe_interact)["D"],
+    agg_ipw_simple$overall.se,
+    agg_ra_simple$overall.se,
+    agg_dr_simple$overall.se
+  )
+) %>%
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+comparison_table
+```
+
+```{r comparison-gt}
+gt(comparison_table) %>%
+  fmt_number(columns = c(att, se, ci_low, ci_high), decimals = 3)
+
+# Exportar:
+# readr::write_csv(comparison_table, "resultados/comparacion_estimadores.csv")
+# gt::gtsave(gt(comparison_table), "resultados/comparacion_estimadores.html")
+```
+
+## 13.2 Gráfico de comparación
+
+```{r comparison-plot, fig.width=8, fig.height=5}
+comparison_table %>%
+  ggplot(aes(x = reorder(estimador, att), y = att)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.15) +
+  coord_flip() +
+  labs(x = NULL, y = "ATT estimado",
+       title = "Comparacion de estimadores") +
+  theme_minimal()
+
+# Exportar:
+# ggsave("resultados/comparacion_estimadores.png", width = 8, height = 5, dpi = 300)
+```
+
+## 13.3 Comparar event studies IPW, RA y DR en una tabla
+
+```{r dynamic-table-comparison}
+# Los objetos dynamic contienen efectos por tiempo relativo.
+# Los nombres internos pueden variar por version, por eso imprimimos su estructura.
+str(agg_dr_dynamic)
+```
+
+En muchas versiones, los efectos dinámicos están en `att.egt`, los errores en `se.egt` y el tiempo relativo en `egt`.
+
+```{r dynamic-table-build}
+dynamic_comparison <- bind_rows(
+  tibble(method = "IPW", event_time = agg_ipw_dynamic$egt,
+         att = agg_ipw_dynamic$att.egt, se = agg_ipw_dynamic$se.egt),
+  tibble(method = "RA", event_time = agg_ra_dynamic$egt,
+         att = agg_ra_dynamic$att.egt, se = agg_ra_dynamic$se.egt),
+  tibble(method = "DR", event_time = agg_dr_dynamic$egt,
+         att = agg_dr_dynamic$att.egt, se = agg_dr_dynamic$se.egt)
+) %>%
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+dynamic_comparison
+
+# Exportar:
+# readr::write_csv(dynamic_comparison, "resultados/event_studies_ipw_ra_dr.csv")
+```
+
+## 13.4 Comparar visualmente event studies IPW, RA y DR
+
+```{r dynamic-comparison-plot, fig.width=8, fig.height=5}
+dynamic_comparison %>%
+  ggplot(aes(x = event_time, y = att, color = method)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_vline(xintercept = -1, linetype = "dotted") +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.1, alpha = 0.6) +
+  labs(x = "Tiempo relativo al tratamiento", y = "ATT(g,t) agregado",
+       color = "Metodo",
+       title = "Comparacion de event studies: IPW, RA y DR") +
+  theme_minimal()
+
+# Exportar:
+# ggsave("resultados/event_studies_ipw_ra_dr.png", width = 8, height = 5, dpi = 300)
+```
+
+# 14. Event studies modernos con Sun & Abraham
+
+Otra alternativa habitual para diseños escalonados es usar `fixest::sunab()`.
+
+```{r sunab-event-study}
+es_sa <- feols(
+  y ~ sunab(G, year) | id + year,
+  data = df,
+  cluster = ~id
+)
+
+summary(es_sa)
+```
+
+```{r plot-sunab, fig.width=8, fig.height=5}
+iplot(es_sa,
+      xlab = "Tiempo relativo al tratamiento",
+      ylab = "Efecto estimado",
+      main = "Event study Sun & Abraham")
+```
+
+## 14.1 Sun & Abraham con covariables o tendencias específicas
+
+```{r sunab-with-covariates}
+es_sa_x <- feols(
+  y ~ sunab(G, year) + i(year, gender) + i(year, sector) | id + year,
+  data = df,
+  cluster = ~id
+)
+
+summary(es_sa_x)
+```
+
+```{r plot-sunab-x, fig.width=8, fig.height=5}
+iplot(es_sa_x,
+      xlab = "Tiempo relativo al tratamiento",
+      ylab = "Efecto estimado",
+      main = "Event study Sun & Abraham con tendencias por genero/sector")
+```
+
+## 14.2 Tabla y exportación Sun & Abraham
+
+```{r sunab-table-export}
+modelsummary(
+  list(
+    "Sun-Abraham" = es_sa,
+    "Sun-Abraham + tendencias X" = es_sa_x
+  ),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar:
+# modelsummary(list("Sun-Abraham" = es_sa,
+#                   "Sun-Abraham + tendencias X" = es_sa_x),
+#              output = "resultados/sunab_event_study.html")
+```
+
+# 15. Heterogeneidad del efecto tratamiento
+
+El efecto tratamiento puede variar por género, sector, tamaño inicial, cohorte o tiempo desde tratamiento.
+
+## 15.1 Heterogeneidad por subgrupos con `did`
+
+Estimamos el mismo modelo por separado para cada subgrupo.
+
+### Género
+
+```{r heterogeneity-gender-women}
+att_dr_mujer <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + sector,
+  data = df %>% filter(gender == "Mujer"),
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_dr_mujer <- aggte(att_dr_mujer, type = "simple")
+summary(agg_dr_mujer)
+```
+
+```{r heterogeneity-gender-men}
+att_dr_hombre <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + sector,
+  data = df %>% filter(gender == "Hombre"),
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_dr_hombre <- aggte(att_dr_hombre, type = "simple")
+summary(agg_dr_hombre)
+```
+
+```{r table-heterogeneity-gender}
+het_gender_table <- tibble(
+  subgrupo = c("Mujer", "Hombre"),
+  att = c(agg_dr_mujer$overall.att, agg_dr_hombre$overall.att),
+  se = c(agg_dr_mujer$overall.se, agg_dr_hombre$overall.se)
+) %>%
+  mutate(
+    ci_low = att - 1.96 * se,
+    ci_high = att + 1.96 * se
+  )
+
+het_gender_table
+
+# Exportar:
+# readr::write_csv(het_gender_table, "resultados/heterogeneidad_genero.csv")
+```
+
+```{r plot-heterogeneity-gender, fig.width=7, fig.height=4}
+het_gender_table %>%
+  ggplot(aes(x = subgrupo, y = att)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.1) +
+  labs(x = NULL, y = "ATT", title = "Heterogeneidad por genero") +
+  theme_minimal()
+
+# Exportar:
+# ggsave("resultados/heterogeneidad_genero.png", width = 7, height = 4, dpi = 300)
+```
+
+## 15.2 Event studies por subgrupo
+
+```{r gender-event-studies}
+dyn_mujer <- aggte(att_dr_mujer, type = "dynamic")
+dyn_hombre <- aggte(att_dr_hombre, type = "dynamic")
+
+summary(dyn_mujer)
+summary(dyn_hombre)
+```
+
+```{r plot-gender-event-studies, fig.width=8, fig.height=5}
+het_dyn_gender <- bind_rows(
+  tibble(subgrupo = "Mujer", event_time = dyn_mujer$egt,
+         att = dyn_mujer$att.egt, se = dyn_mujer$se.egt),
+  tibble(subgrupo = "Hombre", event_time = dyn_hombre$egt,
+         att = dyn_hombre$att.egt, se = dyn_hombre$se.egt)
+) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+het_dyn_gender %>%
+  ggplot(aes(x = event_time, y = att, color = subgrupo)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.1, alpha = 0.6) +
+  labs(x = "Tiempo relativo", y = "ATT", color = NULL,
+       title = "Event studies por genero") +
+  theme_minimal()
+
+# Exportar:
+# readr::write_csv(het_dyn_gender, "resultados/event_studies_genero.csv")
+# ggsave("resultados/event_studies_genero.png", width = 8, height = 5, dpi = 300)
+```
+
+## 15.3 Heterogeneidad por sector
+
+```{r heterogeneity-sector}
+sectors <- unique(df$sector)
+
+sector_results <- list()
+
+for (s in sectors) {
+  att_s <- att_gt(
+    yname = "y",
+    tname = "year",
+    idname = "id",
+    gname = "G",
+    xformla = ~ x1_std + x2 + log_size0_std + gender,
+    data = df %>% filter(sector == s),
+    panel = TRUE,
+    control_group = "notyettreated",
+    est_method = "dr",
+    bstrap = TRUE,
+    biters = 999,
+    cband = TRUE
+  )
+  agg_s <- aggte(att_s, type = "simple")
+  sector_results[[s]] <- tibble(
+    sector = s,
+    att = agg_s$overall.att,
+    se = agg_s$overall.se
+  )
+}
+
+het_sector_table <- bind_rows(sector_results) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+het_sector_table
+```
+
+```{r plot-heterogeneity-sector, fig.width=8, fig.height=5}
+het_sector_table %>%
+  ggplot(aes(x = reorder(sector, att), y = att)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.1) +
+  coord_flip() +
+  labs(x = NULL, y = "ATT", title = "Heterogeneidad por sector") +
+  theme_minimal()
+
+# Exportar:
+# readr::write_csv(het_sector_table, "resultados/heterogeneidad_sector.csv")
+# ggsave("resultados/heterogeneidad_sector.png", width = 8, height = 5, dpi = 300)
+```
+
+## 15.4 Heterogeneidad por cohortes
+
+```{r heterogeneity-cohort}
+agg_dr_group <- aggte(att_dr, type = "group")
+summary(agg_dr_group)
+```
+
+```{r plot-heterogeneity-cohort, fig.width=8, fig.height=5}
+ggdid(agg_dr_group) +
+  labs(title = "Heterogeneidad por cohorte de tratamiento")
+
+# Exportar:
+# ggsave("resultados/heterogeneidad_cohorte.png", width = 8, height = 5, dpi = 300)
+```
+
+## 15.5 Heterogeneidad dinámica
+
+```{r heterogeneity-dynamic}
+summary(agg_dr_dynamic)
+```
+
+```{r plot-heterogeneity-dynamic, fig.width=8, fig.height=5}
+ggdid(agg_dr_dynamic) +
+  labs(title = "Heterogeneidad dinamica: efecto por tiempo desde tratamiento")
+```
+
+## 15.6 Heterogeneidad por variable continua: bins
+
+Una forma transparente de analizar heterogeneidad por una variable continua es crear grupos, por ejemplo cuartiles de tamaño inicial.
+
+```{r heterogeneity-size-bins}
+df <- df %>%
+  mutate(size_quartile = ntile(size0, 4))
+
+size_results <- list()
+
+for (q in 1:4) {
+  att_q <- att_gt(
+    yname = "y",
+    tname = "year",
+    idname = "id",
+    gname = "G",
+    xformla = ~ x1_std + x2 + gender + sector,
+    data = df %>% filter(size_quartile == q),
+    panel = TRUE,
+    control_group = "notyettreated",
+    est_method = "dr",
+    bstrap = TRUE,
+    biters = 999,
+    cband = TRUE
+  )
+  agg_q <- aggte(att_q, type = "simple")
+  size_results[[q]] <- tibble(
+    size_quartile = q,
+    att = agg_q$overall.att,
+    se = agg_q$overall.se
+  )
+}
+
+het_size_table <- bind_rows(size_results) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+het_size_table
+```
+
+```{r plot-heterogeneity-size, fig.width=8, fig.height=5}
+het_size_table %>%
+  ggplot(aes(x = factor(size_quartile), y = att)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high), width = 0.1) +
+  labs(x = "Cuartil de tamaño inicial", y = "ATT",
+       title = "Heterogeneidad por tamaño inicial") +
+  theme_minimal()
+
+# Exportar:
+# readr::write_csv(het_size_table, "resultados/heterogeneidad_size.csv")
+# ggsave("resultados/heterogeneidad_size.png", width = 8, height = 5, dpi = 300)
+```
+
+## 15.7 Interacciones en TWFE para heterogeneidad
+
+Esta opción es sencilla, pero hereda los problemas de TWFE en diseños escalonados.
+
+```{r heterogeneity-twfe-interaction}
+twfe_gender_het <- feols(
+  y ~ D * gender | id + year,
+  data = df,
+  cluster = ~id
+)
+
+summary(twfe_gender_het)
+```
+
+```{r table-heterogeneity-twfe}
+modelsummary(
+  list("TWFE heterogeneidad genero" = twfe_gender_het),
+  statistic = "({std.error})",
+  stars = TRUE,
+  output = "gt"
+)
+
+# Exportar:
+# modelsummary(list("TWFE heterogeneidad genero" = twfe_gender_het),
+#              output = "resultados/twfe_heterogeneidad_genero.html")
+```
+
+# 16. Robustez y sensibilidad
+
+## 16.1 Cambiar grupo de control
+
+```{r robustness-control-group}
+att_dr_never <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + gender + sector,
+  data = df,
+  panel = TRUE,
+  control_group = "nevertreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_dr_never <- aggte(att_dr_never, type = "simple")
+summary(agg_dr_never)
+```
+
+```{r table-control-group}
+control_group_table <- tibble(
+  control_group = c("notyettreated", "nevertreated"),
+  att = c(agg_dr_simple$overall.att, agg_dr_never$overall.att),
+  se = c(agg_dr_simple$overall.se, agg_dr_never$overall.se)
+) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+control_group_table
+
+# Exportar:
+# readr::write_csv(control_group_table, "resultados/robustez_grupo_control.csv")
+```
+
+## 16.2 Cambiar covariables
+
+```{r robustness-covariates}
+att_dr_x_small <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2,
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_dr_x_small <- aggte(att_dr_x_small, type = "simple")
+summary(agg_dr_x_small)
+```
+
+```{r table-robustness-covariates}
+covariate_robustness_table <- tibble(
+  especificacion = c("X completa", "X reducida"),
+  att = c(agg_dr_simple$overall.att, agg_dr_x_small$overall.att),
+  se = c(agg_dr_simple$overall.se, agg_dr_x_small$overall.se)
+) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+covariate_robustness_table
+
+# Exportar:
+# readr::write_csv(covariate_robustness_table, "resultados/robustez_covariables.csv")
+```
+
+## 16.3 Excluir cohortes tempranas o tardías
+
+```{r robustness-cohorts}
+df_no_early <- df %>% filter(G == 0 | G >= 2016)
+
+att_no_early <- att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "G",
+  xformla = ~ x1_std + x2 + log_size0_std + gender + sector,
+  data = df_no_early,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 999,
+  cband = TRUE
+)
+
+agg_no_early <- aggte(att_no_early, type = "simple")
+summary(agg_no_early)
+```
+
+```{r table-robustness-cohorts}
+cohort_robustness_table <- tibble(
+  especificacion = c("Muestra completa", "Sin cohorte 2015"),
+  att = c(agg_dr_simple$overall.att, agg_no_early$overall.att),
+  se = c(agg_dr_simple$overall.se, agg_no_early$overall.se)
+) %>%
+  mutate(ci_low = att - 1.96 * se,
+         ci_high = att + 1.96 * se)
+
+cohort_robustness_table
+
+# Exportar:
+# readr::write_csv(cohort_robustness_table, "resultados/robustez_cohortes.csv")
+```
+
+# 17. Buenas prácticas y errores comunes
+
+## 17.1 Buenas prácticas
+
+1. Definir claramente el tratamiento y la primera fecha de tratamiento.
+2. Distinguir diseño 2x2, multiperiodo simple y adopción escalonada.
+3. Usar estimadores diseñados para adopción escalonada cuando corresponda.
+4. Graficar tendencias antes de estimar.
+5. No interpretar no-rechazo de pretrends como prueba definitiva.
+6. Usar covariables pretratamiento si la identificación condicional es más creíble.
+7. Revisar overlap si se usa IPW o DR.
+8. Reportar especificaciones alternativas.
+9. Analizar heterogeneidad solo si hay soporte suficiente dentro de subgrupos.
+10. Clusterizar al nivel adecuado.
+
+## 17.2 Errores comunes
+
+1. Usar TWFE en diseños escalonados sin discutir heterogeneidad.
+2. Meter covariables post-tratamiento.
+3. Meter covariables invariantes en TWFE esperando identificar su coeficiente.
+4. Usar IPW sin mirar pesos u overlap.
+5. Usar RA con extrapolación fuerte.
+6. Pensar que DR arregla una mala elección de covariables.
+7. Hacer heterogeneidad con submuestras demasiado pequeñas.
+8. Exportar solo coeficientes agregados y no mostrar dinámica.
+
+# 18. Workflow recomendado
+
+Un flujo de trabajo razonable sería:
+
+1. Preparar datos: `id`, `time`, `y`, `D`, `G`, covariables baseline.
+2. Identificar si hay adopción escalonada.
+3. Graficar tendencias.
+4. Estimar TWFE como benchmark.
+5. Estimar event study moderno.
+6. Decidir si la hipótesis creíble es incondicional o condicional en covariables.
+7. Si se usan covariables, estimar DR como especificación principal.
+8. Comparar con IPW y RA.
+9. Evaluar overlap, balance y sensibilidad.
+10. Analizar heterogeneidad.
+11. Reportar tablas y gráficos.
+
+# 19. Plantilla mínima para un análisis real
+
+Este bloque resume el flujo mínimo que normalmente copiaría para un proyecto real.
+
+```{r real-project-template, eval=FALSE}
+# 1. Preparar datos
+# df <- read_csv("data/mis_datos.csv") %>%
+#   mutate(
+#     G = if_else(is.na(first_treat_year), 0, first_treat_year),
+#     D = as.integer(G > 0 & year >= G)
+#   )
+
+# 2. Tendencias descriptivas
+# df %>%
+#   mutate(group = if_else(G == 0, "Nunca tratados", "Alguna vez tratados")) %>%
+#   group_by(group, year) %>%
+#   summarise(ybar = mean(y, na.rm = TRUE), .groups = "drop") %>%
+#   ggplot(aes(year, ybar, color = group)) +
+#   geom_line() +
+#   geom_point() +
+#   theme_minimal()
+
+# 3. TWFE benchmark
+# twfe <- feols(y ~ D | id + year, data = df, cluster = ~id)
+# summary(twfe)
+
+# 4. DR DiD con adopcion escalonada
+# att_dr <- att_gt(
+#   yname = "y",
+#   tname = "year",
+#   idname = "id",
+#   gname = "G",
+#   xformla = ~ x1 + x2 + x3,
+#   data = df,
+#   panel = TRUE,
+#   control_group = "notyettreated",
+#   est_method = "dr",
+#   bstrap = TRUE,
+#   biters = 999,
+#   cband = TRUE
+# )
+
+# 5. ATT agregado
+# agg_simple <- aggte(att_dr, type = "simple")
+# summary(agg_simple)
+
+# 6. Event study
+# agg_dynamic <- aggte(att_dr, type = "dynamic")
+# ggdid(agg_dynamic)
+
+# 7. Exportar resultados
+# table_att <- tibble(
+#   att = agg_simple$overall.att,
+#   se = agg_simple$overall.se,
+#   ci_low = att - 1.96 * se,
+#   ci_high = att + 1.96 * se
+# )
+# write_csv(table_att, "resultados/att_dr.csv")
+# ggsave("resultados/event_study_dr.png", width = 8, height = 5, dpi = 300)
+```
+
+# 20. Conclusión
+
+La diferencia entre métodos no es solo computacional. Cada estimador construye el contrafactual de forma distinta:
+
+- TWFE compara cambios residuales dentro de una estructura lineal con efectos fijos.
+- IPW repondera controles para parecerse a tratados.
+- RA imputa el contrafactual usando modelos de outcome.
+- DR combina reponderación e imputación.
+
+En diseños escalonados, el objeto natural es `ATT(g,t)`. Por eso conviene usar estimadores diseñados para ese contexto, como `did::att_gt()` o event studies tipo `sunab()`, en vez de confiar únicamente en TWFE.
+
