@@ -21,37 +21,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up R
-        uses: r-lib/actions/setup-r@v2
-
-      - name: Set up Quarto
-        uses: quarto-dev/quarto-actions/setup@v2
-
-      - name: Install R packages
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          packages: |
-            any::tidyverse
-            any::janitor
-            any::lubridate
-            any::stringr
-            any::readr
-            any::broom
-            any::modelsummary
-            any::fixest
-            any::did
-            any::DRDID
-            any::gt
-            any::bacondecomp
-            any::cobalt
-            any::rdrobust
-            any::rddensity
-            any::patchwork
-            any::scales
-
-      - name: Render Quarto documents
-        run: ./render.sh
-
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
