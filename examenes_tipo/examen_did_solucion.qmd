@@ -1,0 +1,126 @@
+---
+title: "Solucion - DiD - Instrumentos financieros pyme"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+set.seed(20260511)
+options(scipen = 999)
+
+# Inspiracion: AIReF, Instrumentos financieros de apoyo a la pyme reforzados por el PRTR,
+# con analisis causal contrafactual mediante diferencias en diferencias escalonado.
+
+n <- 1200
+emp <- data.frame(
+  id_empresa = sprintf("P%05d", 1:n),
+  ccaa = sample(c("Andalucia", "Cataluna", "Madrid", "Valencia", "Pais Vasco", "Castilla y Leon"), n, TRUE),
+  sector = sample(c("Manufacturas", "Hosteleria", "Comercio", "TIC", "Servicios profesionales"), n, TRUE),
+  tamano = sample(c("micro", "pequena", "mediana"), n, TRUE, c(.45,.40,.15)),
+  empleados_base = round(exp(rnorm(n, log(18), .75))),
+  endeudamiento_base = pmax(.05, rnorm(n, .52, .18))
+)
+cohortes <- sample(c(2020,2021,2022,2023,Inf), n, TRUE, c(.16,.18,.16,.10,.40))
+emp$anio_apoyo <- cohortes
+emp$empleados_base[sample(n,1)] <- 50000
+emp$endeudamiento_base[sample(n,1)] <- 9
+
+anios <- 2017:2024
+panel <- merge(emp, data.frame(anio=anios))
+panel$tratamiento <- as.integer(panel$anio >= panel$anio_apoyo & is.finite(panel$anio_apoyo))
+panel$event_time <- ifelse(is.finite(panel$anio_apoyo), panel$anio - panel$anio_apoyo, NA)
+size_eff <- ifelse(panel$tamano=="micro", -2, ifelse(panel$tamano=="pequena", 0, 4))
+trend <- 1.2*(panel$anio-2017)
+eff <- ifelse(panel$tratamiento==1, pmin(pmax(panel$event_time,0),4)*1.7 + 2.5, 0)
+panel$empleo <- round(pmax(1, panel$empleados_base + trend + size_eff + eff + rnorm(nrow(panel),0,4)))
+panel$credito_miles <- pmax(0, 80 + 6*panel$empleados_base + 15*(panel$anio-2017) +
+                             ifelse(panel$tratamiento==1, 55 + 18*pmax(panel$event_time,0),0) +
+                             rnorm(nrow(panel),0,75))
+panel$tipo_interes <- pmax(.5, 4.5 - .08*(panel$anio-2017) - ifelse(panel$tratamiento==1, .25, 0) + rnorm(nrow(panel),0,.45))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(emp, "datos/empresas_pyme.csv", row.names=FALSE)
+write.csv(panel, "datos/panel_pyme.csv", row.names=FALSE)
+cat("Se han creado datos/empresas_pyme.csv y datos/panel_pyme.csv\n")
+```
+
+```{r librerias}
+library(dplyr)
+library(ggplot2)
+```
+
+# Solucion orientativa
+
+## Bloque 1
+
+```{r bloque1}
+emp <- read.csv("datos/empresas_pyme.csv")
+pan <- read.csv("datos/panel_pyme.csv")
+
+emp <- emp %>%
+  mutate(
+    empleados_base_imp = ifelse(empleados_base > quantile(empleados_base, .995), NA, empleados_base),
+    endeudamiento_base_imp = ifelse(endeudamiento_base > 2, NA, endeudamiento_base)
+  ) %>%
+  group_by(tamano) %>%
+  mutate(empleados_base_imp = ifelse(is.na(empleados_base_imp), median(empleados_base_imp, na.rm=TRUE), empleados_base_imp),
+         endeudamiento_base_imp = ifelse(is.na(endeudamiento_base_imp), median(endeudamiento_base_imp, na.rm=TRUE), endeudamiento_base_imp)) %>% ungroup()
+
+pan <- pan %>% select(-empleados_base, -endeudamiento_base) %>%
+  left_join(emp %>% select(id_empresa, empleados_base_imp, endeudamiento_base_imp), by="id_empresa") %>%
+  mutate(ever_treated = as.integer(is.finite(anio_apoyo)),
+         cohorte = ifelse(is.finite(anio_apoyo), as.character(anio_apoyo), "nunca"),
+         post = tratamiento,
+         event_time = ifelse(ever_treated==1, anio - anio_apoyo, NA))
+
+emp %>% mutate(cohorte = ifelse(is.finite(anio_apoyo), as.character(anio_apoyo), "nunca")) %>% count(cohorte)
+pan %>% group_by(anio, ever_treated) %>% summarise(empleo=mean(empleo), credito=mean(credito_miles), interes=mean(tipo_interes), .groups="drop")
+local <- pan %>% filter(ever_treated==0 | (event_time >= -3 & event_time <= 4))
+```
+
+## Bloque 2
+
+```{r bloque2, fig.width=7, fig.height=4}
+pan %>% group_by(anio, ever_treated) %>% summarise(empleo=mean(empleo), .groups="drop") %>%
+  ggplot(aes(anio, empleo, group=factor(ever_treated), linetype=factor(ever_treated))) +
+  geom_line() + geom_point() + labs(linetype="Tratada alguna vez")
+
+pan %>% filter(ever_treated==1, event_time >= -3, event_time <= 4) %>%
+  group_by(event_time) %>% summarise(empleo=mean(empleo), .groups="drop") %>%
+  ggplot(aes(event_time, empleo)) + geom_line() + geom_point() + geom_vline(xintercept=-1, linetype="dashed")
+
+emp %>% mutate(ever_treated=as.integer(is.finite(anio_apoyo))) %>%
+  group_by(ever_treated, tamano) %>% summarise(n=n(), endeudamiento=mean(endeudamiento_base_imp), .groups="drop")
+```
+
+## Bloque 3
+
+```{r bloque3}
+# TWFE con lm y dummies de empresa y año. En una muestra grande podria usarse fixest::feols.
+m_emp <- lm(empleo ~ tratamiento + factor(id_empresa) + factor(anio), data=pan)
+coef(summary(m_emp))["tratamiento",]
+
+m_cred <- lm(credito_miles ~ tratamiento + factor(id_empresa) + factor(anio), data=pan)
+coef(summary(m_cred))["tratamiento",]
+
+m_int <- lm(tipo_interes ~ tratamiento + factor(id_empresa) + factor(anio), data=pan)
+coef(summary(m_int))["tratamiento",]
+
+# Estudio de eventos: se omite event_time = -1. Los nunca tratados quedan como controles.
+ev <- pan %>% mutate(
+  ev_m3 = as.integer(event_time == -3), ev_m2 = as.integer(event_time == -2),
+  ev_0 = as.integer(event_time == 0), ev_1 = as.integer(event_time == 1),
+  ev_2 = as.integer(event_time == 2), ev_3 = as.integer(event_time == 3), ev_4 = as.integer(event_time == 4)
+)
+m_ev <- lm(empleo ~ ev_m3 + ev_m2 + ev_0 + ev_1 + ev_2 + ev_3 + ev_4 + factor(id_empresa) + factor(anio), data=ev)
+coefs <- coef(summary(m_ev))[c("ev_m3","ev_m2","ev_0","ev_1","ev_2","ev_3","ev_4"),]
+coefs
+```
+
+Interpretacion: el tratamiento deberia aumentar empleo y credito y reducir el tipo de interes. Los coeficientes previos (`ev_m3`, `ev_m2`) deberian ser cercanos a cero; si fueran grandes o significativos, se pondria en duda el supuesto de tendencias paralelas. En datos reales convendria usar estimadores robustos para adopcion escalonada, controles de composicion y errores agrupados por empresa.

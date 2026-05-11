@@ -1,0 +1,2000 @@
+---
+title: "Apuntes extensos: inferencia causal en evaluaciones de AIReF"
+subtitle: "Guía práctica para orientar ejercicios de oposición"
+author: "ChatGPT"
+date: "2026-05-10"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: true
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Cómo usar estos apuntes
+
+Estos apuntes están pensados para consulta rápida durante la preparación de ejercicios prácticos de evaluación de políticas públicas tipo AIReF.
+
+El objetivo no es sustituir a los informes originales, sino condensar las **decisiones de inferencia causal** que suelen aparecer en estudios de la División de Evaluación del Gasto Público y convertirlas en una guía de examen:
+
+- qué política se evalúa;
+- cuál es la unidad de análisis;
+- cuál es el tratamiento;
+- cuál es el grupo de comparación;
+- qué variable resultado se analiza;
+- qué metodología causal se usa;
+- qué supuestos hay que defender;
+- qué gráficos y comprobaciones conviene hacer;
+- qué errores evitar en un examen de 90 minutos.
+
+> **Nota importante.** Parte de la información pública de AIReF está disponible en fichas-resumen y páginas del Observatorio, no siempre en anexos metodológicos completos. Cuando el detalle exacto de covariables, ancho de banda, especificación o robustez no está disponible en la fuente pública resumida, se indica como **"no especificado en la ficha pública"** y se ofrece una orientación razonable de cómo abordarlo en examen.
+
+# Fuentes públicas utilizadas
+
+Principales páginas públicas de AIReF consultadas:
+
+- AIReF, *Beneficios fiscales*, Spending Review 2018-2021, fase II: <https://www.airef.es/es/estudios-observatorio/beneficios-fiscales/>
+- AIReF, *Gestión de los residuos municipales*: <https://www.airef.es/es/estudios-observatorio/evaluacion-de-la-gestion-de-los-residuos-urbanos/>
+- AIReF, *Infraestructuras de transporte*: <https://www.airef.es/es/estudios-observatorio/infraestructuras-de-transporte/>
+- AIReF, *Becas de educación universitaria*: <https://www.airef.es/es/estudios-observatorio/becas-de-educacion-universitaria/>
+- AIReF, *Promoción del talento y su empleabilidad en I+D+i*: <https://www.airef.es/es/estudios-observatorio/programa-estatal-de-promocion-del-talento-y-su-empleabilidad-en-idi/>
+- AIReF, *Políticas activas de empleo*: <https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo/>
+- AIReF, *Incentivos a la contratación y al trabajo autónomo*: <https://www.airef.es/es/estudios-observatorio/incentivos-a-la-contratacion-y-al-trabajo-autonomo/>
+- AIReF, *Políticas activas de empleo en Extremadura*: <https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-extremadura/>
+- AIReF, *Políticas activas de empleo en Castilla y León*: <https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-castilla-y-leon/>
+- AIReF, *Instrumentos financieros de apoyo a la pyme reforzados por el PRTR*: <https://www.airef.es/es/estudios-observatorio/instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr/>
+- AIReF, *Incapacidad temporal*, Spending Review 2022-2026, fase II: <https://www.airef.es/es/estudios-observatorio/incapacidad-temporal/>
+- AIReF, divulgación metodológica sobre evaluación de políticas públicas: <https://www.airef.es/es/divulgacion/como-evalua-la-airef-combinar-datos-y-experiencia-para-entender-mejor-las-politicas-publicas/>
+
+# Mapa rápido por metodología
+
+| Metodología | Estudios/opiniones donde aparece | Probabilidad de aparecer en examen | Comentario práctico |
+|---|---:|---:|---|
+| Difference-in-Differences | Residuos, incentivos contratación, PAE Extremadura, IT, alquiler vivienda, instrumentos financieros pyme, infraestructuras | Muy alta | Es la estructura más examinable: panel, tratamiento, año de adopción, event-study |
+| DiD escalonado / Callaway-Sant'Anna | Residuos, instrumentos financieros pyme, probablemente otros paneles con adopción no simultánea | Muy alta | Ojo con TWFE cuando hay efectos heterogéneos |
+| Matching / PSM | Becas universitarias, talento I+D+i, PAE, PAE Extremadura, PAE Castilla y León | Alta | Muy probable en ejercicios individuales con beneficiarios/no beneficiarios |
+| RDD | Beneficios fiscales, incentivos a conversión de contratos, infraestructuras | Media-alta | Aparece cuando hay umbral normativo claro |
+| Modelos panel / FE | Muchos estudios | Alta | Normalmente acompañan a DiD |
+| Synthetic control | Mencionado como metodología usada por AIReF, pero no se ha identificado en las fichas revisadas una instancia concreta clara de la División | Baja-media | Puede aparecer si el examen diseña un caso territorial único |
+| RCT | Más como recomendación de diseño de pilotos que como evaluación ex post identificada en fichas | Baja | Útil saber plantearlo, menos probable que haya datos reales de RCT |
+
+# Difference-in-Differences y event-study
+
+## 1. Gestión de residuos municipales: recogida puerta a puerta y ordenanzas
+
+### Qué se evalúa
+
+AIReF evalúa políticas de gestión de residuos municipales. En la ficha pública aparece explícitamente el uso de **diferencia en diferencias** y se menciona tanto el estimador estándar como un estimador robusto a efectos heterogéneos tipo **Callaway y Sant'Anna**.
+
+En el examen de la OPE 2024 se utilizó un caso de recogida separada puerta a puerta municipal con datos de Cataluña entre 2000 y 2023. Ese patrón es muy representativo de un ejercicio AIReF:
+
+- panel municipio-año;
+- tratamiento que empieza en años distintos;
+- construcción de variables a partir de fechas y fracciones recogidas;
+- análisis descriptivo y causal;
+- efectos a corto plazo hasta cinco años tras la adopción.
+
+### Unidad de análisis
+
+La unidad natural es el **municipio-año**.
+
+Ejemplo:
+
+| municipio | año | tratamiento | año_inicio | selectiva_pct | residuos_total |
+|---|---:|---:|---:|---:|---:|
+| A | 2017 | 0 | 2020 | 34.2 | 4,500 |
+| A | 2020 | 1 | 2020 | 48.9 | 4,300 |
+
+### Tratamiento
+
+Puede adoptar varias formas:
+
+1. **Dummy de tratamiento simple**  
+   `tratamiento_it = 1` si el municipio `i` ya tiene implantada la política en el año `t`.
+
+2. **Cohorte de tratamiento**  
+   `g_i = año de primera adopción`.
+
+3. **Tiempo relativo al tratamiento**  
+   `event_time = año - año_inicio`.
+
+4. **Intensidad del tratamiento**  
+   Número de fracciones recogidas puerta a puerta o dummies por fracción:
+   - orgánica;
+   - papel/cartón;
+   - envases;
+   - vidrio;
+   - resto.
+
+### Variables resultado
+
+Las más probables:
+
+- porcentaje de recogida selectiva;
+- kilos de residuos por habitante;
+- residuos totales;
+- tasa de impropios;
+- coste por tonelada;
+- frecuencia de recogida.
+
+### Estrategia causal
+
+La lógica es comparar la evolución de los municipios tratados antes y después de adoptar la política con la evolución de municipios aún no tratados o nunca tratados.
+
+Especificación básica:
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \beta Tratamiento_{it} + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+donde:
+
+- \(\alpha_i\) son efectos fijos de municipio;
+- \(\lambda_t\) son efectos fijos de año;
+- \(X_{it}\) son controles municipales observables;
+- \(\beta\) mide el efecto medio de la política.
+
+### Problema clave: adopción escalonada
+
+Si los municipios adoptan en años diferentes, el estimador TWFE estándar puede ser problemático si:
+
+- los efectos varían por cohorte;
+- los efectos cambian con el tiempo desde la adopción;
+- municipios ya tratados actúan como controles de municipios tratados más tarde.
+
+Por eso la ficha pública de AIReF sobre residuos menciona un estimador robusto a efectos heterogéneos, Callaway y Sant'Anna.
+
+### Cómo responder en examen
+
+Si tienes poco tiempo, una respuesta sólida debería incluir:
+
+1. Construir `tratamiento`.
+2. Construir `event_time`.
+3. Mostrar tendencias pretratamiento.
+4. Estimar TWFE como referencia.
+5. Si es posible, estimar un DiD escalonado robusto.
+6. Interpretar el efecto en unidades claras.
+7. Hacer heterogeneidad por tamaño municipal o fracciones recogidas.
+
+### Qué controles incluir
+
+Covariables típicas:
+
+- población;
+- densidad;
+- renta municipal;
+- provincia;
+- turismo;
+- envejecimiento;
+- estructura urbana/rural;
+- residuos per cápita pretratamiento;
+- año o tendencia provincial.
+
+En un examen no siempre necesitas incluir todos. Lo más importante es justificar que:
+
+- los efectos fijos absorben diferencias permanentes entre municipios;
+- los efectos de año absorben shocks comunes;
+- los controles reducen cambios diferenciales observables.
+
+### Gráficos imprescindibles
+
+1. Evolución media de \(Y\) para tratados y no tratados.
+2. Event-study con leads y lags.
+3. Distribución de años de adopción.
+4. Heterogeneidad por tamaño municipal.
+5. Boxplot o histograma de residuos para detectar outliers.
+
+### Robustez
+
+- Excluir grandes municipios.
+- Excluir municipios turísticos.
+- Limitar a ventanas de ±5 años.
+- Comparar con nunca tratados y aún no tratados.
+- Clusterizar errores por municipio.
+- Probar resultado alternativo: porcentaje selectivo y kilos per cápita.
+- Placebo con años pretratamiento.
+
+### Errores frecuentes
+
+- Comparar tratados vs no tratados solo después de la política.
+- No usar efectos fijos.
+- No mirar tendencias paralelas.
+- Usar municipios tratados como controles sin pensar en adopción escalonada.
+- Interpretar correlación descriptiva como causal.
+- No clusterizar por unidad de tratamiento.
+
+### Si cae en examen
+
+Frase útil:
+
+> La identificación descansa en que, en ausencia de la política, los municipios tratados habrían seguido una evolución paralela a la de los municipios comparables no tratados o aún no tratados. Dado que la adopción es escalonada, conviene complementar el TWFE con estimadores robustos a heterogeneidad de efectos por cohorte y tiempo desde el tratamiento.
+
+---
+
+## 2. Instrumentos financieros de apoyo a la pyme reforzados por el PRTR
+
+### Qué se evalúa
+
+AIReF evalúa instrumentos financieros de apoyo a la pyme, especialmente operaciones que movilizan financiación pública o semipública. La ficha pública indica que la metodología cuantitativa combina estadística descriptiva, econometría y análisis causal contrafactual mediante un **modelo de diferencias en diferencias escalonado**.
+
+### Unidad de análisis
+
+La unidad probable es la **empresa-año** o empresa-periodo.
+
+Datos mencionados en la ficha pública:
+
+- microdatos de agencias públicas;
+- Central de Balances;
+- Central de Riesgos del Banco de España;
+- DIRCE del INE;
+- Impuesto de Sociedades de AEAT.
+
+### Tratamiento
+
+Recibir apoyo financiero público:
+
+- garantía;
+- reafianzamiento;
+- capital riesgo;
+- financiación movilizada;
+- participación en un instrumento concreto.
+
+Puede haber:
+
+- fecha de concesión;
+- cuantía de financiación;
+- intensidad del tratamiento;
+- tipo de instrumento.
+
+### Grupo de comparación
+
+Empresas no beneficiarias, o empresas aún no tratadas, similares en:
+
+- tamaño;
+- sector;
+- edad;
+- productividad;
+- endeudamiento previo;
+- comunidad autónoma;
+- historial financiero;
+- crecimiento previo.
+
+### Variables resultado
+
+Probables:
+
+- empleo;
+- ventas;
+- inversión;
+- supervivencia empresarial;
+- productividad;
+- endeudamiento;
+- acceso a crédito;
+- activos;
+- rentabilidad.
+
+### Estrategia causal
+
+DiD escalonado:
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \sum_k \beta_k 1(event\_time=k) + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+donde el tratamiento empieza en distintos momentos para distintas empresas.
+
+### Qué hace delicado este caso
+
+La selección al tratamiento no es aleatoria:
+
+- las empresas que reciben financiación pueden ser mejores;
+- o, al contrario, pueden estar más necesitadas;
+- puede haber selección administrativa;
+- puede depender de expectativas de crecimiento.
+
+Por eso es clave controlar por trayectoria pretratamiento.
+
+### Qué comprobar
+
+1. Balance pretratamiento entre beneficiarias y no beneficiarias.
+2. Tendencias previas en empleo, ventas o inversión.
+3. Distribución de tamaño empresarial.
+4. Composición sectorial.
+5. Año de entrada al programa.
+6. Posible anticipación: empresas que preparan inversiones antes de recibir apoyo.
+
+### Robustez
+
+- Matching previo + DiD.
+- Restricción a empresas con información completa antes y después.
+- Excluir empresas muy grandes.
+- Heterogeneidad por sector.
+- Heterogeneidad por tamaño: micro, pequeña, mediana.
+- Heterogeneidad por instrumento.
+- Placebo en años anteriores.
+- Estimación con cohortes separadas.
+
+### Claves para examen
+
+Si te dan un dataset empresa-año:
+
+1. Crear `treated_ever`.
+2. Crear `first_treat_year`.
+3. Crear `treated_it`.
+4. Crear `event_time`.
+5. Comparar trayectorias pre.
+6. Estimar DiD/event-study.
+7. Interpretar resultados en términos de adicionalidad.
+
+### Errores frecuentes
+
+- Confundir financiación movilizada con impacto causal.
+- No distinguir efecto sobre acceso a crédito y efecto sobre empleo/ventas.
+- No controlar por sector y año.
+- No considerar que empresas beneficiarias pueden haber sido seleccionadas por potencial de crecimiento.
+- Interpretar el efecto como retorno social completo sin análisis coste-beneficio.
+
+### Frase útil
+
+> En instrumentos financieros, la pregunta causal no es si las empresas beneficiarias crecen, sino si crecen más de lo que habrían crecido en ausencia del instrumento, descontando su trayectoria previa y shocks comunes por sector, año o territorio.
+
+---
+
+## 3. Incentivos a la contratación y al trabajo autónomo
+
+### Qué se evalúa
+
+AIReF evaluó incentivos a la contratación y al trabajo autónomo dentro del Spending Review. La ficha pública señala:
+
+- **diferencia en diferencias** para el contrato de apoyo a emprendedores;
+- **regresión en discontinuidad** para incentivos a la conversión de contratos de formación en indefinidos.
+
+### Unidad de análisis
+
+Probablemente individuo, contrato o relación laboral.
+
+Posibles estructuras:
+
+- trabajador-mes;
+- contrato-mes;
+- empresa-trabajador;
+- beneficiario/no beneficiario.
+
+### Tratamiento DiD
+
+En el caso de incentivos a la contratación indefinida:
+
+- recibir un contrato bonificado;
+- entrar en un colectivo elegible;
+- estar expuesto a una reforma normativa;
+- joven o mayor de 45 frente a otros colectivos.
+
+### Variables resultado
+
+- probabilidad de encontrar empleo;
+- probabilidad de empleo indefinido;
+- duración del empleo;
+- mantenimiento tras periodo incentivado;
+- conversión a indefinido;
+- inserción laboral.
+
+### Hallazgos relevantes de la ficha pública
+
+La ficha pública indica que los incentivos al contrato de apoyo a emprendedores tuvieron:
+
+- efecto positivo pero limitado;
+- efecto pequeño sobre probabilidad de encontrar empleo en jóvenes;
+- ausencia de efecto en personas con baja formación o mayores de 45;
+- mayor efecto sobre mantenimiento del empleo, pero desaparición tras el periodo incentivado.
+
+### Estrategia DiD
+
+Una especificación típica:
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \beta Post_t \times Eligible_i + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+donde:
+
+- `Eligible_i` identifica colectivos afectados;
+- `Post_t` identifica el periodo tras la reforma;
+- el coeficiente de interacción mide el impacto diferencial.
+
+### Qué vigilar
+
+- Las reformas laborales suelen afectar a muchos colectivos simultáneamente.
+- Puede haber anticipación de empresas.
+- Puede haber composición distinta por edad, formación o sector.
+- El resultado puede ser distinto a corto y medio plazo.
+
+### Robustez
+
+- Ventanas temporales alternativas.
+- Placebo antes de la reforma.
+- Heterogeneidad por edad.
+- Heterogeneidad por nivel educativo.
+- Heterogeneidad por sector.
+- Separar inserción inicial y mantenimiento posterior.
+
+### Cómo puede aparecer en examen
+
+Te pueden dar:
+
+- base de contratos;
+- fecha de reforma;
+- edad del trabajador;
+- tipo de contrato;
+- fecha de inicio y fin;
+- indicador de bonificación.
+
+Preguntas probables:
+
+- crear elegibilidad;
+- medir exposición;
+- calcular tasa de conversión;
+- estimar DiD;
+- analizar si el efecto desaparece tras agotar incentivo.
+
+### Errores frecuentes
+
+- Usar como resultado "recibir incentivo" en vez de empleo/conversión.
+- No separar colectivos elegibles.
+- No controlar por shocks de mercado laboral.
+- No analizar duración del efecto.
+- Olvidar que mayor contratación bonificada puede sustituir contratación no bonificada.
+
+---
+
+## 4. Políticas activas de empleo en Extremadura
+
+### Qué se evalúa
+
+AIReF evaluó políticas activas de empleo en Extremadura. La ficha pública muestra el uso conjunto de:
+
+- métodos de emparejamiento;
+- diferencia en diferencias.
+
+Programas mencionados:
+
+- ayuda a la contratación indefinida;
+- ayuda al autoempleo;
+- Empleo Experiencia;
+- Escuelas Profesionales;
+- oferta preferente de formación para desempleados.
+
+### Unidad de análisis
+
+Individuo desempleado o demandante de empleo, seguido en el tiempo.
+
+Posibles periodos:
+
+- meses desde la participación;
+- antes/después del programa;
+- seguimiento hasta 36 meses en algunos casos.
+
+### Tratamiento
+
+Participar en un programa específico:
+
+- recibir ayuda a la contratación;
+- recibir ayuda de autoempleo;
+- participar en programa de experiencia;
+- participar en formación.
+
+### Grupo de comparación
+
+No participantes similares en:
+
+- edad;
+- sexo;
+- nivel educativo;
+- historial laboral;
+- duración del desempleo;
+- prestaciones;
+- ocupación demandada;
+- municipio/comarca;
+- empleabilidad ex ante.
+
+### Variables resultado
+
+- inserción laboral;
+- empleo a 15 días;
+- empleo a 6, 12, 24 o 36 meses;
+- contrato indefinido;
+- jornada completa;
+- supervivencia del autoempleo;
+- calidad del empleo.
+
+### Estrategia causal
+
+Se combinan dos ideas:
+
+1. **Matching** para construir un grupo de control comparable.
+2. **DiD** para comparar evolución antes/después entre tratados y controles.
+
+Esto es muy útil cuando la selección depende de observables y también hay diferencias fijas no observadas.
+
+Esquema:
+
+\[
+ATT = E[(Y_{post}^T - Y_{pre}^T) - (Y_{post}^C - Y_{pre}^C) \mid T=1]
+\]
+
+### Qué se encontró según la ficha pública
+
+- Ayuda a contratación indefinida: efecto positivo en calidad del empleo.
+- Mayor efecto si se focaliza en personas de baja empleabilidad.
+- Ayuda al autoempleo: impacto positivo sobre inserción, con persistencia hasta 36 meses, aunque decreciente.
+- Empleo Experiencia: efectos negativos iniciales que desaparecen aproximadamente tras 24 meses, sin llegar a mejorar la inserción.
+- Formación: mejores resultados para colectivos de baja empleabilidad, aunque reducidos.
+
+### Clave sustantiva
+
+El concepto de **peso muerto** es central.
+
+Si una ayuda se concede a personas con alta empleabilidad, parte del empleo observado habría ocurrido de todos modos. Por eso AIReF insiste en focalizar en baja empleabilidad.
+
+### Qué covariables usar en examen
+
+Para matching:
+
+- edad;
+- sexo;
+- nacionalidad;
+- nivel educativo;
+- antigüedad como demandante;
+- historial de empleo;
+- historial de prestaciones;
+- sector/ocupación;
+- municipio o comarca;
+- experiencia previa;
+- empleabilidad predicha.
+
+### Validaciones de matching
+
+1. Balance antes/después.
+2. Diferencia de medias estandarizada.
+3. Distribución de propensity scores.
+4. Common support.
+5. Tamaño efectivo de la muestra.
+6. Sensibilidad a número de vecinos.
+7. Caliper.
+
+### Validaciones DiD
+
+1. Tendencias pretratamiento.
+2. Placebo en periodos anteriores.
+3. Dinámica mensual postratamiento.
+4. Clustering por individuo o unidad territorial.
+5. Heterogeneidad por empleabilidad.
+
+### Cómo responder en examen
+
+Una respuesta excelente diría:
+
+> Primero emparejaría participantes con no participantes comparables usando variables observadas previas al tratamiento. Después aplicaría una diferencia en diferencias sobre la muestra emparejada para eliminar diferencias fijas entre grupos y estimar el efecto diferencial de la participación sobre la inserción laboral.
+
+### Errores frecuentes
+
+- Emparejar usando variables posteriores al tratamiento.
+- No comprobar common support.
+- Comparar beneficiarios con todos los no beneficiarios sin balance.
+- No separar programas distintos.
+- Evaluar formación justo al terminar, cuando puede haber lock-in effect.
+- No distinguir inserción de calidad del empleo.
+
+### Concepto importante: lock-in effect
+
+En programas de formación o empleo público temporal, los participantes pueden tener menor empleo mientras participan porque están ocupados en el programa o formándose. Eso no implica necesariamente fracaso inmediato; hay que mirar la dinámica posterior.
+
+---
+
+## 5. Incapacidad temporal
+
+### Qué se evalúa
+
+AIReF evaluó el gasto en incapacidad temporal dentro del Spending Review 2022-2026, fase II. La ficha pública identifica varios análisis de impacto con **diferencia en diferencias**.
+
+Casos mencionados:
+
+1. Real Decreto 956/2018, que mejora la prestación para personal de la AGE.
+2. Cambio de contrato temporal a indefinido tras la reforma laboral.
+3. Incremento del SMI de 2019 y su posible efecto sobre IT.
+
+### Unidad de análisis
+
+Trabajador-periodo o episodio-periodo.
+
+Fuentes mencionadas:
+
+- universo de episodios de IT del INSS;
+- Muestra Continua de Vidas Laborales;
+- afiliación;
+- datos de MUFACE;
+- BDCAP;
+- convenios colectivos REGCON.
+
+### Caso 1: mejora de prestación AGE
+
+#### Tratamiento
+
+Personal afectado por el Real Decreto 956/2018, que eleva el complemento retributivo al 100% desde el primer día.
+
+#### Variables resultado
+
+- probabilidad de iniciar una IT al mes;
+- duración media del episodio.
+
+#### Hallazgos públicos
+
+La ficha pública indica:
+
+- incremento en torno al 40% de la probabilidad de iniciar una IT al mes;
+- reducción aproximada del 30% en duración promedio, equivalente a 17 días menos respecto a una media previa de 55,7 días.
+
+#### Interpretación
+
+La mejora de cobertura puede aumentar la incidencia porque reduce el coste económico de iniciar una baja. Pero también puede reducir duración si cambia el perfil de episodios o elimina incentivos a alargar bajas por pérdidas salariales previas.
+
+### Caso 2: conversión temporal-indefinido
+
+#### Tratamiento
+
+Cambio de contrato temporal a indefinido derivado de la reforma laboral.
+
+#### Resultado
+
+Probabilidad de iniciar una IT.
+
+#### Hallazgo público
+
+La ficha pública indica que el paso a contrato indefinido incrementa en torno a un 30% la probabilidad de iniciar una IT.
+
+### Caso 3: subida del SMI 2019
+
+#### Tratamiento
+
+Aumento salarial para trabajadores próximos al SMI.
+
+#### Resultado
+
+Probabilidad de iniciar IT.
+
+#### Hallazgo público
+
+No se detectan efectos estadísticamente significativos en la probabilidad de iniciar un episodio de IT.
+
+### Especificación tipo
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \beta (Tratado_i \times Post_t) + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+Para análisis dinámico:
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \sum_k \beta_k 1(event\_time=k) + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+### Qué controles serían razonables
+
+- edad;
+- sexo;
+- grupo de cotización;
+- sector;
+- ocupación;
+- salario/base reguladora;
+- tipo de contrato;
+- comunidad autónoma;
+- historial de IT;
+- antigüedad;
+- tamaño de empresa;
+- mes y año.
+
+### Qué puede aparecer en examen
+
+- Crear una variable `post` desde julio de 2018.
+- Crear grupo tratado y control.
+- Estimar impacto en incidencia mensual.
+- Estimar impacto en duración.
+- Representar impactos trimestrales.
+- Comprobar paralelismo previo.
+- Interpretar resultados aparentemente contradictorios: más episodios pero menor duración.
+
+### Robustez
+
+- Excluir COVID o tratarlo con dummies específicas.
+- Separar diagnósticos.
+- Separar hombres/mujeres.
+- Separar duración e incidencia.
+- Placebo con fecha falsa.
+- Ventanas simétricas alrededor de la reforma.
+- Clustering por trabajador o entidad.
+
+### Errores frecuentes
+
+- Mezclar incidencia y duración sin interpretar mecanismos.
+- Usar episodios post sin controlar cambios de composición.
+- No controlar estacionalidad mensual.
+- Ignorar shocks COVID.
+- No separar efecto intensivo y extensivo.
+
+---
+
+## 6. Reducción por arrendamiento de vivienda en IRPF
+
+### Qué se evalúa
+
+Dentro del estudio de beneficios fiscales, AIReF analiza la reducción del 60% sobre rendimientos netos por alquiler de vivienda. La ficha pública indica que se usa **diferencia en diferencias** junto con análisis documental, descriptivo, comparativa internacional y microsimuladores.
+
+### Política
+
+La reducción fiscal busca fomentar la oferta de viviendas en alquiler.
+
+### Tratamiento
+
+Exposición al incentivo fiscal asociado al alquiler declarado de vivienda habitual.
+
+En un diseño de examen podría definirse por:
+
+- contribuyentes arrendadores afectados por un cambio normativo;
+- viviendas/zonas con diferente exposición;
+- años antes/después de una reforma;
+- hogares o declarantes elegibles/no elegibles.
+
+### Resultado
+
+- oferta de vivienda en alquiler;
+- declaración de rendimientos por alquiler;
+- número de viviendas alquiladas;
+- rentas declaradas;
+- probabilidad de declarar alquiler.
+
+### Grupo de comparación
+
+Dependerá del diseño exacto:
+
+- propietarios no afectados;
+- zonas con distinta exposición;
+- contribuyentes con inmuebles similares no alquilados;
+- periodos antes/después de reforma;
+- alquiler frente a otros usos del inmueble.
+
+### Hallazgo público
+
+La ficha pública indica que la reducción sí consigue fomentar la oferta de vivienda en alquiler, aunque no permite distinguir entre nueva oferta y rentas que emergen de la economía informal.
+
+### Clave metodológica
+
+Este matiz es muy importante en examen:
+
+> Un aumento de alquiler declarado puede ser efecto real de mayor oferta o efecto de formalización/declaración de alquileres previamente informales.
+
+Por tanto, la variable observada no necesariamente mide solo el objetivo real.
+
+### Especificación tipo
+
+\[
+Y_{it} = \alpha_i + \lambda_t + \beta Tratamiento_{it} + X_{it}'\gamma + \varepsilon_{it}
+\]
+
+Pero aquí la dificultad está en construir bien el contrafactual.
+
+### Qué controles serían razonables
+
+- renta del contribuyente;
+- patrimonio/inmuebles;
+- provincia/municipio;
+- edad;
+- mercado inmobiliario local;
+- precio de alquiler;
+- desempleo local;
+- población;
+- presión turística.
+
+### Robustez
+
+- Excluir grandes áreas metropolitanas.
+- Analizar por tramos de renta.
+- Separar margen extensivo e intensivo.
+- Comparar con inmuebles no elegibles.
+- Placebo en años previos.
+- Sensibilidad a zonas tensionadas.
+
+### Errores frecuentes
+
+- Confundir oferta nueva con declaración fiscal.
+- No discutir economía informal.
+- No separar efectos distributivos de efectos de eficiencia.
+- No analizar quién se beneficia fiscalmente.
+
+---
+
+# Regression Discontinuity Design
+
+## 7. Beneficios fiscales: tributación conjunta
+
+### Qué se evalúa
+
+AIReF evalúa la reducción por tributación conjunta en IRPF, especialmente la modalidad matrimonio. La ficha pública indica uso de **regresiones en discontinuidad**.
+
+### Política
+
+La tributación conjunta permite reducir la carga fiscal de hogares en los que la renta procede principalmente de un miembro. El estudio concluye que cumple el objetivo de adecuar el impuesto a la composición de rentas del hogar, pero genera desincentivos a la participación laboral del segundo perceptor, que son mujeres en más del 80% de los casos según la ficha pública.
+
+### Posible discontinuidad
+
+En beneficios fiscales, los RDD suelen aparecer porque la norma establece:
+
+- umbrales de renta;
+- cuantías que cambian en un punto;
+- elegibilidad condicionada a una variable continua.
+
+El detalle exacto del running variable no está especificado en la ficha pública resumida.
+
+### Unidad de análisis
+
+Declaración o contribuyente/hogar.
+
+### Resultado
+
+- participación laboral del segundo perceptor;
+- renta laboral del segundo perceptor;
+- probabilidad de presentar conjunta;
+- cuota fiscal;
+- oferta laboral.
+
+### Running variable
+
+Posibles variables en un ejercicio:
+
+- renta del hogar;
+- renta del segundo perceptor;
+- diferencia de renta entre cónyuges;
+- base imponible;
+- proximidad a un umbral de elegibilidad.
+
+### Especificación tipo
+
+\[
+Y_i = \alpha + \tau D_i + f(X_i - c) + \varepsilon_i
+\]
+
+donde:
+
+- \(X_i\) es la variable de asignación;
+- \(c\) es el umbral;
+- \(D_i = 1(X_i \geq c)\);
+- \(\tau\) es el salto local.
+
+### Claves de identificación
+
+1. Individuos justo a ambos lados del umbral son comparables.
+2. No hay manipulación precisa del running variable.
+3. Las covariables evolucionan suavemente en el umbral.
+4. El salto en \(Y\) se atribuye al cambio de tratamiento.
+
+### Qué comprobar en examen
+
+- Gráfico de bins alrededor del umbral.
+- Densidad del running variable.
+- Balance de covariables.
+- Estimación local lineal.
+- Sensibilidad a bandwidth.
+- Polinomios de bajo orden.
+- Placebo cutoffs.
+
+### Errores frecuentes
+
+- Usar toda la muestra sin atender a la naturaleza local.
+- Ajustar polinomios de grado muy alto.
+- No centrar la variable en el cutoff.
+- No discutir manipulación.
+- Interpretar el efecto local como efecto para toda la población.
+
+### Frase útil
+
+> El estimador RDD identifica un efecto local para contribuyentes situados en torno al umbral normativo; no necesariamente informa del efecto medio para todos los hogares.
+
+---
+
+## 8. Beneficios fiscales: planes de pensiones individuales
+
+### Qué se evalúa
+
+AIReF evalúa la reducción por aportaciones a sistemas de previsión social, en particular planes de pensiones. La ficha pública menciona:
+
+- microsimuladores;
+- análisis distributivo;
+- descriptivo;
+- regresiones en discontinuidad;
+- análisis de elasticidades.
+
+### Política
+
+La reducción fiscal busca incentivar el ahorro a largo plazo como complemento al sistema público de pensiones.
+
+### Hallazgo público
+
+La ficha pública indica que el beneficio no consigue su objetivo de incentivar ahorro a largo plazo para un conjunto amplio de ahorradores una vez consideradas:
+
+- fiscalidad de prestaciones en jubilación;
+- comisiones;
+- tasa de preferencia intertemporal.
+
+### Posible diseño RDD
+
+Puede haber discontinuidades por:
+
+- límites máximos de aportación;
+- tramos de tipos marginales;
+- edad;
+- renta;
+- cambios normativos.
+
+El detalle exacto del running variable no está especificado en la ficha pública.
+
+### Variables resultado
+
+- aportación a planes;
+- ahorro financiero;
+- riqueza acumulada;
+- probabilidad de aportar;
+- cuantía aportada;
+- sustitución entre activos.
+
+### Qué es especialmente importante
+
+Distinguir entre:
+
+1. **Ahorro nuevo**: el incentivo aumenta ahorro total.
+2. **Recomposición de cartera**: el contribuyente cambia de producto financiero para aprovechar deducción.
+3. **Diferimiento fiscal**: ahorro aparente por desplazar tributación al futuro.
+4. **Regresividad**: mayor aprovechamiento por rentas altas.
+
+### Cómo puede aparecer en examen
+
+- Dataset de contribuyentes.
+- Variable de renta.
+- Variable de aportación.
+- Umbral de tipo marginal o límite de deducción.
+- Pregunta: ¿aumenta el ahorro o solo cambia composición?
+
+### Robustez
+
+- Analizar por deciles de renta.
+- Separar margen extensivo e intensivo.
+- Simular fiscalidad presente/futura.
+- Considerar comisiones.
+- Comparar resultados con y sin microsimulación.
+- RDD en torno a umbrales normativos.
+
+### Errores frecuentes
+
+- Llamar impacto al ahorro fiscal, no al ahorro adicional.
+- Ignorar la fiscalidad futura.
+- No analizar distribución por renta.
+- No separar aportaciones nuevas y reasignación de ahorro existente.
+
+---
+
+## 9. Incentivos a conversión de contratos de formación en indefinidos
+
+### Qué se evalúa
+
+En la evaluación de incentivos a contratación y trabajo autónomo, AIReF utilizó **regresión en discontinuidad** para evaluar el impacto del incremento de incentivos introducido en febrero de 2012 sobre la tasa de conversión de contratos de formación en indefinidos.
+
+### Política
+
+Reducciones anuales por convertir contratos de formación y aprendizaje en indefinidos.
+
+### Tratamiento
+
+Estar expuesto al incremento del incentivo tras la reforma de febrero de 2012.
+
+### Resultado
+
+Tasa de conversión de contratos de formación en indefinidos.
+
+### Hallazgo público
+
+La ficha pública indica que el incremento generó un aumento medio de la tasa de conversión de 0,5 puntos porcentuales, equivalente a un 6,1% respecto a la tasa anterior a la reforma. El efecto se considera pequeño y limitado por el reducido uso del contrato de formación.
+
+### Running variable
+
+Tiempo alrededor de la reforma:
+
+\[
+X_t = fecha - febrero\ 2012
+\]
+
+Esto se parece a un RDD temporal o interrupted time series local.
+
+### Especificación tipo
+
+\[
+Y_t = \alpha + \tau Post_t + f(t-c) + \varepsilon_t
+\]
+
+donde:
+
+- \(c\) es la fecha de entrada en vigor;
+- `Post` indica después de la reforma;
+- \(Y_t\) es tasa de conversión.
+
+### Riesgo metodológico
+
+Los RDD temporales son más débiles que los RDD con running variable individual porque pueden coincidir otros shocks en la misma fecha.
+
+Por eso conviene controlar o discutir:
+
+- estacionalidad;
+- ciclo económico;
+- otras reformas laborales;
+- cambios de composición;
+- tendencias previas.
+
+### Robustez
+
+- Ventanas temporales estrechas y amplias.
+- Placebo en fechas falsas.
+- Control por estacionalidad mensual.
+- Comparación con contratos no afectados.
+- Gráficos de bins antes/después.
+- Excluir meses de transición.
+
+### Claves para examen
+
+Si aparece una reforma con fecha concreta:
+
+1. Crear variable tiempo centrada en la reforma.
+2. Crear `post`.
+3. Graficar resultado alrededor del cutoff.
+4. Estimar local lineal a ambos lados.
+5. Probar bandwidths.
+6. Discutir shocks simultáneos.
+
+### Errores frecuentes
+
+- No controlar estacionalidad.
+- Usar una ventana demasiado larga.
+- No separar efecto de reforma y tendencia macro.
+- Interpretar efecto pequeño como irrelevante sin tener en cuenta coste o población objetivo.
+
+---
+
+## 10. Infraestructuras de transporte
+
+### Qué se evalúa
+
+AIReF evaluó infraestructuras de transporte en Spending Review. La ficha pública indica el uso de:
+
+- análisis descriptivo;
+- análisis coste-beneficio;
+- análisis input-output;
+- regresión en discontinuidad;
+- diferencia en diferencias;
+- regresión por quintiles;
+- modelos paramétricos lineales.
+
+### Ámbitos posibles
+
+La ficha menciona, entre otros, subvenciones al transporte, transporte aéreo insular, transporte urbano/metropolitano y financiación de infraestructuras.
+
+### Unidad de análisis
+
+Depende del subanálisis:
+
+- ruta-año;
+- aeropuerto-ruta-mes;
+- área metropolitana-año;
+- territorio-año;
+- proyecto-infraestructura;
+- usuario/viaje.
+
+### Tratamiento
+
+Puede ser:
+
+- incremento de subvención;
+- cambio normativo;
+- condición de residente;
+- acceso a infraestructura;
+- pertenencia a territorio afectado;
+- umbral de renta para subvención.
+
+### Variables resultado
+
+- precio del billete;
+- demanda de viajes;
+- frecuencia;
+- competencia;
+- coste público;
+- distribución por renta;
+- accesibilidad;
+- uso de transporte.
+
+### DiD en transporte
+
+Ejemplo de diseño:
+
+\[
+Precio_{rt} = \alpha_r + \lambda_t + \beta Tratada_r \times Post_t + \varepsilon_{rt}
+\]
+
+donde:
+
+- \(r\) es ruta;
+- tratamiento es ruta afectada por cambio de subvención;
+- controles son rutas no afectadas.
+
+### RDD en transporte
+
+Puede aparecer por:
+
+- umbrales de renta;
+- elegibilidad territorial;
+- límites administrativos;
+- distancia;
+- población;
+- criterios de subvención.
+
+### Qué hace difícil estos análisis
+
+- mercados con competencia imperfecta;
+- precios dinámicos;
+- estacionalidad;
+- rutas turísticas;
+- shock COVID;
+- endogeneidad de oferta;
+- cambios simultáneos en demanda.
+
+### Robustez
+
+- Controles por ruta y mes.
+- Efectos fijos ruta y año/mes.
+- Separar temporada alta/baja.
+- Excluir rutas con pocas observaciones.
+- Placebo en rutas no afectadas.
+- Heterogeneidad por competencia.
+- Comparar precios medios, mínimos y percentiles.
+
+### Clave de examen
+
+En transporte, no basta con mirar si baja el precio para usuarios. Hay que mirar:
+
+- cuánto se traslada la subvención al precio;
+- cuánto capturan las empresas;
+- si aumenta demanda;
+- impacto distributivo;
+- coste por usuario adicional.
+
+### Errores frecuentes
+
+- No controlar estacionalidad.
+- Comparar islas/península sin grupo de control.
+- Ignorar precios dinámicos.
+- No separar cantidad y precio.
+- Confundir análisis coste-beneficio con estimación causal.
+
+---
+
+# Matching / Propensity Score Matching
+
+## 11. Becas de educación universitaria
+
+### Qué se evalúa
+
+AIReF evalúa el sistema estatal de becas universitarias del Ministerio de Educación. La ficha pública indica uso de técnicas de evaluación de impacto y, en los hallazgos, **métodos de emparejamiento**.
+
+### Política
+
+Becas universitarias para garantizar igualdad de oportunidades.
+
+### Periodo
+
+Cursos 2010 a 2018 según la ficha pública.
+
+### Datos
+
+La ficha pública menciona:
+
+- Sistema Integrado de Información Universitaria;
+- encuesta AIReF a estudiantes universitarios.
+
+### Tratamiento
+
+Recibir beca.
+
+Es importante distinguir:
+
+1. Recibir beca en primer año.
+2. Recibir beca a partir de segundo año.
+3. Tipo o cuantía de beca.
+4. Componente de matrícula vs cuantía variable/fija.
+
+### Variables resultado
+
+- continuar en segundo año;
+- rendimiento académico;
+- créditos superados;
+- permanencia;
+- graduación;
+- abandono;
+- tiempo hasta título.
+
+### Hallazgo público
+
+La ficha pública resume:
+
+- no puede afirmarse que recibir beca el primer año favorezca continuar en segundo año;
+- el impacto sobre rendimiento en primer año es muy limitado;
+- recibir alguna beca a partir de segundo año tiene impacto positivo;
+- favorece la consecución del título;
+- mejora modestamente el rendimiento académico.
+
+### Estrategia causal
+
+Matching entre becarios y no becarios con características similares.
+
+El estimando natural es el ATT:
+
+\[
+ATT = E[Y(1) - Y(0) \mid T=1]
+\]
+
+### Covariables razonables
+
+Antes del tratamiento:
+
+- nota de acceso;
+- rama de conocimiento;
+- universidad;
+- titulación;
+- sexo;
+- edad;
+- nacionalidad;
+- renta familiar;
+- nivel educativo de padres, si disponible;
+- situación laboral familiar;
+- modalidad de acceso;
+- residencia;
+- rendimiento previo;
+- curso académico.
+
+### Variables que NO debes usar para matching
+
+No usar variables posteriores al tratamiento, por ejemplo:
+
+- créditos superados después de recibir beca;
+- nota del curso evaluado;
+- abandono posterior;
+- cambios de matrícula posteriores.
+
+### Cómo hacer el matching
+
+Opciones razonables:
+
+1. Propensity Score Matching con logit/probit.
+2. Nearest neighbor.
+3. Caliper.
+4. Matching exacto por universidad/rama/cohorte y PSM dentro de estratos.
+5. Inverse Probability Weighting.
+6. Entropy balancing.
+
+En examen, PSM + balance suele ser suficiente.
+
+### Comprobaciones clave
+
+1. Common support.
+2. Balance de covariables.
+3. Distribución del propensity score.
+4. Diferencias estandarizadas antes/después.
+5. Número de tratados perdidos por falta de soporte.
+6. Sensibilidad a caliper.
+7. Estimación separada por curso.
+
+### Por qué separar primer año y años posteriores
+
+El primer año es especial:
+
+- la beca puede estar muy ligada a renta y requisitos iniciales;
+- el rendimiento de entrada importa mucho;
+- puede haber adaptación universitaria;
+- puede haber selección fuerte en quién continúa.
+
+A partir de segundo año ya se observa historial universitario, lo que mejora el emparejamiento.
+
+### Cómo interpretarlo en examen
+
+Frase útil:
+
+> El matching intenta aproximar el contrafactual de los becarios con estudiantes no becarios comparables en características observables previas. La interpretación causal exige asumir independencia condicional: dado el conjunto de covariables, la recepción de beca es as-if random.
+
+### Limitaciones
+
+- Puede haber motivación no observada.
+- La renta familiar puede estar medida con error.
+- Los no becarios pueden no ser comparables si no solicitan beca.
+- Efectos distintos por tipo de beca.
+- Sesgo por supervivencia si se analiza solo quienes siguen matriculados.
+
+### Errores frecuentes
+
+- No separar elegibles, solicitantes y beneficiarios.
+- Usar todos los no becarios como control.
+- No hacer balance.
+- No distinguir matrícula gratuita de transferencia monetaria.
+- No analizar abandono y rendimiento como resultados distintos.
+- No discutir variables no observadas.
+
+### Si cae en examen
+
+Pasos mínimos:
+
+1. Limpiar base estudiante-curso.
+2. Definir tratamiento `beca`.
+3. Definir resultado `continua`, `creditos_superados` o `titula`.
+4. Estimar propensity score con covariables pre.
+5. Comprobar balance.
+6. Estimar ATT.
+7. Heterogeneidad por renta, nota de acceso o rama.
+8. Discutir limitaciones.
+
+---
+
+## 12. Promoción del talento y empleabilidad en I+D+i
+
+### Qué se evalúa
+
+AIReF evaluó el Programa Estatal de Promoción del Talento y su Empleabilidad en I+D+i. La ficha pública indica uso de **métodos de emparejamiento** y análisis descriptivo.
+
+### Política
+
+Ayudas de investigación dirigidas a promover carrera investigadora y empleabilidad.
+
+### Datos
+
+La ficha pública señala limitaciones relevantes:
+
+- información de solicitantes de convocatorias 2008-2012;
+- periodo marcado por la crisis financiera;
+- falta de integración con solicitantes de otras ayudas;
+- falta de información para seguir trayectoria laboral fuera de España.
+
+También se menciona una imputación/supuesto:
+
+> individuos sin contrato vigente y con inactividad en Seguridad Social superior a tres años se consideran realizando actividades en el extranjero.
+
+### Unidad de análisis
+
+Solicitante o investigador.
+
+### Tratamiento
+
+Recibir una ayuda.
+
+Una estrategia muy plausible es comparar:
+
+- solicitantes beneficiarios;
+- solicitantes no beneficiarios;
+- posiblemente cerca de umbrales de puntuación si existiesen, aunque la ficha menciona matching, no RDD.
+
+### Variables resultado
+
+- empleo en investigación;
+- afiliación a Seguridad Social;
+- tipo de contrato;
+- permanencia en sistema científico;
+- salida al extranjero;
+- carrera académica;
+- estabilidad laboral;
+- salario o base de cotización.
+
+### Grupo de comparación
+
+No beneficiarios similares entre solicitantes.
+
+Esto es mejor que comparar beneficiarios con cualquier joven investigador, porque todos los solicitantes revelan interés y elegibilidad.
+
+### Covariables razonables
+
+- puntuación de evaluación;
+- área científica;
+- universidad/centro;
+- año convocatoria;
+- edad;
+- sexo;
+- expediente;
+- experiencia previa;
+- publicaciones, si disponible;
+- tipo de ayuda solicitada;
+- región;
+- situación laboral previa.
+
+### Matching recomendado
+
+- Matching exacto por convocatoria y área.
+- PSM dentro de convocatoria.
+- Nearest neighbor con caliper.
+- Control por puntuación si está disponible.
+- Balance por variables académicas y laborales previas.
+
+### Limitaciones centrales
+
+Este es un caso perfecto para que en examen te pidan discutir problemas de datos:
+
+1. Periodo 2008-2012 no extrapolable.
+2. Crisis financiera como shock agregado.
+3. Trayectorias fuera de España mal observadas.
+4. Falta de información de otras ayudas.
+5. Posible selección por calidad investigadora no observada.
+
+### Cómo responder bien
+
+No prometas más causalidad de la que el diseño permite.
+
+Frase útil:
+
+> El matching mejora la comparabilidad entre beneficiarios y no beneficiarios observacionalmente similares, pero no elimina sesgos por características no observadas como motivación, redes académicas, calidad investigadora no medida o oportunidades internacionales.
+
+### Robustez
+
+- Restricción a solicitantes no beneficiarios como control.
+- Matching dentro de convocatoria.
+- Sensibilidad a no observables.
+- Resultados alternativos imputando de forma distinta la salida al extranjero.
+- Separar áreas científicas.
+- Separar hombres y mujeres.
+- Comparar corto y medio plazo.
+
+### Errores frecuentes
+
+- Tratar inactividad en Seguridad Social como desempleo sin matices.
+- No separar emigración de no empleo.
+- Usar controles no solicitantes.
+- Ignorar crisis 2008.
+- Mezclar convocatorias heterogéneas.
+
+---
+
+## 13. Políticas activas de empleo estatales
+
+### Qué se evalúa
+
+En el Spending Review de Políticas Activas de Empleo, AIReF identificó criterios heterogéneos de gestión y falta de orientación clara a colectivos específicos. La ficha pública menciona uso de **métodos de emparejamiento**.
+
+### Unidad de análisis
+
+Demandante de empleo / participante en servicio o programa.
+
+### Tratamiento
+
+Participación en servicios o programas de empleo.
+
+Puede incluir:
+
+- orientación;
+- formación;
+- intermediación;
+- incentivos;
+- itinerarios.
+
+### Resultado
+
+- inserción laboral;
+- duración del desempleo;
+- empleo estable;
+- salario;
+- permanencia en empleo.
+
+### Grupo de comparación
+
+Demandantes no participantes o participantes en otros servicios, emparejados por características previas.
+
+### Clave conceptual
+
+El mayor reto es la asignación no aleatoria:
+
+- los servicios públicos pueden seleccionar a personas más empleables;
+- o priorizar colectivos vulnerables;
+- los participantes pueden tener más motivación;
+- las comunidades autónomas aplican criterios heterogéneos.
+
+### Matching
+
+Covariables habituales:
+
+- edad;
+- sexo;
+- nivel educativo;
+- experiencia;
+- duración del desempleo;
+- ocupación;
+- prestación;
+- discapacidad;
+- nacionalidad;
+- historial laboral;
+- comunidad autónoma;
+- oficina de empleo.
+
+### Qué pediría un examen
+
+- Construir grupo tratado/control.
+- Estimar propensity score.
+- Revisar balance.
+- Calcular ATT sobre inserción.
+- Comparar resultados por colectivo.
+- Discutir sesgo de selección.
+
+### Error clave
+
+No comparar participantes con no participantes brutos. En PAE, esa comparación casi siempre está contaminada por selección.
+
+---
+
+## 14. Políticas activas de empleo en Castilla y León
+
+### Qué se evalúa
+
+AIReF evaluó políticas activas de empleo en Castilla y León. La ficha pública indica que se aplicaron:
+
+- métodos de emparejamiento;
+- técnicas de análisis contrafactual cuasiexperimental;
+- modelos de regresión paramétrica lineales y no lineales en algunos hallazgos.
+
+### Programas
+
+La ficha menciona, entre otros:
+
+- PRORGAN;
+- orientación y acompañamiento a la inserción;
+- programas de formación.
+
+### Resultado central
+
+Empleabilidad posterior de participantes.
+
+### Hallazgo metodológico importante
+
+Para algunos programas, como PRORGAN, la ficha pública indica que no se puede realizar una evaluación de impacto por falta de información adecuada y por problemas de diseño del programa.
+
+Esto es muy importante para examen: a veces la respuesta correcta es decir que **no hay identificación causal válida**.
+
+### Orientación y acompañamiento
+
+La ficha pública indica que la evaluación de impacto muestra efectos positivos de orientación y acompañamiento, aunque limitados a un proyecto concreto.
+
+### Estrategia
+
+Matching + modelos paramétricos:
+
+- emparejar participantes y no participantes;
+- controlar por covariables;
+- estimar probabilidad de inserción;
+- comparar resultados.
+
+### Covariables
+
+- historial laboral;
+- edad;
+- sexo;
+- formación;
+- ocupación;
+- duración del desempleo;
+- oficina/territorio;
+- prestaciones;
+- colectivo objetivo;
+- nivel de empleabilidad.
+
+### Claves de examen
+
+Una buena respuesta debe reconocer evaluabilidad:
+
+> Antes de estimar impacto, hay que verificar si el programa tiene criterios de selección claros, registros suficientes, fechas de entrada, grupo potencial de comparación y resultados medibles.
+
+### Robustez
+
+- Balance.
+- Restricción a personas elegibles.
+- Matching exacto por programa y convocatoria.
+- Sensibilidad a especificación.
+- Estimaciones por subgrupos.
+- Seguimiento temporal.
+
+### Errores frecuentes
+
+- Forzar una evaluación causal cuando el diseño no lo permite.
+- No distinguir evaluación descriptiva y evaluación de impacto.
+- No reconocer que programas generalistas dificultan el contrafactual.
+- Usar como controles personas no elegibles.
+
+---
+
+# Combinación Matching + DiD
+
+## 15. Patrón general en políticas activas de empleo
+
+Muchos estudios de empleo combinan matching y DiD porque:
+
+- el matching controla diferencias observables;
+- el DiD controla diferencias fijas inobservables;
+- juntos mejoran la credibilidad frente a una comparación simple.
+
+### Estructura tipo
+
+1. Definir población elegible.
+2. Estimar propensity score con variables pretratamiento.
+3. Emparejar tratados y controles.
+4. Comprobar balance.
+5. Construir panel antes/después.
+6. Estimar DiD sobre muestra emparejada.
+7. Analizar dinámica mensual.
+
+### Estimador
+
+\[
+ATT_{DiD} =
+\left(\overline{Y}_{T,post} - \overline{Y}_{T,pre}\right)
+-
+\left(\overline{Y}_{C,post} - \overline{Y}_{C,pre}\right)
+\]
+
+### Cuándo usarlo
+
+- Programas de empleo.
+- Formación.
+- Ayudas a contratación.
+- Autoempleo.
+- Becas con observaciones pre/post.
+- Programas empresariales.
+
+### Ventajas
+
+- Más defendible que matching puro.
+- Permite controlar diferencias permanentes.
+- Da lugar a gráficos dinámicos.
+
+### Limitaciones
+
+- Sigue requiriendo tendencias paralelas condicionales.
+- No corrige shocks diferenciales no observados.
+- Puede perder muestra.
+- Sensible a mala especificación del propensity score.
+
+---
+
+# Synthetic control
+
+## 16. Uso potencial en evaluaciones territoriales
+
+AIReF menciona el control sintético como una metodología de evaluación de impacto dentro de su repertorio metodológico. En las fichas públicas revisadas no se ha identificado una instancia concreta y clara de la División de Evaluación del Gasto Público donde se detalle su uso aplicado.
+
+Por tanto, conviene tratarlo como una metodología posible, pero menos probable que DiD, RDD o matching en examen.
+
+### Cuándo tendría sentido
+
+- Una única comunidad autónoma tratada.
+- Una ciudad que adopta una política.
+- Una reforma territorial.
+- Una infraestructura concreta.
+- Una intervención sin muchos tratados.
+
+### Unidad de análisis
+
+Territorio-año.
+
+### Tratamiento
+
+Intervención que afecta a una unidad agregada:
+
+- reforma sanitaria regional;
+- cambio educativo autonómico;
+- política fiscal regional;
+- infraestructura;
+- programa piloto regional.
+
+### Grupo de donantes
+
+Territorios no tratados.
+
+### Idea
+
+Construir una combinación ponderada de territorios no tratados que reproduzca la trayectoria pretratamiento del territorio tratado.
+
+\[
+Y_{treated,t} - \sum_j w_j Y_{j,t}
+\]
+
+### Variables predictoras
+
+- resultado pretratamiento;
+- PIB per cápita;
+- población;
+- desempleo;
+- estructura sectorial;
+- gasto público;
+- variables demográficas.
+
+### Validaciones
+
+- Ajuste pretratamiento.
+- RMSPE pre.
+- Placebos espaciales.
+- Placebo temporal.
+- Sensibilidad a unidades donantes.
+- Leave-one-out.
+
+### Errores frecuentes
+
+- Usarlo con muchos tratados cuando DiD sería más natural.
+- No mirar ajuste pretratamiento.
+- Incluir unidades contaminadas en el donor pool.
+- Interpretar resultados sin placebos.
+- Elegir predictores postratamiento.
+
+---
+
+# Variables instrumentales
+
+## 17. Uso como metodología potencial
+
+AIReF menciona variables instrumentales entre las técnicas cuantitativas de evaluación de impacto. En las fichas revisadas para estos apuntes no se ha identificado una instancia concreta con detalle suficiente para documentar un caso aplicado específico de la División.
+
+Aun así, conviene saber reconocer cuándo podría aparecer.
+
+### Cuándo tendría sentido
+
+- Tratamiento endógeno.
+- Elegibilidad o intensidad determinada por una regla externa.
+- Distancia a oficina/centro.
+- Variación administrativa.
+- Sorteo parcial.
+- Cambios normativos que afectan a unos grupos más que otros.
+
+### Condiciones
+
+Un instrumento \(Z\) debe cumplir:
+
+1. Relevancia: afecta al tratamiento.
+2. Exclusión: afecta al resultado solo a través del tratamiento.
+3. Independencia: no correlaciona con no observables.
+4. Monotonicidad si se interpreta LATE.
+
+### Examen
+
+Si aparece IV, lo más probable es que pidan:
+
+- primera etapa;
+- segunda etapa;
+- interpretación LATE;
+- discutir exclusión;
+- F-stat de instrumento débil.
+
+---
+
+# Ensayos controlados aleatorizados
+
+## 18. RCT como recomendación de evaluabilidad
+
+En la ficha de Políticas Activas de Empleo en Castilla y León se menciona que, cuando proceda, pueden realizarse proyectos piloto que permitan estimar impacto mediante ensayos controlados aleatorizados antes de escalar programas.
+
+Esto sugiere que AIReF valora RCT como diseño ex ante, aunque no sea lo más habitual en evaluaciones ex post.
+
+### Cuándo tendría sentido
+
+- Programa piloto.
+- Exceso de demanda.
+- Fases de despliegue.
+- Asignación aleatoria de invitaciones.
+- Nudges administrativos.
+- Servicios de orientación.
+
+### Claves
+
+- Randomización individual o por oficina.
+- Balance basal.
+- Cumplimiento imperfecto.
+- ITT y TOT.
+- Attrition.
+- Spillovers.
+
+### Examen
+
+Podría aparecer como pregunta conceptual:
+
+> Diseñe una evaluación ex ante para estimar el impacto causal de un nuevo programa.
+
+Respuesta:
+
+1. Definir población elegible.
+2. Aleatorizar oferta o acceso.
+3. Registrar tratamiento asignado y recibido.
+4. Medir outcomes administrativos.
+5. Estimar ITT.
+6. Si hay incumplimiento, usar asignación como instrumento para tratamiento recibido.
+
+---
+
+# Apéndice: plantillas rápidas para examen
+
+## Plantilla DiD
+
+```r
+# Variables básicas
+df <- df |>
+  mutate(
+    treated = if_else(!is.na(first_treat_year) & year >= first_treat_year, 1, 0),
+    ever_treated = if_else(!is.na(first_treat_year), 1, 0),
+    event_time = year - first_treat_year
+  )
+
+# TWFE básico
+model <- fixest::feols(
+  y ~ treated + controls | id + year,
+  cluster = ~id,
+  data = df
+)
+
+# Event-study
+event <- fixest::feols(
+  y ~ i(event_time, ever_treated, ref = -1) + controls | id + year,
+  cluster = ~id,
+  data = df
+)
+```
+
+### Qué escribir
+
+- El coeficiente mide el cambio diferencial en tratados respecto al contrafactual.
+- Identificación: tendencias paralelas.
+- Validación: leads no significativos.
+- Errores clusterizados por unidad.
+- Si adopción escalonada: usar estimadores robustos.
+
+## Plantilla Matching / PSM
+
+```r
+ps <- glm(
+  treat ~ age + sex + education + prior_employment + region,
+  family = binomial(),
+  data = df_pre
+)
+
+df_pre$pscore <- predict(ps, type = "response")
+```
+
+### Qué escribir
+
+- El propensity score estima la probabilidad de recibir tratamiento dadas covariables pretratamiento.
+- El ATT compara tratados con controles similares.
+- La clave es el balance, no el AUC del modelo.
+- No usar variables postratamiento.
+
+## Plantilla RDD
+
+```r
+df <- df |>
+  mutate(
+    running_centered = running - cutoff,
+    treat = if_else(running >= cutoff, 1, 0)
+  )
+
+model <- lm(
+  y ~ treat + running_centered + treat:running_centered,
+  data = df |> filter(abs(running_centered) <= bandwidth)
+)
+```
+
+### Qué escribir
+
+- El efecto es local alrededor del umbral.
+- Hay que comprobar densidad y balance.
+- Probar bandwidths alternativos.
+- Evitar polinomios altos.
+
+## Plantilla Matching + DiD
+
+```r
+# 1. Estimar pscore pretratamiento
+# 2. Emparejar
+# 3. Recuperar panel de matched ids
+# 4. DiD en muestra emparejada
+
+model <- fixest::feols(
+  y ~ treated_post | id + time,
+  cluster = ~id,
+  data = matched_panel
+)
+```
+
+### Qué escribir
+
+- Matching crea comparabilidad en observables.
+- DiD controla diferencias fijas.
+- El supuesto es tendencias paralelas condicionales.
+
+# Apéndice: checklist de 90 minutos
+
+## Primeros 20 minutos: datos
+
+- Importar correctamente.
+- Revisar dimensiones.
+- Revisar tipos.
+- Detectar duplicados.
+- Fusionar bases.
+- Crear tratamiento.
+- Crear outcomes.
+- Revisar missing/outliers.
+
+## Minutos 20-40: descriptivo
+
+- Tabla de tratados/no tratados.
+- Evolución outcome.
+- Distribución tratamiento.
+- Balance básico.
+- Gráfico pre/post.
+
+## Minutos 40-70: causal
+
+Elegir metodología:
+
+- panel + adopción temporal → DiD/event-study;
+- umbral → RDD;
+- beneficiarios/no beneficiarios cross-section → matching;
+- programa empleo con panel → matching + DiD;
+- una región tratada → synthetic control.
+
+## Minutos 70-90: informe
+
+- Explicar identificación.
+- Poner tabla principal.
+- Poner gráfico clave.
+- Interpretar magnitud.
+- Mencionar limitaciones.
+- Proponer robustez.
+
+# Apéndice: errores transversales que penalizan
+
+1. No explicar el contrafactual.
+2. No separar análisis descriptivo de causal.
+3. No construir bien el tratamiento.
+4. Usar variables posteriores como controles.
+5. No mirar tendencias previas.
+6. No clusterizar errores.
+7. Interpretar coeficientes sin unidades.
+8. No discutir limitaciones.
+9. No distinguir corto y largo plazo.
+10. No conectar resultado con política pública.
+
+# Orientación final para posibles exámenes AIReF
+
+Los diseños más probables, por frecuencia y facilidad de examen, son:
+
+1. **DiD con panel y tratamiento escalonado**  
+   Ejemplo: residuos, programas empresariales, incapacidad temporal, ayudas de empleo.
+
+2. **Matching o PSM**  
+   Ejemplo: becas, talento I+D+i, políticas activas de empleo.
+
+3. **Matching + DiD**  
+   Ejemplo: programas de empleo con seguimiento temporal.
+
+4. **RDD básico**  
+   Ejemplo: beneficios fiscales, reformas con umbral o fecha de corte.
+
+5. **Event-study**  
+   Casi siempre como extensión natural del DiD.
+
+La regla práctica es:
+
+> Si ves municipios/empresas/personas durante varios años y una política que empieza en distinto momento, piensa en DiD/event-study.  
+> Si ves beneficiarios y no beneficiarios sin regla clara de asignación, piensa en matching.  
+> Si ves un umbral normativo, piensa en RDD.  
+> Si ves una sola región tratada, piensa en synthetic control.

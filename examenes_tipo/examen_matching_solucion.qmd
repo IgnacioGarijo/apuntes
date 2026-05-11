@@ -1,0 +1,129 @@
+---
+title: "Solucion - Matching - Becas universitarias"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+set.seed(20260512)
+options(scipen = 999)
+
+# Inspiracion: AIReF, evaluaciones de becas universitarias y de talento I+D+i,
+# que emplean tecnicas de emparejamiento como Mahalanobis, Propensity Score e IPTW.
+
+n <- 4200
+al <- data.frame(
+  id_alumno = sprintf("A%05d", 1:n),
+  sexo = sample(c("Mujer","Hombre"), n, TRUE),
+  rama = sample(c("Ciencias", "Ingenieria", "Salud", "Sociales", "Humanidades"), n, TRUE),
+  nota_acceso = pmin(14, pmax(5, rnorm(n, 8.6, 1.6))),
+  renta_familiar = round(exp(rnorm(n, log(26000), .55))),
+  creditos_matriculados = sample(c(48,54,60,66,72), n, TRUE, c(.05,.08,.66,.14,.07)),
+  edad = sample(18:30, n, TRUE, prob=c(.35,.22,.14,.09,.05,.04,.03,.025,.02,.015,.01,.005,.003))
+)
+al$renta_familiar[sample(n,1)] <- 9999999
+al$nota_acceso[sample(n,1)] <- -1
+lin <- 1.1 - .000055*al$renta_familiar + .23*al$nota_acceso + .15*(al$creditos_matriculados>=60) - .05*(al$edad>23)
+ps <- 1/(1+exp(-lin))
+al$beca <- rbinom(n,1,ps)
+# Outcomes sinteticos: beca aumenta permanencia y creditos superados, modestamente
+al$creditos_superados <- pmin(al$creditos_matriculados, pmax(0, round(22 + 3.8*al$nota_acceso - .00009*al$renta_familiar + 4.5*al$beca + rnorm(n,0,9))))
+al$continua_segundo <- rbinom(n,1,plogis(-3 + .42*al$nota_acceso - .000025*al$renta_familiar + .45*al$beca + .2*(al$creditos_superados>=45)))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(al, "datos/alumnos_becas.csv", row.names=FALSE)
+cat("Se ha creado datos/alumnos_becas.csv\n")
+```
+
+```{r librerias}
+library(dplyr)
+library(ggplot2)
+```
+
+# Solucion orientativa
+
+## Bloque 1
+
+```{r bloque1}
+al <- read.csv("datos/alumnos_becas.csv")
+summary(al[, c("nota_acceso", "renta_familiar")])
+
+al <- al %>%
+  mutate(
+    nota_acceso_imp = ifelse(nota_acceso < 5 | nota_acceso > 14, NA, nota_acceso),
+    renta_familiar_imp = ifelse(renta_familiar > quantile(renta_familiar, .995), NA, renta_familiar)
+  ) %>%
+  mutate(nota_acceso_imp = ifelse(is.na(nota_acceso_imp), median(nota_acceso_imp, na.rm=TRUE), nota_acceso_imp),
+         renta_familiar_imp = ifelse(is.na(renta_familiar_imp), median(renta_familiar_imp, na.rm=TRUE), renta_familiar_imp),
+         renta_log = log(renta_familiar_imp),
+         carga_completa = as.integer(creditos_matriculados >= 60),
+         tercil_renta = ntile(renta_familiar_imp, 3))
+
+al %>% group_by(beca) %>% summarise(n=n(), nota=mean(nota_acceso_imp), renta=mean(renta_familiar_imp), edad=mean(edad), creditos=mean(creditos_matriculados), .groups="drop")
+al %>% group_by(beca) %>% summarise(continuidad=mean(continua_segundo), creditos_superados=mean(creditos_superados), .groups="drop")
+```
+
+## Bloque 2
+
+```{r bloque2, fig.width=7, fig.height=4}
+ps_mod <- glm(beca ~ nota_acceso_imp + renta_log + edad + carga_completa + sexo + rama,
+              family=binomial(), data=al)
+al$ps <- predict(ps_mod, type="response")
+
+ggplot(al, aes(ps, linetype=factor(beca))) + geom_density() + labs(linetype="Beca", x="Propensity score")
+
+# Matching 1:1 simple por vecino mas cercano sin reemplazo implementado en base R.
+treated <- al %>% filter(beca==1) %>% arrange(ps)
+control <- al %>% filter(beca==0) %>% arrange(ps)
+used <- rep(FALSE, nrow(control))
+pairs <- data.frame()
+for(i in seq_len(nrow(treated))){
+  dist <- abs(control$ps - treated$ps[i])
+  dist[used] <- Inf
+  j <- which.min(dist)
+  if(is.finite(dist[j]) && dist[j] <= .05){
+    used[j] <- TRUE
+    pairs <- rbind(pairs, data.frame(id_t=treated$id_alumno[i], id_c=control$id_alumno[j], dist=dist[j]))
+  }
+}
+matched <- bind_rows(
+  al %>% semi_join(pairs, by=c("id_alumno"="id_t")) %>% mutate(muestra="tratados_matched"),
+  al %>% semi_join(pairs, by=c("id_alumno"="id_c")) %>% mutate(muestra="controles_matched")
+)
+nrow(pairs)
+
+smd <- function(data, var){
+  m1 <- mean(data[[var]][data$beca==1]); m0 <- mean(data[[var]][data$beca==0])
+  s <- sqrt((var(data[[var]][data$beca==1]) + var(data[[var]][data$beca==0]))/2)
+  (m1-m0)/s
+}
+vars <- c("nota_acceso_imp", "renta_log", "edad", "creditos_matriculados", "ps")
+data.frame(variable=vars,
+           smd_antes=sapply(vars, function(v) smd(al,v)),
+           smd_despues=sapply(vars, function(v) smd(matched,v)))
+```
+
+## Bloque 3
+
+```{r bloque3}
+# ATT por pares: diferencia tratado - control dentro de cada emparejamiento
+mt <- al %>% select(id_alumno, continua_segundo, creditos_superados)
+res <- pairs %>%
+  left_join(mt, by=c("id_t"="id_alumno")) %>% rename(cont_t=continua_segundo, cred_t=creditos_superados) %>%
+  left_join(mt, by=c("id_c"="id_alumno")) %>% rename(cont_c=continua_segundo, cred_c=creditos_superados) %>%
+  mutate(diff_cont = cont_t - cont_c, diff_cred = cred_t - cred_c)
+
+c(ATT_continuidad = mean(res$diff_cont), ATT_creditos = mean(res$diff_cred))
+
+brutas <- al %>% group_by(beca) %>% summarise(continuidad=mean(continua_segundo), creditos=mean(creditos_superados), .groups="drop")
+brutas
+c(diff_bruta_cont = diff(brutas$continuidad), diff_bruta_creditos = diff(brutas$creditos))
+```
+
+Interpretacion: el efecto estimado por matching deberia ser positivo, pero distinto de la diferencia bruta porque los becarios tienen menor renta y diferente rendimiento academico inicial. El estimador se interpreta como ATT si, condicionando por covariables observadas, la recepcion de beca es independiente de los resultados potenciales y existe soporte comun suficiente.

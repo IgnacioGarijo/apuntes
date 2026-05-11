@@ -1,0 +1,74 @@
+---
+title: "Examen practico - Matching - Becas universitarias"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+set.seed(20260512)
+options(scipen = 999)
+
+# Inspiracion: AIReF, evaluaciones de becas universitarias y de talento I+D+i,
+# que emplean tecnicas de emparejamiento como Mahalanobis, Propensity Score e IPTW.
+
+n <- 4200
+al <- data.frame(
+  id_alumno = sprintf("A%05d", 1:n),
+  sexo = sample(c("Mujer","Hombre"), n, TRUE),
+  rama = sample(c("Ciencias", "Ingenieria", "Salud", "Sociales", "Humanidades"), n, TRUE),
+  nota_acceso = pmin(14, pmax(5, rnorm(n, 8.6, 1.6))),
+  renta_familiar = round(exp(rnorm(n, log(26000), .55))),
+  creditos_matriculados = sample(c(48,54,60,66,72), n, TRUE, c(.05,.08,.66,.14,.07)),
+  edad = sample(18:30, n, TRUE, prob=c(.35,.22,.14,.09,.05,.04,.03,.025,.02,.015,.01,.005,.003))
+)
+al$renta_familiar[sample(n,1)] <- 9999999
+al$nota_acceso[sample(n,1)] <- -1
+lin <- 1.1 - .000055*al$renta_familiar + .23*al$nota_acceso + .15*(al$creditos_matriculados>=60) - .05*(al$edad>23)
+ps <- 1/(1+exp(-lin))
+al$beca <- rbinom(n,1,ps)
+# Outcomes sinteticos: beca aumenta permanencia y creditos superados, modestamente
+al$creditos_superados <- pmin(al$creditos_matriculados, pmax(0, round(22 + 3.8*al$nota_acceso - .00009*al$renta_familiar + 4.5*al$beca + rnorm(n,0,9))))
+al$continua_segundo <- rbinom(n,1,plogis(-3 + .42*al$nota_acceso - .000025*al$renta_familiar + .45*al$beca + .2*(al$creditos_superados>=45)))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(al, "datos/alumnos_becas.csv", row.names=FALSE)
+cat("Se ha creado datos/alumnos_becas.csv\n")
+```
+
+# Contexto
+
+Este examen simula una evaluacion inspirada en el estudio de AIReF sobre becas universitarias. La pregunta es si recibir beca mejora la permanencia y el rendimiento academico. Como la asignacion no es aleatoria, se propone construir un contrafactual mediante matching o propensity score.
+
+Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, pero no utilizar IA.
+
+# Bloque 1: preparacion y data wrangling (12 puntos)
+
+a. Importe `datos/alumnos_becas.csv`. Revise dimensiones, tipos y distribuciones. Detecte outliers en renta y nota de acceso e impute valores razonables.
+
+b. Construya variables auxiliares: `renta_log`, `carga_completa` y una clasificacion de renta por terciles.
+
+c. Describa diferencias iniciales entre becarios y no becarios en nota, renta, edad, creditos matriculados y rama de estudios.
+
+d. Calcule las tasas brutas de continuidad y los creditos superados medios por grupo de beca.
+
+# Bloque 2: propensity score y balance (10 puntos)
+
+a. Estime un modelo logit de probabilidad de recibir beca usando covariables pretratamiento.
+
+b. Represente la distribucion del propensity score para becarios y no becarios. Comente solapamiento.
+
+c. Construya un matching 1:1 por vecino mas cercano sin reemplazo o, alternativamente, ponderacion IPTW. Evalúe el balance antes y despues mediante diferencias estandarizadas.
+
+# Bloque 3: impacto causal con matching (8 puntos)
+
+a. Estime el efecto medio sobre los tratados de la beca en `continua_segundo` y `creditos_superados`.
+
+b. Compare los resultados con las diferencias brutas. Explique por que cambian.
+
+c. Discuta supuestos: seleccion en observables, soporte comun y posibles variables omitidas.

@@ -1,0 +1,221 @@
+---
+title: "Metodologías de inferencia causal en evaluaciones de AIReF"
+author: "ChatGPT"
+format:
+  html:
+    toc: true
+    theme: cosmo
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+# Objetivo
+
+Este documento resume de forma breve algunas metodologías de inferencia causal utilizadas por la División de Evaluación del Gasto Público de AIReF en *Spending Reviews*, opiniones y estudios. El objetivo es identificar patrones y metodologías que potencialmente pueden aparecer en ejercicios prácticos de oposición.
+
+No pretende ser un inventario exhaustivo ni técnico, sino una guía rápida de orientación.
+
+# Difference-in-Differences (DiD)
+
+## Recogida puerta a puerta (PaP) de residuos
+
+- Evaluación del impacto de la implantación del sistema PaP sobre:
+  - porcentaje de recogida selectiva;
+  - cantidad de residuos generados.
+- Uso de datos panel municipio-año.
+- Comparación entre municipios tratados y no tratados.
+- Análisis dinámico tipo *event-study*.
+
+### Ideas tipo examen
+
+- Construcción de variable tratamiento.
+- Staggered adoption.
+- FE municipio y año.
+- Heterogeneidad por tamaño municipal.
+
+---
+
+## Instrumentos financieros para empresas (ICO / financiación pública)
+
+- Estudios y opiniones sobre programas de apoyo financiero a empresas.
+- Uso de estrategias cuasi-experimentales comparando empresas beneficiarias y no beneficiarias.
+- Resultados típicos:
+  - empleo;
+  - supervivencia;
+  - inversión.
+
+### Ideas tipo examen
+
+- Panel empresa-año.
+- Tendencias paralelas.
+- DiD con adopción escalonada.
+- Placebos y gráficos pretratamiento.
+
+---
+
+## Políticas activas de empleo
+
+- Evaluaciones sobre programas de inserción laboral y formación.
+- Comparación entre participantes y grupos de control.
+- Variables resultado:
+  - empleo;
+  - salarios;
+  - duración del desempleo.
+
+### Ideas tipo examen
+
+- DiD + matching.
+- Efectos dinámicos.
+- Heterogeneidad por edad o sexo.
+
+# Regression Discontinuity Design (RDD)
+
+## Beneficios fiscales y umbrales de renta
+
+- Algunas evaluaciones de beneficios fiscales explotan reglas de elegibilidad basadas en umbrales.
+- Comparación de individuos muy cercanos al punto de corte.
+- Variables típicas:
+  - renta;
+  - deducciones;
+  - acceso a ayudas.
+
+### Ideas tipo examen
+
+- Manipulación del running variable.
+- McCrary test.
+- Local linear regression.
+- Bandwidth selection.
+- Gráficos alrededor del cutoff.
+
+---
+
+## Becas y ayudas educativas
+
+- Evaluaciones basadas en notas mínimas o umbrales económicos.
+- Comparación de estudiantes justo por encima y por debajo del umbral.
+
+### Ideas tipo examen
+
+- Sharp vs fuzzy RDD.
+- Balance covariables.
+- Robustez a bandwidths.
+
+# Matching / Propensity Score Matching (PSM)
+
+## Programas de empleo y formación
+
+- Comparación entre beneficiarios y no beneficiarios similares.
+- Uso de:
+  - Propensity Score Matching;
+  - nearest neighbors;
+  - weighting.
+
+### Variables frecuentes
+
+- Edad.
+- Sexo.
+- Nivel educativo.
+- Historial laboral.
+- Región.
+
+### Ideas tipo examen
+
+- Estimación del propensity score.
+- Balance de covariables.
+- ATT.
+- Love plots.
+
+---
+
+## Programas educativos y becas
+
+- Evaluaciones de impacto sobre:
+  - abandono;
+  - rendimiento;
+  - continuidad educativa.
+
+### Ideas tipo examen
+
+- Matching exacto o por propensity score.
+- Comparación antes/después del matching.
+- Sensibilidad a especificación.
+
+# Synthetic Control
+
+## Evaluaciones territoriales
+
+- Uso más ocasional.
+- Aplicable cuando existe una intervención en una sola región o territorio.
+- Construcción de una región sintética a partir de combinación ponderada de controles.
+
+### Ideas tipo examen
+
+- Comparación visual tratado vs sintético.
+- Placebos espaciales.
+- RMSPE.
+
+# Patrones comunes en los exámenes
+
+## 1. Data wrangling importante
+
+Casi todos los ejercicios incluyen:
+
+- limpieza de datos;
+- detección de outliers;
+- imputaciones simples;
+- merges;
+- creación de variables;
+- reshape o panelización.
+
+## 2. Mucho peso en visualización
+
+Suelen pedir:
+
+- gráficos descriptivos;
+- evolución temporal;
+- validación visual de supuestos;
+- gráficos de heterogeneidad.
+
+## 3. Interpretación aplicada
+
+El foco no suele estar en derivaciones matemáticas, sino en:
+
+- justificar identificación causal;
+- interpretar coeficientes;
+- discutir limitaciones;
+- conectar resultados con política pública.
+
+## 4. Metodologías más probables
+
+Las metodologías que más sentido tienen para un examen tipo AIReF son:
+
+1. Difference-in-Differences.
+2. Event-study.
+3. Matching / PSM.
+4. RDD.
+5. Panel con efectos fijos.
+
+Synthetic control parece bastante menos probable por complejidad y tiempo.
+
+# Conclusión
+
+La orientación típica de los ejercicios de AIReF combina:
+
+- preparación de datos;
+- visualización;
+- identificación causal;
+- interpretación aplicada.
+
+El patrón más repetido parece ser:
+
+> datos panel + política pública + tratamiento escalonado + estimación causal + heterogeneidad.
+
+Por tanto, para preparar el examen merece especialmente la pena practicar:
+
+- DiD con panel;
+- event-study;
+- matching;
+- RDD básico;
+- limpieza y transformación rápida de datos en R.

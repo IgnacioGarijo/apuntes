@@ -1,0 +1,83 @@
+---
+title: "Examen practico - DiD - Instrumentos financieros pyme"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+set.seed(20260511)
+options(scipen = 999)
+
+# Inspiracion: AIReF, Instrumentos financieros de apoyo a la pyme reforzados por el PRTR,
+# con analisis causal contrafactual mediante diferencias en diferencias escalonado.
+
+n <- 1200
+emp <- data.frame(
+  id_empresa = sprintf("P%05d", 1:n),
+  ccaa = sample(c("Andalucia", "Cataluna", "Madrid", "Valencia", "Pais Vasco", "Castilla y Leon"), n, TRUE),
+  sector = sample(c("Manufacturas", "Hosteleria", "Comercio", "TIC", "Servicios profesionales"), n, TRUE),
+  tamano = sample(c("micro", "pequena", "mediana"), n, TRUE, c(.45,.40,.15)),
+  empleados_base = round(exp(rnorm(n, log(18), .75))),
+  endeudamiento_base = pmax(.05, rnorm(n, .52, .18))
+)
+cohortes <- sample(c(2020,2021,2022,2023,Inf), n, TRUE, c(.16,.18,.16,.10,.40))
+emp$anio_apoyo <- cohortes
+emp$empleados_base[sample(n,1)] <- 50000
+emp$endeudamiento_base[sample(n,1)] <- 9
+
+anios <- 2017:2024
+panel <- merge(emp, data.frame(anio=anios))
+panel$tratamiento <- as.integer(panel$anio >= panel$anio_apoyo & is.finite(panel$anio_apoyo))
+panel$event_time <- ifelse(is.finite(panel$anio_apoyo), panel$anio - panel$anio_apoyo, NA)
+size_eff <- ifelse(panel$tamano=="micro", -2, ifelse(panel$tamano=="pequena", 0, 4))
+trend <- 1.2*(panel$anio-2017)
+eff <- ifelse(panel$tratamiento==1, pmin(pmax(panel$event_time,0),4)*1.7 + 2.5, 0)
+panel$empleo <- round(pmax(1, panel$empleados_base + trend + size_eff + eff + rnorm(nrow(panel),0,4)))
+panel$credito_miles <- pmax(0, 80 + 6*panel$empleados_base + 15*(panel$anio-2017) +
+                             ifelse(panel$tratamiento==1, 55 + 18*pmax(panel$event_time,0),0) +
+                             rnorm(nrow(panel),0,75))
+panel$tipo_interes <- pmax(.5, 4.5 - .08*(panel$anio-2017) - ifelse(panel$tratamiento==1, .25, 0) + rnorm(nrow(panel),0,.45))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(emp, "datos/empresas_pyme.csv", row.names=FALSE)
+write.csv(panel, "datos/panel_pyme.csv", row.names=FALSE)
+cat("Se han creado datos/empresas_pyme.csv y datos/panel_pyme.csv\n")
+```
+
+# Contexto
+
+Este examen simula una evaluacion inspirada en el estudio de AIReF sobre instrumentos financieros de apoyo a la pyme reforzados por el PRTR. Se evalua el efecto de recibir apoyo financiero publico sobre empleo, credito y coste financiero.
+
+Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, pero no utilizar IA.
+
+# Bloque 1: preparacion y data wrangling (12 puntos)
+
+a. Importe `datos/empresas_pyme.csv` y `datos/panel_pyme.csv`. Compruebe claves, dimensiones y consistencia temporal. Detecte outliers en empleados base y endeudamiento base e impute valores razonables.
+
+b. Cree variables de tratamiento: `tratamiento`, `post`, `ever_treated`, `cohorte` y `event_time`. Compruebe cuantas empresas reciben apoyo por cohorte y cuantas no lo reciben nunca.
+
+c. Calcule para cada año el empleo medio, credito medio y tipo de interes medio por grupo tratado alguna vez frente a nunca tratado.
+
+d. Restrinja la muestra al horizonte dinamico entre -3 y +4 años respecto a la recepcion del apoyo. Explique que observaciones quedan fuera.
+
+# Bloque 2: descriptivos y graficos (10 puntos)
+
+a. Grafique la evolucion del empleo medio para empresas tratadas alguna vez y nunca tratadas.
+
+b. Grafique medias de empleo por tiempo relativo al tratamiento, usando como referencia el año -1.
+
+c. Explore si las empresas tratadas difieren ex ante por tamaño, sector y endeudamiento base. Comente implicaciones para la validez del DiD.
+
+# Bloque 3: analisis causal DiD (8 puntos)
+
+a. Estime un modelo de diferencias en diferencias con efectos fijos de empresa y año para el empleo.
+
+b. Estime un modelo dinamico con dummies de tiempo relativo de -3 a +4, omitiendo el año -1. Represente o tabule los coeficientes.
+
+c. Repita el analisis para credito y tipo de interes. Interprete resultados, supuestos y amenazas.

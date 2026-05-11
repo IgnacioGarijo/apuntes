@@ -1,0 +1,146 @@
+---
+title: "Solucion - RDD - Beneficios fiscales I+D+i"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+# Primer chunk: genera datos sinteticos para el examen
+set.seed(20260510)
+options(scipen = 999)
+
+# Inspiracion: AIReF, Spending Review de Beneficios Fiscales, que combina
+# Diff-in-Diff, regresiones en discontinuidad y microsimuladores fiscales.
+# El ejercicio simula una deduccion fiscal por I+D+i con un umbral de elegibilidad.
+
+n <- 3500
+empresas <- data.frame(
+  id_empresa = sprintf("E%05d", 1:n),
+  sector = sample(c("Industria", "TIC", "Servicios", "Comercio"), n, TRUE, c(.30,.22,.28,.20)),
+  ccaa = sample(c("Andalucia", "Cataluna", "Madrid", "Valencia", "Pais Vasco", "Galicia"), n, TRUE),
+  empleados_2020 = round(exp(rnorm(n, log(45), .85))),
+  facturacion_2020_miles = round(exp(rnorm(n, log(3500), .9)), 1),
+  intensidad_idi = pmax(0, pmin(.20, rnorm(n, .050, .035)))
+)
+# Outliers intencionados
+empresas$empleados_2020[sample(n,1)] <- 99999
+empresas$facturacion_2020_miles[sample(n,1)] <- -25
+
+# Umbral de elegibilidad: intensidad de gasto en I+D+i >= 5% de la facturacion
+empresas$running <- empresas$intensidad_idi - .05
+empresas$elegible <- as.integer(empresas$running >= 0)
+
+anios <- 2019:2023
+panel <- merge(empresas, data.frame(anio = anios))
+panel$post <- as.integer(panel$anio >= 2021)
+panel$deduccion_miles <- ifelse(panel$elegible == 1 & panel$post == 1,
+                                pmax(0, 25 + 1400*panel$running + rnorm(nrow(panel), 0, 18)), 0)
+sector_eff <- setNames(c(5,12,0,-3), c("Industria","TIC","Servicios","Comercio"))
+trend <- (panel$anio - 2019) * 3
+trat_effect <- ifelse(panel$elegible == 1 & panel$post == 1, 9 + 2*(panel$anio-2021), 0)
+panel$gasto_idi_miles <- 80 + 0.012*panel$facturacion_2020_miles +
+  0.18*panel$empleados_2020 + sector_eff[panel$sector] + trend + trat_effect +
+  45*panel$running + rnorm(nrow(panel), 0, 22)
+panel$gasto_idi_miles <- pmax(0, panel$gasto_idi_miles)
+panel$empleo <- round(pmax(1, panel$empleados_2020 + (panel$anio-2020)*rnorm(nrow(panel), 1.2, .6) +
+                            ifelse(panel$elegible == 1 & panel$post == 1, 1.5, 0)))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(empresas, "datos/empresas_idi.csv", row.names = FALSE)
+write.csv(panel, "datos/panel_idi.csv", row.names = FALSE)
+
+cat("Se han creado datos/empresas_idi.csv y datos/panel_idi.csv\n")
+```
+
+```{r librerias}
+library(dplyr)
+library(ggplot2)
+```
+
+# Solucion orientativa
+
+## Bloque 1
+
+```{r bloque1}
+emp <- read.csv("datos/empresas_idi.csv")
+pan <- read.csv("datos/panel_idi.csv")
+
+dim(emp); dim(pan)
+stopifnot(!anyDuplicated(emp$id_empresa))
+
+# Outliers: empleados excesivamente alto y facturacion negativa
+summary(emp[, c("empleados_2020", "facturacion_2020_miles")])
+emp <- emp %>%
+  mutate(
+    empleados_2020_imp = ifelse(empleados_2020 > quantile(empleados_2020, .995, na.rm=TRUE), NA, empleados_2020),
+    facturacion_2020_imp = ifelse(facturacion_2020_miles <= 0, NA, facturacion_2020_miles)
+  ) %>%
+  group_by(sector) %>%
+  mutate(
+    empleados_2020_imp = ifelse(is.na(empleados_2020_imp), median(empleados_2020_imp, na.rm=TRUE), empleados_2020_imp),
+    facturacion_2020_imp = ifelse(is.na(facturacion_2020_imp), median(facturacion_2020_imp, na.rm=TRUE), facturacion_2020_imp)
+  ) %>% ungroup()
+
+pan <- pan %>%
+  select(-empleados_2020, -facturacion_2020_miles) %>%
+  left_join(emp %>% select(id_empresa, empleados_2020_imp, facturacion_2020_imp), by="id_empresa") %>%
+  mutate(
+    running = intensidad_idi - .05,
+    elegible = as.integer(running >= 0),
+    post = as.integer(anio >= 2021),
+    tratamiento = as.integer(elegible == 1 & post == 1),
+    dist_umbral_pp = 100*running
+  )
+
+pan %>% filter(anio == 2021) %>%
+  group_by(sector) %>%
+  summarise(pct_elegibles = mean(elegible)*100,
+            deduccion_media = mean(deduccion_miles),
+            gasto_idi_medio = mean(gasto_idi_miles), .groups="drop")
+
+local <- pan %>% filter(abs(running) <= .03)
+local %>% filter(anio == 2021) %>% count(elegible)
+```
+
+## Bloque 2
+
+```{r bloque2, fig.width=7, fig.height=4}
+p2021 <- local %>% filter(anio == 2021) %>%
+  mutate(bin = cut(running, breaks = seq(-.03,.03,.005), include.lowest=TRUE)) %>%
+  group_by(bin) %>% summarise(running_m = mean(running), gasto_m = mean(gasto_idi_miles), .groups="drop")
+
+ggplot(p2021, aes(running_m, gasto_m)) +
+  geom_point() + geom_vline(xintercept=0, linetype="dashed") +
+  labs(x="Distancia al umbral", y="Gasto medio en I+D+i", title="RDD descriptivo, 2021")
+
+local %>% group_by(anio, elegible) %>% summarise(gasto=mean(gasto_idi_miles), .groups="drop") %>%
+  ggplot(aes(anio, gasto, group=factor(elegible), linetype=factor(elegible))) +
+  geom_line() + geom_point() + labs(linetype="Elegible", y="Gasto medio I+D+i")
+
+local %>% filter(anio == 2021) %>%
+  ggplot(aes(running, empleados_2020_imp)) + geom_point(alpha=.2) +
+  geom_smooth(method="lm", se=FALSE) + geom_vline(xintercept=0, linetype="dashed")
+```
+
+## Bloque 3
+
+```{r bloque3}
+est_rdd <- function(h){
+  d <- pan %>% filter(anio == 2021, abs(running) <= h)
+  m1 <- lm(gasto_idi_miles ~ elegible + running + elegible:running, data=d)
+  m2 <- lm(gasto_idi_miles ~ elegible + running + elegible:running + log(empleados_2020_imp) + log(facturacion_2020_imp) + sector, data=d)
+  data.frame(h=h,
+             tau_sin_controles = coef(m1)["elegible"],
+             tau_con_controles = coef(m2)["elegible"])
+}
+res <- bind_rows(est_rdd(.02), est_rdd(.03), est_rdd(.04))
+res
+```
+
+Interpretacion: el coeficiente de `elegible` mide el salto local en el gasto en I+D+i justo en el umbral del 5%. En estos datos sinteticos deberia aparecer un efecto positivo de alrededor de 8-12 miles de euros, relativamente robusto a ventanas cercanas. La identificacion requiere continuidad de potenciales resultados y covariables alrededor del umbral, ausencia de manipulacion precisa de la intensidad de I+D+i y especificacion local flexible.

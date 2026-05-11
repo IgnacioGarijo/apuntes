@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Solucion - DiD - Instrumentos financieros pyme</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="examen_did_solucion_files/libs/clipboard/clipboard.min.js"></script>
+<script src="examen_did_solucion_files/libs/quarto-html/quarto.js"></script>
+<script src="examen_did_solucion_files/libs/quarto-html/popper.min.js"></script>
+<script src="examen_did_solucion_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="examen_did_solucion_files/libs/quarto-html/anchor.min.js"></script>
+<link href="examen_did_solucion_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="examen_did_solucion_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="examen_did_solucion_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="examen_did_solucion_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="examen_did_solucion_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#solucion-orientativa" id="toc-solucion-orientativa" class="nav-link active" data-scroll-target="#solucion-orientativa"><span class="header-section-number">1</span> Solucion orientativa</a>
+  <ul class="collapse">
+  <li><a href="#bloque-1" id="toc-bloque-1" class="nav-link" data-scroll-target="#bloque-1"><span class="header-section-number">1.1</span> Bloque 1</a></li>
+  <li><a href="#bloque-2" id="toc-bloque-2" class="nav-link" data-scroll-target="#bloque-2"><span class="header-section-number">1.2</span> Bloque 2</a></li>
+  <li><a href="#bloque-3" id="toc-bloque-3" class="nav-link" data-scroll-target="#bloque-3"><span class="header-section-number">1.3</span> Bloque 3</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Solucion - DiD - Instrumentos financieros pyme</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260511</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspiracion: AIReF, Instrumentos financieros de apoyo a la pyme reforzados por el PRTR,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># con analisis causal contrafactual mediante diferencias en diferencias escalonado.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">1200</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>emp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_empresa =</span> <span class="fu">sprintf</span>(<span class="st">"P%05d"</span>, <span class="dv">1</span><span class="sc">:</span>n),</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">ccaa =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"Andalucia"</span>, <span class="st">"Cataluna"</span>, <span class="st">"Madrid"</span>, <span class="st">"Valencia"</span>, <span class="st">"Pais Vasco"</span>, <span class="st">"Castilla y Leon"</span>), n, <span class="cn">TRUE</span>),</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">sector =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"Manufacturas"</span>, <span class="st">"Hosteleria"</span>, <span class="st">"Comercio"</span>, <span class="st">"TIC"</span>, <span class="st">"Servicios profesionales"</span>), n, <span class="cn">TRUE</span>),</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">tamano =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"micro"</span>, <span class="st">"pequena"</span>, <span class="st">"mediana"</span>), n, <span class="cn">TRUE</span>, <span class="fu">c</span>(.<span class="dv">45</span>,.<span class="dv">40</span>,.<span class="dv">15</span>)),</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">empleados_base =</span> <span class="fu">round</span>(<span class="fu">exp</span>(<span class="fu">rnorm</span>(n, <span class="fu">log</span>(<span class="dv">18</span>), .<span class="dv">75</span>))),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">endeudamiento_base =</span> <span class="fu">pmax</span>(.<span class="dv">05</span>, <span class="fu">rnorm</span>(n, .<span class="dv">52</span>, .<span class="dv">18</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>cohortes <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="dv">2020</span>,<span class="dv">2021</span>,<span class="dv">2022</span>,<span class="dv">2023</span>,<span class="cn">Inf</span>), n, <span class="cn">TRUE</span>, <span class="fu">c</span>(.<span class="dv">16</span>,.<span class="dv">18</span>,.<span class="dv">16</span>,.<span class="dv">10</span>,.<span class="dv">40</span>))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>emp<span class="sc">$</span>anio_apoyo <span class="ot">&lt;-</span> cohortes</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>emp<span class="sc">$</span>empleados_base[<span class="fu">sample</span>(n,<span class="dv">1</span>)] <span class="ot">&lt;-</span> <span class="dv">50000</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>emp<span class="sc">$</span>endeudamiento_base[<span class="fu">sample</span>(n,<span class="dv">1</span>)] <span class="ot">&lt;-</span> <span class="dv">9</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>anios <span class="ot">&lt;-</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2024</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>panel <span class="ot">&lt;-</span> <span class="fu">merge</span>(emp, <span class="fu">data.frame</span>(<span class="at">anio=</span>anios))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>tratamiento <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(panel<span class="sc">$</span>anio <span class="sc">&gt;=</span> panel<span class="sc">$</span>anio_apoyo <span class="sc">&amp;</span> <span class="fu">is.finite</span>(panel<span class="sc">$</span>anio_apoyo))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>event_time <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">is.finite</span>(panel<span class="sc">$</span>anio_apoyo), panel<span class="sc">$</span>anio <span class="sc">-</span> panel<span class="sc">$</span>anio_apoyo, <span class="cn">NA</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>size_eff <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(panel<span class="sc">$</span>tamano<span class="sc">==</span><span class="st">"micro"</span>, <span class="sc">-</span><span class="dv">2</span>, <span class="fu">ifelse</span>(panel<span class="sc">$</span>tamano<span class="sc">==</span><span class="st">"pequena"</span>, <span class="dv">0</span>, <span class="dv">4</span>))</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>trend <span class="ot">&lt;-</span> <span class="fl">1.2</span><span class="sc">*</span>(panel<span class="sc">$</span>anio<span class="dv">-2017</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>eff <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(panel<span class="sc">$</span>tratamiento<span class="sc">==</span><span class="dv">1</span>, <span class="fu">pmin</span>(<span class="fu">pmax</span>(panel<span class="sc">$</span>event_time,<span class="dv">0</span>),<span class="dv">4</span>)<span class="sc">*</span><span class="fl">1.7</span> <span class="sc">+</span> <span class="fl">2.5</span>, <span class="dv">0</span>)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>empleo <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">pmax</span>(<span class="dv">1</span>, panel<span class="sc">$</span>empleados_base <span class="sc">+</span> trend <span class="sc">+</span> size_eff <span class="sc">+</span> eff <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel),<span class="dv">0</span>,<span class="dv">4</span>)))</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>credito_miles <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="dv">80</span> <span class="sc">+</span> <span class="dv">6</span><span class="sc">*</span>panel<span class="sc">$</span>empleados_base <span class="sc">+</span> <span class="dv">15</span><span class="sc">*</span>(panel<span class="sc">$</span>anio<span class="dv">-2017</span>) <span class="sc">+</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">ifelse</span>(panel<span class="sc">$</span>tratamiento<span class="sc">==</span><span class="dv">1</span>, <span class="dv">55</span> <span class="sc">+</span> <span class="dv">18</span><span class="sc">*</span><span class="fu">pmax</span>(panel<span class="sc">$</span>event_time,<span class="dv">0</span>),<span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel),<span class="dv">0</span>,<span class="dv">75</span>))</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>tipo_interes <span class="ot">&lt;-</span> <span class="fu">pmax</span>(.<span class="dv">5</span>, <span class="fl">4.5</span> <span class="sc">-</span> .<span class="dv">08</span><span class="sc">*</span>(panel<span class="sc">$</span>anio<span class="dv">-2017</span>) <span class="sc">-</span> <span class="fu">ifelse</span>(panel<span class="sc">$</span>tratamiento<span class="sc">==</span><span class="dv">1</span>, .<span class="dv">25</span>, <span class="dv">0</span>) <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel),<span class="dv">0</span>,.<span class="dv">45</span>))</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="st">"datos"</span>)) <span class="fu">dir.create</span>(<span class="st">"datos"</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(emp, <span class="st">"datos/empresas_pyme.csv"</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(panel, <span class="st">"datos/panel_pyme.csv"</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Se han creado datos/empresas_pyme.csv y datos/panel_pyme.csv</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Se han creado datos/empresas_pyme.csv y datos/panel_pyme.csv</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="solucion-orientativa" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Solucion orientativa</h1>
+<section id="bloque-1" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="bloque-1"><span class="header-section-number">1.1</span> Bloque 1</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>emp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"datos/empresas_pyme.csv"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>pan <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"datos/panel_pyme.csv"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>emp <span class="ot">&lt;-</span> emp <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">empleados_base_imp =</span> <span class="fu">ifelse</span>(empleados_base <span class="sc">&gt;</span> <span class="fu">quantile</span>(empleados_base, .<span class="dv">995</span>), <span class="cn">NA</span>, empleados_base),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">endeudamiento_base_imp =</span> <span class="fu">ifelse</span>(endeudamiento_base <span class="sc">&gt;</span> <span class="dv">2</span>, <span class="cn">NA</span>, endeudamiento_base)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(tamano) <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">empleados_base_imp =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(empleados_base_imp), <span class="fu">median</span>(empleados_base_imp, <span class="at">na.rm=</span><span class="cn">TRUE</span>), empleados_base_imp),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">endeudamiento_base_imp =</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(endeudamiento_base_imp), <span class="fu">median</span>(endeudamiento_base_imp, <span class="at">na.rm=</span><span class="cn">TRUE</span>), endeudamiento_base_imp)) <span class="sc">%&gt;%</span> <span class="fu">ungroup</span>()</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>pan <span class="ot">&lt;-</span> pan <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>empleados_base, <span class="sc">-</span>endeudamiento_base) <span class="sc">%&gt;%</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(emp <span class="sc">%&gt;%</span> <span class="fu">select</span>(id_empresa, empleados_base_imp, endeudamiento_base_imp), <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ever_treated =</span> <span class="fu">as.integer</span>(<span class="fu">is.finite</span>(anio_apoyo)),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">cohorte =</span> <span class="fu">ifelse</span>(<span class="fu">is.finite</span>(anio_apoyo), <span class="fu">as.character</span>(anio_apoyo), <span class="st">"nunca"</span>),</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">post =</span> tratamiento,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">event_time =</span> <span class="fu">ifelse</span>(ever_treated<span class="sc">==</span><span class="dv">1</span>, anio <span class="sc">-</span> anio_apoyo, <span class="cn">NA</span>))</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>emp <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">cohorte =</span> <span class="fu">ifelse</span>(<span class="fu">is.finite</span>(anio_apoyo), <span class="fu">as.character</span>(anio_apoyo), <span class="st">"nunca"</span>)) <span class="sc">%&gt;%</span> <span class="fu">count</span>(cohorte)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 5 × 2
+  cohorte     n
+  &lt;chr&gt;   &lt;int&gt;
+1 2020      190
+2 2021      197
+3 2022      204
+4 2023      127
+5 nunca     482</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>pan <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(anio, ever_treated) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">empleo=</span><span class="fu">mean</span>(empleo), <span class="at">credito=</span><span class="fu">mean</span>(credito_miles), <span class="at">interes=</span><span class="fu">mean</span>(tipo_interes), <span class="at">.groups=</span><span class="st">"drop"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 16 × 5
+    anio ever_treated empleo credito interes
+   &lt;int&gt;        &lt;int&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+ 1  2017            0   23.4    224.    4.49
+ 2  2017            1   91.6    633.    4.48
+ 3  2018            0   25.3    240.    4.41
+ 4  2018            1   92.8    646.    4.43
+ 5  2019            0   25.7    250.    4.34
+ 6  2019            1   94      659.    4.39
+ 7  2020            0   27.3    275.    4.29
+ 8  2020            1   95.9    689.    4.18
+ 9  2021            0   28.5    278.    4.15
+10  2021            1   98.3    724.    4.02
+11  2022            0   30.0    297.    4.09
+12  2022            1  101.     765.    3.88
+13  2023            0   30.6    310.    4.01
+14  2023            1  104.     811.    3.77
+15  2024            0   32.1    333.    3.95
+16  2024            1  107.     838.    3.69</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>local <span class="ot">&lt;-</span> pan <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ever_treated<span class="sc">==</span><span class="dv">0</span> <span class="sc">|</span> (event_time <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">3</span> <span class="sc">&amp;</span> event_time <span class="sc">&lt;=</span> <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="bloque-2" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="bloque-2"><span class="header-section-number">1.2</span> Bloque 2</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>pan <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(anio, ever_treated) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">empleo=</span><span class="fu">mean</span>(empleo), <span class="at">.groups=</span><span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(anio, empleo, <span class="at">group=</span><span class="fu">factor</span>(ever_treated), <span class="at">linetype=</span><span class="fu">factor</span>(ever_treated))) <span class="sc">+</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">linetype=</span><span class="st">"Tratada alguna vez"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_did_solucion_files/figure-html/bloque2-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>pan <span class="sc">%&gt;%</span> <span class="fu">filter</span>(ever_treated<span class="sc">==</span><span class="dv">1</span>, event_time <span class="sc">&gt;=</span> <span class="sc">-</span><span class="dv">3</span>, event_time <span class="sc">&lt;=</span> <span class="dv">4</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(event_time) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">empleo=</span><span class="fu">mean</span>(empleo), <span class="at">.groups=</span><span class="st">"drop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(event_time, empleo)) <span class="sc">+</span> <span class="fu">geom_line</span>() <span class="sc">+</span> <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">geom_vline</span>(<span class="at">xintercept=</span><span class="sc">-</span><span class="dv">1</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_did_solucion_files/figure-html/bloque2-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>emp <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">ever_treated=</span><span class="fu">as.integer</span>(<span class="fu">is.finite</span>(anio_apoyo))) <span class="sc">%&gt;%</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ever_treated, tamano) <span class="sc">%&gt;%</span> <span class="fu">summarise</span>(<span class="at">n=</span><span class="fu">n</span>(), <span class="at">endeudamiento=</span><span class="fu">mean</span>(endeudamiento_base_imp), <span class="at">.groups=</span><span class="st">"drop"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 4
+  ever_treated tamano      n endeudamiento
+         &lt;int&gt; &lt;chr&gt;   &lt;int&gt;         &lt;dbl&gt;
+1            0 mediana    81         0.539
+2            0 micro     214         0.503
+3            0 pequena   187         0.511
+4            1 mediana   102         0.534
+5            1 micro     320         0.520
+6            1 pequena   296         0.528</code></pre>
+</div>
+</div>
+</section>
+<section id="bloque-3" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="bloque-3"><span class="header-section-number">1.3</span> Bloque 3</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># TWFE con lm y dummies de empresa y año. En una muestra grande podria usarse fixest::feols.</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>m_emp <span class="ot">&lt;-</span> <span class="fu">lm</span>(empleo <span class="sc">~</span> tratamiento <span class="sc">+</span> <span class="fu">factor</span>(id_empresa) <span class="sc">+</span> <span class="fu">factor</span>(anio), <span class="at">data=</span>pan)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(<span class="fu">summary</span>(m_emp))[<span class="st">"tratamiento"</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                                                                                                              Estimate 
+ 4.1493263576410752691003835934679955244064331054687500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                                                            Std. Error 
+ 0.1519351527799037149257799228507792577147483825683593750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                                                               t value 
+27.3098508259762091654465621104463934898376464843750000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                                                              Pr(&gt;|t|) 
+ 0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002117968 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>m_cred <span class="ot">&lt;-</span> <span class="fu">lm</span>(credito_miles <span class="sc">~</span> tratamiento <span class="sc">+</span> <span class="fu">factor</span>(id_empresa) <span class="sc">+</span> <span class="fu">factor</span>(anio), <span class="at">data=</span>pan)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(<span class="fu">summary</span>(m_cred))[<span class="st">"tratamiento"</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                                                                                                 Estimate 
+69.43375069532407906081061810255050659179687500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                               Std. Error 
+ 2.83107637174396087331729177094530314207077026367187500000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                                  t value 
+24.52556610210852383602286863606423139572143554687500000000000000000000000000000000000000000000000000000000000000000000000000000000000000 
+                                                                                                                                 Pr(&gt;|t|) 
+ 0.00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002401478 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>m_int <span class="ot">&lt;-</span> <span class="fu">lm</span>(tipo_interes <span class="sc">~</span> tratamiento <span class="sc">+</span> <span class="fu">factor</span>(id_empresa) <span class="sc">+</span> <span class="fu">factor</span>(anio), <span class="at">data=</span>pan)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">coef</span>(<span class="fu">summary</span>(m_int))[<span class="st">"tratamiento"</span>,]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                                                    Estimate 
+ -0.25403581102617034392920913887792266905307769775390625000 
+                                                  Std. Error 
+  0.01688241624210865335364850636779010528698563575744628906 
+                                                     t value 
+-15.04736095728680389527198713039979338645935058593750000000 
+                                                    Pr(&gt;|t|) 
+  0.00000000000000000000000000000000000000000000000001632287 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Estudio de eventos: se omite event_time = -1. Los nunca tratados quedan como controles.</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ev <span class="ot">&lt;-</span> pan <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ev_m3 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="sc">-</span><span class="dv">3</span>), <span class="at">ev_m2 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="sc">-</span><span class="dv">2</span>),</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">ev_0 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="dv">0</span>), <span class="at">ev_1 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">ev_2 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="dv">2</span>), <span class="at">ev_3 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="dv">3</span>), <span class="at">ev_4 =</span> <span class="fu">as.integer</span>(event_time <span class="sc">==</span> <span class="dv">4</span>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>m_ev <span class="ot">&lt;-</span> <span class="fu">lm</span>(empleo <span class="sc">~</span> ev_m3 <span class="sc">+</span> ev_m2 <span class="sc">+</span> ev_0 <span class="sc">+</span> ev_1 <span class="sc">+</span> ev_2 <span class="sc">+</span> ev_3 <span class="sc">+</span> ev_4 <span class="sc">+</span> <span class="fu">factor</span>(id_empresa) <span class="sc">+</span> <span class="fu">factor</span>(anio), <span class="at">data=</span>ev)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>coefs <span class="ot">&lt;-</span> <span class="fu">coef</span>(<span class="fu">summary</span>(m_ev))[<span class="fu">c</span>(<span class="st">"ev_m3"</span>,<span class="st">"ev_m2"</span>,<span class="st">"ev_0"</span>,<span class="st">"ev_1"</span>,<span class="st">"ev_2"</span>,<span class="st">"ev_3"</span>,<span class="st">"ev_4"</span>),]</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>coefs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        Estimate Std. Error    t value
+ev_m3  0.1892396  0.1821518  1.0389115
+ev_m2 -0.1083887  0.1910090 -0.5674535
+ev_0   2.6558311  0.2524439 10.5204820
+ev_1   4.4900843  0.3173858 14.1470878
+ev_2   6.2233804  0.3951027 15.7512973
+ev_3   7.3373478  0.4868991 15.0695448
+ev_4   9.6292593  0.6099760 15.7862931
+                                                             Pr(&gt;|t|)
+ev_m3 0.2988960046002651638197278316511074081063270568847656250000000
+ev_m2 0.5704315326286955034618131321622058749198913574218750000000000
+ev_0  0.0000000000000000000000001283344481636790370684617079710676535
+ev_1  0.0000000000000000000000000000000000000000000139006869803825425
+ev_2  0.0000000000000000000000000000000000000000000000000000013471668
+ev_3  0.0000000000000000000000000000000000000000000000000319038931696
+ev_4  0.0000000000000000000000000000000000000000000000000000007946513</code></pre>
+</div>
+</div>
+<p>Interpretacion: el tratamiento deberia aumentar empleo y credito y reducir el tipo de interes. Los coeficientes previos (<code>ev_m3</code>, <code>ev_m2</code>) deberian ser cercanos a cero; si fueran grandes o significativos, se pondria en duda el supuesto de tendencias paralelas. En datos reales convendria usar estimadores robustos para adopcion escalonada, controles de composicion y errores agrupados por empresa.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

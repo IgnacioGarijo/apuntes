@@ -1,0 +1,1201 @@
+"id_empresa","ccaa","sector","tamano","empleados_base","endeudamiento_base","anio_apoyo"
+"P00001","Madrid","TIC","micro",46,0.234212285577177,Inf
+"P00002","Madrid","Servicios profesionales","pequena",16,0.444305409613947,2021
+"P00003","Valencia","Manufacturas","mediana",18,0.407558889817478,2020
+"P00004","Pais Vasco","Comercio","pequena",27,0.868150194691001,2021
+"P00005","Madrid","Hosteleria","mediana",16,0.407380713007447,2020
+"P00006","Cataluna","Servicios profesionales","micro",6,0.575710538033862,2022
+"P00007","Valencia","TIC","mediana",6,0.478787486373637,2022
+"P00008","Valencia","TIC","pequena",7,0.355240798131706,2021
+"P00009","Castilla y Leon","TIC","micro",34,0.456447634036578,2021
+"P00010","Pais Vasco","Manufacturas","pequena",12,0.461445663872111,Inf
+"P00011","Valencia","TIC","pequena",8,0.518176059681191,Inf
+"P00012","Valencia","Hosteleria","pequena",13,0.519293252759903,2021
+"P00013","Andalucia","TIC","micro",13,0.6560377278391,2020
+"P00014","Castilla y Leon","TIC","mediana",20,0.399071095688882,Inf
+"P00015","Cataluna","Manufacturas","pequena",5,0.561985140622871,2022
+"P00016","Castilla y Leon","Manufacturas","pequena",37,0.5624921096031,Inf
+"P00017","Castilla y Leon","Manufacturas","pequena",9,0.530902954799849,2022
+"P00018","Andalucia","Hosteleria","pequena",12,0.543417715353879,Inf
+"P00019","Andalucia","Servicios profesionales","micro",10,0.608475810836976,2023
+"P00020","Castilla y Leon","TIC","pequena",8,0.451188255631259,2023
+"P00021","Cataluna","Comercio","micro",20,0.391320505042641,Inf
+"P00022","Castilla y Leon","Comercio","mediana",10,0.116600390945291,Inf
+"P00023","Andalucia","Hosteleria","mediana",5,0.549384150151492,Inf
+"P00024","Andalucia","TIC","mediana",15,0.715480754709621,2020
+"P00025","Valencia","Comercio","pequena",62,0.460287009840243,Inf
+"P00026","Andalucia","Manufacturas","pequena",39,0.206306784165978,Inf
+"P00027","Andalucia","Comercio","pequena",44,0.406015468195861,2023
+"P00028","Andalucia","Manufacturas","mediana",45,0.560802607518538,Inf
+"P00029","Cataluna","Servicios profesionales","pequena",21,0.227321079862588,Inf
+"P00030","Castilla y Leon","Comercio","pequena",16,0.205166263864424,2020
+"P00031","Pais Vasco","Manufacturas","micro",18,0.481752356169672,Inf
+"P00032","Andalucia","TIC","pequena",20,0.630606069551305,Inf
+"P00033","Cataluna","Manufacturas","micro",40,0.180097250847941,2021
+"P00034","Madrid","Hosteleria","micro",10,0.603474173681593,2023
+"P00035","Castilla y Leon","Manufacturas","pequena",13,0.68812752700999,2022
+"P00036","Valencia","Manufacturas","pequena",28,0.519588369718215,Inf
+"P00037","Pais Vasco","Manufacturas","micro",10,0.682701600889098,2020
+"P00038","Madrid","TIC","micro",14,0.809470175140751,2021
+"P00039","Castilla y Leon","Manufacturas","pequena",21,0.34274251272482,2020
+"P00040","Madrid","Comercio","pequena",27,0.654507812386445,2022
+"P00041","Valencia","Manufacturas","micro",42,0.291249816430407,2022
+"P00042","Valencia","Servicios profesionales","micro",61,0.159886847699139,2021
+"P00043","Cataluna","Hosteleria","micro",11,0.272685286769388,2021
+"P00044","Castilla y Leon","Hosteleria","micro",10,0.636162691267328,2021
+"P00045","Cataluna","Manufacturas","pequena",33,0.263735177246191,2020
+"P00046","Valencia","TIC","micro",13,0.670069686308829,2022
+"P00047","Castilla y Leon","Hosteleria","pequena",26,0.648526535293287,2022
+"P00048","Castilla y Leon","Hosteleria","micro",8,0.442307823198656,Inf
+"P00049","Valencia","Comercio","pequena",28,0.59895248376073,2023
+"P00050","Castilla y Leon","Servicios profesionales","micro",3,0.802301456321818,2023
+"P00051","Madrid","Servicios profesionales","micro",7,0.641941713869608,2022
+"P00052","Castilla y Leon","Manufacturas","micro",32,0.577916157432578,Inf
+"P00053","Andalucia","Comercio","micro",130,0.464831279375047,Inf
+"P00054","Andalucia","Manufacturas","micro",19,0.354018946187783,2023
+"P00055","Andalucia","Comercio","pequena",10,0.755255893006278,2021
+"P00056","Cataluna","TIC","pequena",13,0.287425319280244,2021
+"P00057","Andalucia","TIC","pequena",11,0.274002402884686,2020
+"P00058","Valencia","Comercio","pequena",24,0.608134947061573,2021
+"P00059","Pais Vasco","Hosteleria","mediana",7,0.358930783195226,2022
+"P00060","Pais Vasco","Manufacturas","micro",17,0.299694675829716,2023
+"P00061","Valencia","TIC","mediana",16,0.357174629231935,2022
+"P00062","Pais Vasco","Manufacturas","micro",27,0.215905997705457,2022
+"P00063","Pais Vasco","Comercio","pequena",14,0.244452593945746,Inf
+"P00064","Pais Vasco","Servicios profesionales","pequena",8,0.40079352783937,Inf
+"P00065","Valencia","Manufacturas","pequena",107,0.374778698172174,2022
+"P00066","Cataluna","Comercio","pequena",96,0.54392817800721,Inf
+"P00067","Cataluna","Hosteleria","pequena",6,0.333645718039117,2021
+"P00068","Castilla y Leon","Comercio","pequena",19,0.622209669056434,2023
+"P00069","Pais Vasco","Servicios profesionales","mediana",7,0.805717822069708,2022
+"P00070","Cataluna","Comercio","micro",34,0.833701819849216,2022
+"P00071","Pais Vasco","Manufacturas","pequena",66,0.549229338571086,Inf
+"P00072","Cataluna","Manufacturas","mediana",9,0.499971016396822,2023
+"P00073","Andalucia","Servicios profesionales","micro",9,0.767821956534586,2023
+"P00074","Valencia","Manufacturas","micro",24,0.257915067727989,2021
+"P00075","Castilla y Leon","Hosteleria","mediana",24,0.831519408609988,2022
+"P00076","Castilla y Leon","TIC","micro",42,0.404452745266495,Inf
+"P00077","Cataluna","Servicios profesionales","pequena",39,0.542966784804672,2021
+"P00078","Pais Vasco","Comercio","micro",22,0.295086594210003,2020
+"P00079","Castilla y Leon","Manufacturas","pequena",8,0.472362848139972,Inf
+"P00080","Cataluna","Servicios profesionales","micro",16,0.392377372103464,Inf
+"P00081","Madrid","Manufacturas","micro",126,0.308213879270276,2021
+"P00082","Madrid","TIC","micro",16,0.335019744086295,Inf
+"P00083","Madrid","Servicios profesionales","mediana",9,0.596833802746695,Inf
+"P00084","Madrid","TIC","pequena",22,0.750660502656041,2020
+"P00085","Andalucia","Hosteleria","micro",3,0.553519876667891,Inf
+"P00086","Madrid","Servicios profesionales","pequena",15,0.511405459609184,2023
+"P00087","Andalucia","Hosteleria","micro",8,0.555180256459258,Inf
+"P00088","Valencia","Servicios profesionales","pequena",29,0.421550876870033,Inf
+"P00089","Andalucia","Hosteleria","micro",14,0.326759924127044,2021
+"P00090","Madrid","Hosteleria","micro",33,0.577486469971525,2020
+"P00091","Madrid","Manufacturas","micro",7,0.402208684829868,Inf
+"P00092","Pais Vasco","TIC","micro",11,0.602214487948225,2023
+"P00093","Cataluna","Manufacturas","pequena",19,0.634026146048581,Inf
+"P00094","Castilla y Leon","Servicios profesionales","pequena",30,0.496150617658426,2021
+"P00095","Castilla y Leon","Manufacturas","micro",3,0.518249060759323,Inf
+"P00096","Andalucia","Manufacturas","mediana",28,0.508960145298781,2020
+"P00097","Pais Vasco","TIC","pequena",17,0.6683190833757,Inf
+"P00098","Madrid","Manufacturas","micro",38,0.61318483904049,2023
+"P00099","Cataluna","TIC","mediana",15,0.364177900319444,2023
+"P00100","Madrid","Hosteleria","pequena",22,0.533630779057399,Inf
+"P00101","Valencia","TIC","micro",12,0.366583797351982,2022
+"P00102","Valencia","Manufacturas","pequena",22,0.547755377364936,2021
+"P00103","Andalucia","Manufacturas","pequena",5,0.583946470950531,2022
+"P00104","Andalucia","Manufacturas","micro",11,0.1062266590325,2021
+"P00105","Castilla y Leon","Manufacturas","pequena",46,0.704052722622618,Inf
+"P00106","Andalucia","Comercio","micro",56,0.299609824204416,Inf
+"P00107","Castilla y Leon","Manufacturas","pequena",21,0.440143886979692,Inf
+"P00108","Cataluna","Manufacturas","micro",22,0.609406503082328,Inf
+"P00109","Castilla y Leon","Manufacturas","pequena",21,0.488268544753474,2021
+"P00110","Madrid","Servicios profesionales","micro",3,0.484513706659303,2020
+"P00111","Castilla y Leon","Hosteleria","mediana",78,0.625018432642456,Inf
+"P00112","Castilla y Leon","Hosteleria","micro",18,0.48801979229051,Inf
+"P00113","Madrid","Servicios profesionales","mediana",8,0.769703667656068,2022
+"P00114","Andalucia","TIC","micro",12,0.384248649319708,Inf
+"P00115","Cataluna","Servicios profesionales","micro",8,0.471308207128721,Inf
+"P00116","Valencia","Comercio","mediana",23,0.768895225588888,2021
+"P00117","Andalucia","Servicios profesionales","pequena",12,0.432661219191786,2021
+"P00118","Pais Vasco","Manufacturas","micro",4,0.550040473632166,Inf
+"P00119","Pais Vasco","Hosteleria","micro",16,0.603800030018238,2021
+"P00120","Cataluna","Servicios profesionales","pequena",11,0.466888133763961,2020
+"P00121","Andalucia","Hosteleria","micro",21,0.212584858119755,Inf
+"P00122","Cataluna","Manufacturas","pequena",3,0.574730828500875,2020
+"P00123","Cataluna","Servicios profesionales","micro",9,0.824098937515746,2020
+"P00124","Madrid","Manufacturas","micro",10,0.204020679685699,2022
+"P00125","Castilla y Leon","Hosteleria","micro",9,0.555589710569068,2023
+"P00126","Andalucia","Hosteleria","micro",6,0.567088426639831,2020
+"P00127","Castilla y Leon","Comercio","pequena",34,0.358014195988266,2021
+"P00128","Pais Vasco","TIC","mediana",24,0.715477669547897,Inf
+"P00129","Madrid","Manufacturas","pequena",24,0.252697344162513,2021
+"P00130","Pais Vasco","Manufacturas","micro",19,0.574031565022284,2021
+"P00131","Cataluna","Hosteleria","mediana",8,0.655354145653013,2021
+"P00132","Pais Vasco","Manufacturas","mediana",11,0.426774733564505,2020
+"P00133","Pais Vasco","Comercio","pequena",69,0.655515525234579,Inf
+"P00134","Madrid","Hosteleria","micro",50,0.387716546735846,2020
+"P00135","Pais Vasco","Servicios profesionales","micro",19,0.574327659733808,Inf
+"P00136","Pais Vasco","Servicios profesionales","pequena",15,0.546166662861142,2020
+"P00137","Valencia","Comercio","pequena",8,0.604971667514797,Inf
+"P00138","Andalucia","Manufacturas","micro",5,0.278671845217836,Inf
+"P00139","Castilla y Leon","TIC","micro",105,0.674763265273909,Inf
+"P00140","Pais Vasco","Comercio","micro",27,0.178410622086797,2022
+"P00141","Cataluna","Comercio","micro",92,0.496025783471609,Inf
+"P00142","Pais Vasco","Manufacturas","pequena",6,0.613682969938877,Inf
+"P00143","Madrid","Comercio","pequena",16,0.573205169405635,2020
+"P00144","Andalucia","Hosteleria","pequena",33,0.742477502025188,2021
+"P00145","Pais Vasco","Servicios profesionales","mediana",25,0.750380394069595,Inf
+"P00146","Valencia","Comercio","mediana",31,0.423568958521567,2023
+"P00147","Madrid","Manufacturas","mediana",11,0.793340544366331,Inf
+"P00148","Pais Vasco","Manufacturas","micro",73,0.234637784338056,Inf
+"P00149","Madrid","Servicios profesionales","mediana",12,0.574734016346288,2021
+"P00150","Madrid","TIC","mediana",7,0.456271250098047,2022
+"P00151","Andalucia","Servicios profesionales","mediana",14,0.486654474139076,2022
+"P00152","Madrid","Manufacturas","micro",23,0.467132735869346,2021
+"P00153","Pais Vasco","TIC","pequena",17,0.491353137484493,2023
+"P00154","Pais Vasco","Manufacturas","pequena",38,9,2021
+"P00155","Cataluna","TIC","pequena",8,0.796403072105311,2022
+"P00156","Pais Vasco","Servicios profesionales","micro",34,0.186866727837692,2022
+"P00157","Pais Vasco","Comercio","micro",30,0.386304582856299,2023
+"P00158","Madrid","Hosteleria","micro",6,0.450952486896898,Inf
+"P00159","Castilla y Leon","Manufacturas","micro",11,0.481708574552012,2023
+"P00160","Pais Vasco","Hosteleria","micro",100,0.51452378236934,Inf
+"P00161","Valencia","Servicios profesionales","mediana",33,0.479108091531973,2021
+"P00162","Madrid","Manufacturas","pequena",39,0.528273111511071,2020
+"P00163","Castilla y Leon","Manufacturas","micro",30,0.473392490851151,Inf
+"P00164","Andalucia","Comercio","pequena",19,0.05,2021
+"P00165","Madrid","Comercio","pequena",23,0.492468675968588,2022
+"P00166","Valencia","Comercio","pequena",93,0.518523982889129,Inf
+"P00167","Pais Vasco","Comercio","micro",21,0.39526493604823,2020
+"P00168","Castilla y Leon","Manufacturas","pequena",22,0.48928164357701,Inf
+"P00169","Madrid","Manufacturas","pequena",28,0.581806622518383,Inf
+"P00170","Cataluna","Manufacturas","micro",21,0.177388012018516,2022
+"P00171","Cataluna","Servicios profesionales","mediana",16,0.430527928342319,Inf
+"P00172","Andalucia","TIC","micro",7,0.257455766936268,Inf
+"P00173","Andalucia","Hosteleria","pequena",56,0.68528714731891,Inf
+"P00174","Pais Vasco","Servicios profesionales","micro",27,0.515038689709396,2023
+"P00175","Andalucia","Manufacturas","mediana",15,0.373211078580869,Inf
+"P00176","Castilla y Leon","TIC","micro",44,0.501643434763135,2020
+"P00177","Andalucia","Comercio","pequena",7,0.249305436970701,2022
+"P00178","Castilla y Leon","Manufacturas","micro",2,0.214125394241304,Inf
+"P00179","Madrid","Comercio","pequena",10,0.350682716871348,2023
+"P00180","Cataluna","TIC","micro",30,1.11455589636059,2021
+"P00181","Madrid","Manufacturas","micro",4,0.784718584154426,2021
+"P00182","Madrid","TIC","pequena",12,0.31369468252851,Inf
+"P00183","Pais Vasco","Servicios profesionales","micro",7,0.905886472219886,2020
+"P00184","Valencia","Servicios profesionales","micro",15,0.579884207360531,Inf
+"P00185","Castilla y Leon","Manufacturas","micro",24,0.311823485777567,Inf
+"P00186","Madrid","Comercio","micro",22,0.724426010622921,2022
+"P00187","Pais Vasco","Servicios profesionales","micro",43,0.67379411458844,2021
+"P00188","Cataluna","Manufacturas","micro",19,0.490468411122036,2023
+"P00189","Andalucia","Hosteleria","micro",9,0.887540660433526,Inf
+"P00190","Andalucia","Comercio","micro",7,0.40749840550004,Inf
+"P00191","Andalucia","TIC","micro",15,0.367542373823259,Inf
+"P00192","Castilla y Leon","Servicios profesionales","pequena",8,0.31984060635852,2023
+"P00193","Valencia","Manufacturas","pequena",50,0.586445759410437,2021
+"P00194","Madrid","Comercio","pequena",19,0.701010501947277,Inf
+"P00195","Valencia","Manufacturas","pequena",6,0.525665554227335,2020
+"P00196","Castilla y Leon","Hosteleria","micro",31,0.416055370230664,2021
+"P00197","Cataluna","Comercio","pequena",13,0.24687513876401,Inf
+"P00198","Andalucia","Comercio","micro",24,0.469809971850211,2023
+"P00199","Pais Vasco","TIC","mediana",44,0.704045564167883,2021
+"P00200","Valencia","Servicios profesionales","micro",19,0.156856075981205,Inf
+"P00201","Pais Vasco","TIC","pequena",15,0.297749398362312,2021
+"P00202","Castilla y Leon","Servicios profesionales","micro",5,0.643337578479294,2022
+"P00203","Cataluna","TIC","pequena",6,0.307995826896483,2021
+"P00204","Cataluna","Hosteleria","micro",16,0.433112294586683,2020
+"P00205","Castilla y Leon","Hosteleria","micro",51,0.670348159936559,2020
+"P00206","Cataluna","Comercio","micro",17,0.303492870295893,Inf
+"P00207","Valencia","Servicios profesionales","micro",13,0.699194235379724,2022
+"P00208","Cataluna","Manufacturas","pequena",44,0.294616062821054,Inf
+"P00209","Cataluna","Manufacturas","pequena",17,0.596849195595131,2020
+"P00210","Andalucia","Manufacturas","micro",15,0.339809151126368,Inf
+"P00211","Castilla y Leon","Comercio","pequena",14,0.486236880993273,2021
+"P00212","Castilla y Leon","TIC","mediana",9,0.84055935490541,Inf
+"P00213","Valencia","Hosteleria","micro",47,0.685905215523446,2020
+"P00214","Madrid","Comercio","micro",16,0.516261071919015,2023
+"P00215","Andalucia","TIC","micro",54,0.741293690391529,Inf
+"P00216","Cataluna","Manufacturas","pequena",8,0.442478205300651,Inf
+"P00217","Cataluna","Comercio","mediana",25,0.620994317095151,Inf
+"P00218","Pais Vasco","Hosteleria","pequena",14,0.277182624716561,2020
+"P00219","Pais Vasco","TIC","mediana",6,0.628147761074117,Inf
+"P00220","Valencia","Manufacturas","micro",25,0.692924150920292,Inf
+"P00221","Pais Vasco","Comercio","pequena",10,0.290280907737554,2021
+"P00222","Madrid","Hosteleria","pequena",20,0.71708041722822,2021
+"P00223","Pais Vasco","Hosteleria","micro",14,0.5367076419033,Inf
+"P00224","Pais Vasco","Manufacturas","pequena",40,0.514055806278588,2021
+"P00225","Castilla y Leon","Hosteleria","mediana",20,0.496068243554629,Inf
+"P00226","Valencia","TIC","pequena",11,0.542587649604554,2023
+"P00227","Valencia","Hosteleria","micro",22,0.376196279987553,2020
+"P00228","Valencia","Manufacturas","pequena",6,0.556429270727512,Inf
+"P00229","Madrid","Comercio","pequena",7,0.762376952154293,2022
+"P00230","Andalucia","Servicios profesionales","micro",9,0.313558449242401,2021
+"P00231","Valencia","Manufacturas","pequena",18,0.565362644028165,2020
+"P00232","Valencia","Comercio","pequena",12,0.515800211190046,2022
+"P00233","Cataluna","TIC","mediana",2,0.714669923570467,Inf
+"P00234","Madrid","Manufacturas","micro",52,0.482923087398986,Inf
+"P00235","Cataluna","Hosteleria","pequena",26,0.483047365471257,2022
+"P00236","Andalucia","Servicios profesionales","micro",12,0.263221488388762,2020
+"P00237","Andalucia","Servicios profesionales","mediana",23,0.443758865142088,Inf
+"P00238","Andalucia","Comercio","mediana",7,0.804415738321204,Inf
+"P00239","Castilla y Leon","Servicios profesionales","mediana",14,0.651692957516238,Inf
+"P00240","Valencia","Manufacturas","pequena",17,0.275761844061866,Inf
+"P00241","Madrid","Hosteleria","pequena",71,0.323840023382934,2021
+"P00242","Madrid","TIC","micro",27,0.692097488374469,Inf
+"P00243","Castilla y Leon","Servicios profesionales","pequena",19,0.43197953041282,Inf
+"P00244","Andalucia","Manufacturas","micro",9,0.628998425672275,2020
+"P00245","Castilla y Leon","TIC","mediana",78,0.439256689756598,Inf
+"P00246","Madrid","Comercio","pequena",34,0.323692332183187,Inf
+"P00247","Pais Vasco","Comercio","micro",19,0.357794052701149,2023
+"P00248","Castilla y Leon","Manufacturas","pequena",11,0.549208313362656,2022
+"P00249","Pais Vasco","Manufacturas","pequena",32,0.353377079692859,Inf
+"P00250","Andalucia","Hosteleria","pequena",22,0.270052342392146,Inf
+"P00251","Madrid","Servicios profesionales","pequena",3,0.549398292152254,2021
+"P00252","Pais Vasco","Hosteleria","mediana",6,0.874658977637107,Inf
+"P00253","Castilla y Leon","TIC","pequena",14,0.496297686367938,Inf
+"P00254","Pais Vasco","TIC","mediana",12,0.460479577858616,Inf
+"P00255","Cataluna","TIC","micro",21,0.142507529751523,2020
+"P00256","Castilla y Leon","Hosteleria","micro",8,0.522657381055588,Inf
+"P00257","Andalucia","TIC","mediana",83,0.216491707085765,2022
+"P00258","Castilla y Leon","TIC","mediana",5,0.77290752429125,Inf
+"P00259","Andalucia","Manufacturas","mediana",48,0.504636646176291,2023
+"P00260","Madrid","Hosteleria","pequena",9,0.293944573722572,2023
+"P00261","Valencia","Comercio","mediana",17,0.768005503773721,Inf
+"P00262","Cataluna","Hosteleria","micro",3,0.416801040130893,2020
+"P00263","Valencia","Servicios profesionales","micro",9,0.913751457289437,Inf
+"P00264","Andalucia","Servicios profesionales","micro",9,0.458469985524392,2021
+"P00265","Pais Vasco","TIC","pequena",14,0.442511908494901,Inf
+"P00266","Pais Vasco","Manufacturas","micro",9,0.504324290047198,2021
+"P00267","Pais Vasco","Hosteleria","micro",13,0.46044914974681,2021
+"P00268","Andalucia","TIC","pequena",44,0.818651742107269,Inf
+"P00269","Castilla y Leon","Servicios profesionales","pequena",11,0.619576395501144,Inf
+"P00270","Madrid","TIC","micro",12,0.489951475331484,2023
+"P00271","Cataluna","Servicios profesionales","pequena",7,0.420297461168142,2023
+"P00272","Andalucia","Comercio","micro",3,0.532636881611105,Inf
+"P00273","Andalucia","Manufacturas","mediana",22,0.273946378491613,Inf
+"P00274","Andalucia","Manufacturas","pequena",22,0.477656690712806,Inf
+"P00275","Andalucia","Comercio","pequena",6,0.270853922058391,Inf
+"P00276","Pais Vasco","Manufacturas","pequena",60,0.531979077739401,2020
+"P00277","Castilla y Leon","TIC","micro",22,0.354069859398602,2021
+"P00278","Valencia","Servicios profesionales","micro",16,0.530856805839059,2023
+"P00279","Cataluna","Servicios profesionales","pequena",32,0.542586197731734,2022
+"P00280","Cataluna","Hosteleria","pequena",42,0.50141288615815,2022
+"P00281","Castilla y Leon","Comercio","pequena",29,0.584114642571016,2022
+"P00282","Madrid","Servicios profesionales","mediana",18,0.571588567860331,Inf
+"P00283","Castilla y Leon","Hosteleria","micro",17,0.542738323150614,Inf
+"P00284","Madrid","Hosteleria","pequena",3,0.796252977451737,2020
+"P00285","Castilla y Leon","Manufacturas","pequena",7,0.74021717601704,2020
+"P00286","Castilla y Leon","TIC","micro",8,0.461658020774886,2022
+"P00287","Madrid","Comercio","mediana",30,0.315851057151058,2020
+"P00288","Madrid","TIC","pequena",22,0.865522756774286,Inf
+"P00289","Pais Vasco","Manufacturas","micro",28,0.651044347684772,2022
+"P00290","Valencia","Manufacturas","micro",24,0.473594708851348,2020
+"P00291","Castilla y Leon","Comercio","mediana",33,0.61664785783037,2021
+"P00292","Andalucia","TIC","micro",48,0.45205375765696,2021
+"P00293","Castilla y Leon","Hosteleria","micro",12,0.495375771630602,Inf
+"P00294","Pais Vasco","Manufacturas","pequena",37,0.712506137377088,Inf
+"P00295","Cataluna","Comercio","pequena",38,0.285561840987194,2020
+"P00296","Castilla y Leon","TIC","micro",74,0.664911900575886,2022
+"P00297","Madrid","Manufacturas","micro",12,0.563731802583143,Inf
+"P00298","Madrid","Manufacturas","pequena",13,0.648799912572129,2022
+"P00299","Castilla y Leon","TIC","pequena",18,0.16384591716787,2022
+"P00300","Cataluna","TIC","mediana",12,0.302957324170674,2021
+"P00301","Valencia","Comercio","micro",38,0.644825726216437,2022
+"P00302","Pais Vasco","TIC","pequena",3,0.647033182112363,2022
+"P00303","Castilla y Leon","Manufacturas","mediana",30,0.384250614498153,2020
+"P00304","Valencia","TIC","micro",31,0.365817857688357,2022
+"P00305","Castilla y Leon","Servicios profesionales","pequena",11,0.467556168284697,Inf
+"P00306","Cataluna","TIC","pequena",33,0.345212734829946,2021
+"P00307","Pais Vasco","Servicios profesionales","mediana",4,0.585072643738063,2020
+"P00308","Cataluna","TIC","mediana",45,0.69653529711069,2021
+"P00309","Andalucia","Manufacturas","micro",3,0.563999274073726,2020
+"P00310","Castilla y Leon","Hosteleria","mediana",56,0.807777024739385,2021
+"P00311","Valencia","Comercio","mediana",7,0.290543011465584,2022
+"P00312","Madrid","Hosteleria","pequena",26,0.32317761037057,2021
+"P00313","Castilla y Leon","Manufacturas","pequena",8,0.482422013628966,Inf
+"P00314","Madrid","Comercio","micro",22,0.391222040519754,2021
+"P00315","Madrid","Comercio","micro",31,0.666112458137214,2022
+"P00316","Cataluna","TIC","micro",18,0.404341604603824,Inf
+"P00317","Madrid","Manufacturas","micro",20,0.375652540755954,2021
+"P00318","Andalucia","Servicios profesionales","pequena",13,0.80187265823497,2022
+"P00319","Pais Vasco","Manufacturas","pequena",22,0.75642858441174,2020
+"P00320","Pais Vasco","Hosteleria","pequena",4,0.3729669946113,Inf
+"P00321","Pais Vasco","Manufacturas","pequena",41,0.740646708979633,2023
+"P00322","Madrid","Comercio","micro",5,0.441678786118649,Inf
+"P00323","Cataluna","Comercio","pequena",13,0.665061715848264,2020
+"P00324","Andalucia","Hosteleria","micro",19,0.386407456270155,Inf
+"P00325","Andalucia","Comercio","pequena",14,0.398439888574183,2022
+"P00326","Valencia","Servicios profesionales","micro",21,0.345652964240945,Inf
+"P00327","Andalucia","Comercio","micro",65,0.505339578700652,2022
+"P00328","Madrid","Comercio","micro",37,0.542757579269768,2022
+"P00329","Andalucia","Servicios profesionales","micro",19,0.996702574661272,2020
+"P00330","Cataluna","Hosteleria","micro",9,0.526728206138823,Inf
+"P00331","Pais Vasco","Manufacturas","micro",13,0.578387001507336,2020
+"P00332","Pais Vasco","TIC","micro",9,0.684845478924636,Inf
+"P00333","Andalucia","Comercio","pequena",13,0.450847329237221,Inf
+"P00334","Cataluna","Manufacturas","pequena",15,0.518063873319416,Inf
+"P00335","Andalucia","Manufacturas","mediana",21,0.295670057297196,2022
+"P00336","Castilla y Leon","Hosteleria","mediana",4,0.780875855580615,2020
+"P00337","Valencia","TIC","micro",46,0.507027219075511,2023
+"P00338","Valencia","Servicios profesionales","pequena",46,0.780602806170441,2020
+"P00339","Andalucia","Hosteleria","pequena",32,0.416674668905011,Inf
+"P00340","Madrid","Hosteleria","pequena",10,0.845166874472128,2020
+"P00341","Andalucia","TIC","mediana",19,0.284816008608981,2023
+"P00342","Cataluna","TIC","micro",11,0.575566473456963,2021
+"P00343","Cataluna","Servicios profesionales","pequena",14,0.228420805734835,2022
+"P00344","Pais Vasco","Manufacturas","pequena",20,0.769047938384229,2020
+"P00345","Castilla y Leon","TIC","pequena",8,0.323190876795293,Inf
+"P00346","Castilla y Leon","Servicios profesionales","pequena",60,0.542043601371925,Inf
+"P00347","Pais Vasco","TIC","mediana",13,0.683255740160939,2023
+"P00348","Madrid","Hosteleria","micro",20,0.782472245714594,2022
+"P00349","Cataluna","Servicios profesionales","pequena",41,0.697655320394824,2020
+"P00350","Pais Vasco","TIC","micro",5,0.387943315115325,Inf
+"P00351","Cataluna","Comercio","micro",18,0.62761470141244,2022
+"P00352","Valencia","Hosteleria","pequena",18,0.327834996363092,2023
+"P00353","Cataluna","TIC","pequena",10,0.29807547852074,2020
+"P00354","Andalucia","TIC","mediana",45,0.852827593445416,Inf
+"P00355","Pais Vasco","Servicios profesionales","micro",21,0.549874438935649,2020
+"P00356","Madrid","Hosteleria","pequena",15,0.732138993392307,2022
+"P00357","Madrid","Manufacturas","micro",19,0.421683735571977,2020
+"P00358","Castilla y Leon","Hosteleria","mediana",14,0.874812206290503,2020
+"P00359","Valencia","Servicios profesionales","micro",41,0.563969452839384,2021
+"P00360","Pais Vasco","Servicios profesionales","mediana",10,0.802906384643091,Inf
+"P00361","Andalucia","Hosteleria","pequena",4,0.314216544251594,2022
+"P00362","Valencia","Servicios profesionales","micro",39,0.202818318057702,2020
+"P00363","Madrid","TIC","mediana",21,0.557474475865686,Inf
+"P00364","Pais Vasco","Comercio","micro",12,0.540924418514609,Inf
+"P00365","Valencia","Comercio","micro",96,0.539355944388328,Inf
+"P00366","Madrid","Servicios profesionales","micro",6,0.616041932948343,2021
+"P00367","Castilla y Leon","Hosteleria","micro",13,0.457835123734567,Inf
+"P00368","Cataluna","Servicios profesionales","pequena",5,0.351179215185769,Inf
+"P00369","Cataluna","Servicios profesionales","micro",21,0.829161639169429,Inf
+"P00370","Valencia","Manufacturas","pequena",9,0.548295257785709,2020
+"P00371","Madrid","Manufacturas","pequena",9,0.44419192329225,2023
+"P00372","Andalucia","Manufacturas","pequena",19,0.686029584636541,2021
+"P00373","Andalucia","TIC","pequena",32,0.595788161667712,2023
+"P00374","Madrid","Hosteleria","micro",4,0.661028934816853,2023
+"P00375","Cataluna","TIC","micro",15,0.407398575939764,Inf
+"P00376","Pais Vasco","Comercio","pequena",34,0.591757376488671,2023
+"P00377","Cataluna","TIC","mediana",29,0.474180243284094,2020
+"P00378","Castilla y Leon","Servicios profesionales","pequena",5,0.525804661375213,2021
+"P00379","Castilla y Leon","Servicios profesionales","micro",38,0.0855547533064436,2023
+"P00380","Cataluna","Hosteleria","micro",8,0.519506877453738,Inf
+"P00381","Madrid","Manufacturas","micro",10,0.835829168598197,2023
+"P00382","Andalucia","TIC","micro",21,0.726613977267845,2022
+"P00383","Madrid","Hosteleria","pequena",32,0.323557881071476,2021
+"P00384","Madrid","TIC","pequena",58,0.918256216279914,Inf
+"P00385","Cataluna","TIC","mediana",19,0.41370522534912,Inf
+"P00386","Cataluna","Servicios profesionales","micro",12,0.657859082017496,Inf
+"P00387","Madrid","Servicios profesionales","pequena",15,0.531589359015317,2022
+"P00388","Pais Vasco","TIC","mediana",29,0.329334217403761,2023
+"P00389","Castilla y Leon","Hosteleria","mediana",53,0.31276883300559,2020
+"P00390","Castilla y Leon","Manufacturas","pequena",31,0.505470222392054,Inf
+"P00391","Pais Vasco","TIC","pequena",12,0.70257942752339,Inf
+"P00392","Castilla y Leon","TIC","mediana",47,0.444389786476825,Inf
+"P00393","Cataluna","TIC","micro",40,0.332746048156691,Inf
+"P00394","Madrid","TIC","micro",3,0.695504328980447,Inf
+"P00395","Cataluna","Hosteleria","pequena",16,0.56130400307075,2023
+"P00396","Madrid","Hosteleria","micro",14,0.489850955362057,Inf
+"P00397","Castilla y Leon","Manufacturas","pequena",6,0.56387391067026,Inf
+"P00398","Valencia","Hosteleria","mediana",9,0.418620382255344,2022
+"P00399","Andalucia","Hosteleria","micro",42,0.47411699387175,2022
+"P00400","Castilla y Leon","Servicios profesionales","pequena",5,0.404543307124694,2021
+"P00401","Valencia","TIC","micro",26,0.715437261532029,2020
+"P00402","Pais Vasco","Comercio","pequena",36,0.799783589241731,2021
+"P00403","Valencia","Hosteleria","micro",10,0.519812400449601,Inf
+"P00404","Madrid","Manufacturas","pequena",37,0.701319502740481,2021
+"P00405","Andalucia","TIC","pequena",6,0.505218481772414,2021
+"P00406","Madrid","Comercio","micro",37,0.271886935316027,2020
+"P00407","Castilla y Leon","Hosteleria","micro",9,0.323100711814631,2022
+"P00408","Madrid","Manufacturas","micro",16,0.445934225083056,2021
+"P00409","Madrid","Servicios profesionales","mediana",7,0.507326857160939,Inf
+"P00410","Valencia","Comercio","mediana",23,0.403928425288508,Inf
+"P00411","Valencia","Hosteleria","micro",102,0.201539236484302,2022
+"P00412","Andalucia","TIC","pequena",52,0.299234765560116,Inf
+"P00413","Cataluna","Comercio","pequena",5,0.368058091521932,2021
+"P00414","Castilla y Leon","Manufacturas","pequena",51,0.521314054678533,Inf
+"P00415","Andalucia","TIC","pequena",22,0.457539912828107,Inf
+"P00416","Valencia","Servicios profesionales","micro",8,0.785652330022355,Inf
+"P00417","Andalucia","TIC","mediana",6,0.356566220347068,2022
+"P00418","Pais Vasco","Hosteleria","micro",111,0.740916556996382,2022
+"P00419","Andalucia","Comercio","pequena",32,0.211351493762888,2022
+"P00420","Andalucia","Comercio","micro",12,0.109162843630238,2023
+"P00421","Andalucia","Comercio","pequena",27,0.621126887040737,Inf
+"P00422","Andalucia","Comercio","pequena",7,0.257562456254964,Inf
+"P00423","Valencia","Hosteleria","pequena",19,0.460111651216136,2021
+"P00424","Castilla y Leon","Comercio","pequena",38,0.925556806959797,2022
+"P00425","Cataluna","Hosteleria","pequena",16,0.822769086546381,Inf
+"P00426","Castilla y Leon","TIC","mediana",22,0.840207718618846,Inf
+"P00427","Andalucia","Comercio","pequena",43,0.370957807144216,2022
+"P00428","Castilla y Leon","Servicios profesionales","pequena",48,0.97904837889284,2022
+"P00429","Castilla y Leon","TIC","micro",19,0.581652499915354,2022
+"P00430","Pais Vasco","Hosteleria","micro",40,0.428957769727644,2022
+"P00431","Pais Vasco","Manufacturas","micro",36,0.708163670587094,2020
+"P00432","Castilla y Leon","TIC","micro",5,0.687706000390725,Inf
+"P00433","Castilla y Leon","Hosteleria","micro",25,0.701786466171752,2020
+"P00434","Pais Vasco","Manufacturas","micro",13,0.357837429677836,2020
+"P00435","Pais Vasco","TIC","micro",7,0.694386107453832,2020
+"P00436","Madrid","Manufacturas","pequena",13,0.601194606164804,2020
+"P00437","Madrid","TIC","mediana",18,0.231364793688068,Inf
+"P00438","Andalucia","TIC","micro",8,0.438835309636743,2023
+"P00439","Valencia","Hosteleria","pequena",13,0.605736733331749,Inf
+"P00440","Valencia","Comercio","pequena",32,0.705508346292782,Inf
+"P00441","Cataluna","TIC","pequena",40,0.138749985379118,2023
+"P00442","Cataluna","Manufacturas","pequena",24,0.690907318676231,2020
+"P00443","Valencia","Comercio","micro",32,0.596948270584879,2023
+"P00444","Pais Vasco","TIC","mediana",6,0.537805479680575,2020
+"P00445","Andalucia","TIC","micro",19,0.2333255351092,Inf
+"P00446","Castilla y Leon","Hosteleria","micro",22,0.281240401462388,2022
+"P00447","Pais Vasco","TIC","pequena",75,0.711413223492914,2022
+"P00448","Valencia","TIC","mediana",11,0.403251887506809,Inf
+"P00449","Andalucia","Manufacturas","pequena",13,0.698528750957526,2020
+"P00450","Pais Vasco","Comercio","mediana",11,0.13581055723519,2020
+"P00451","Cataluna","Hosteleria","pequena",13,0.853689251222519,Inf
+"P00452","Cataluna","Comercio","pequena",10,0.733862772583566,2022
+"P00453","Castilla y Leon","Hosteleria","micro",20,0.605871851728392,2022
+"P00454","Andalucia","Manufacturas","micro",15,0.502085418185257,Inf
+"P00455","Castilla y Leon","TIC","pequena",30,0.325595852320235,2022
+"P00456","Valencia","Comercio","mediana",11,0.707332720195952,Inf
+"P00457","Cataluna","Hosteleria","pequena",4,0.854823695419709,Inf
+"P00458","Madrid","Comercio","pequena",4,0.287347855994917,Inf
+"P00459","Pais Vasco","Hosteleria","micro",17,0.51746318475524,Inf
+"P00460","Cataluna","Servicios profesionales","pequena",44,0.421621525248914,Inf
+"P00461","Valencia","Manufacturas","micro",20,0.334356189601149,2021
+"P00462","Castilla y Leon","TIC","micro",16,0.666797852580401,2021
+"P00463","Madrid","Servicios profesionales","micro",23,0.391862856440405,2020
+"P00464","Andalucia","TIC","mediana",66,0.482693573226572,2020
+"P00465","Valencia","Comercio","pequena",6,0.779468177978009,Inf
+"P00466","Pais Vasco","Comercio","pequena",13,0.415112567692831,2021
+"P00467","Valencia","TIC","pequena",5,0.398644420251133,2022
+"P00468","Madrid","Hosteleria","micro",15,0.376749110161119,Inf
+"P00469","Andalucia","Comercio","pequena",17,0.657767119033003,2022
+"P00470","Pais Vasco","Manufacturas","pequena",36,0.814791698330152,2023
+"P00471","Pais Vasco","Hosteleria","pequena",13,0.667411467210608,2020
+"P00472","Pais Vasco","Comercio","micro",18,0.40437782078392,Inf
+"P00473","Madrid","TIC","micro",10,0.429178083588633,2022
+"P00474","Cataluna","TIC","micro",22,0.784132320389046,2020
+"P00475","Pais Vasco","Servicios profesionales","micro",10,0.633496620230516,2021
+"P00476","Pais Vasco","Comercio","pequena",22,0.657385405286105,2023
+"P00477","Castilla y Leon","Manufacturas","pequena",28,0.830298813664231,2022
+"P00478","Valencia","Manufacturas","micro",23,0.521352758586166,2022
+"P00479","Madrid","Manufacturas","pequena",7,0.498018273413004,2023
+"P00480","Castilla y Leon","Hosteleria","pequena",67,0.41807642767886,Inf
+"P00481","Cataluna","Servicios profesionales","micro",13,0.453177401077463,2021
+"P00482","Castilla y Leon","Hosteleria","micro",52,0.36239480936827,Inf
+"P00483","Castilla y Leon","TIC","micro",37,0.516894580831952,2020
+"P00484","Madrid","Comercio","micro",23,0.939791256833905,2023
+"P00485","Andalucia","Manufacturas","mediana",31,0.675828991990559,2022
+"P00486","Andalucia","Comercio","pequena",99,0.59089222041043,Inf
+"P00487","Castilla y Leon","Comercio","micro",9,0.751785508009966,Inf
+"P00488","Andalucia","Comercio","micro",24,0.436942879720656,Inf
+"P00489","Pais Vasco","TIC","micro",20,0.492824685928062,Inf
+"P00490","Valencia","Manufacturas","micro",39,0.627247772290218,Inf
+"P00491","Valencia","Comercio","micro",45,0.589015560170254,Inf
+"P00492","Valencia","Comercio","pequena",34,0.539563496571536,2022
+"P00493","Madrid","Manufacturas","pequena",10,0.699113363701306,2020
+"P00494","Cataluna","Hosteleria","micro",23,0.405767695942475,2021
+"P00495","Castilla y Leon","Manufacturas","micro",17,0.545481183790498,2022
+"P00496","Cataluna","Manufacturas","pequena",8,0.300199866510106,2023
+"P00497","Valencia","Manufacturas","pequena",8,0.646193122864552,Inf
+"P00498","Valencia","Hosteleria","mediana",79,0.309726780650177,2022
+"P00499","Valencia","Comercio","micro",51,0.661478111771281,2022
+"P00500","Madrid","Manufacturas","micro",12,0.221912530013488,2021
+"P00501","Pais Vasco","Manufacturas","micro",21,0.449122314464557,2022
+"P00502","Valencia","Comercio","micro",23,0.531764476740903,Inf
+"P00503","Andalucia","Hosteleria","micro",67,0.547779724748647,Inf
+"P00504","Cataluna","Manufacturas","pequena",7,0.597518286848524,2021
+"P00505","Madrid","Comercio","micro",16,0.41855504574763,2020
+"P00506","Pais Vasco","Hosteleria","micro",17,0.733079236604952,2022
+"P00507","Castilla y Leon","TIC","pequena",17,0.625148956136974,2020
+"P00508","Castilla y Leon","Comercio","micro",53,0.534742745001555,2021
+"P00509","Madrid","Comercio","micro",37,0.542097125588486,2021
+"P00510","Valencia","Servicios profesionales","micro",21,0.326937992410985,Inf
+"P00511","Cataluna","Manufacturas","mediana",20,0.743920758872067,Inf
+"P00512","Castilla y Leon","Manufacturas","micro",4,0.911077137173925,Inf
+"P00513","Castilla y Leon","Manufacturas","micro",53,0.518598620764672,2023
+"P00514","Pais Vasco","TIC","micro",22,0.548387646228692,2020
+"P00515","Pais Vasco","TIC","micro",17,0.686158202333451,Inf
+"P00516","Castilla y Leon","Comercio","pequena",18,0.511964982894322,2020
+"P00517","Andalucia","Comercio","micro",21,0.2415961441403,2022
+"P00518","Pais Vasco","Hosteleria","micro",5,0.416602114300254,Inf
+"P00519","Valencia","Servicios profesionales","micro",114,0.476899824644991,2022
+"P00520","Madrid","Hosteleria","micro",22,0.609769519186045,2020
+"P00521","Madrid","Hosteleria","micro",6,0.589868748601644,2020
+"P00522","Castilla y Leon","Hosteleria","pequena",8,0.259745965476417,Inf
+"P00523","Cataluna","Servicios profesionales","pequena",12,0.541909994447179,Inf
+"P00524","Cataluna","TIC","micro",50,0.73127871023184,Inf
+"P00525","Cataluna","Comercio","micro",9,0.840870259953416,2023
+"P00526","Castilla y Leon","Manufacturas","mediana",17,0.577925777783901,2022
+"P00527","Pais Vasco","TIC","micro",14,0.755146789322072,2021
+"P00528","Castilla y Leon","Manufacturas","mediana",5,0.780085037519677,Inf
+"P00529","Andalucia","Servicios profesionales","micro",23,0.617486741107347,2020
+"P00530","Pais Vasco","Servicios profesionales","pequena",15,0.487452453181442,2023
+"P00531","Valencia","Comercio","pequena",43,0.624670708768684,Inf
+"P00532","Andalucia","Comercio","micro",35,0.503466845777645,2023
+"P00533","Cataluna","Comercio","pequena",2,0.665751494521404,2021
+"P00534","Castilla y Leon","Servicios profesionales","micro",23,0.472807884395048,Inf
+"P00535","Pais Vasco","Comercio","pequena",14,0.430726569533904,2022
+"P00536","Pais Vasco","Hosteleria","micro",20,0.740882839323765,Inf
+"P00537","Pais Vasco","Comercio","mediana",16,0.421741926980511,2023
+"P00538","Cataluna","Hosteleria","mediana",16,0.55660632776265,2022
+"P00539","Cataluna","Comercio","pequena",19,0.574010583623476,2021
+"P00540","Castilla y Leon","TIC","micro",18,0.443843660287137,Inf
+"P00541","Pais Vasco","Manufacturas","micro",8,0.505686933724385,Inf
+"P00542","Andalucia","TIC","pequena",15,0.166731284886661,Inf
+"P00543","Andalucia","Hosteleria","micro",15,0.299419711990354,2020
+"P00544","Pais Vasco","Comercio","pequena",8,0.51246969229456,2020
+"P00545","Madrid","TIC","pequena",32,0.706206157980084,2020
+"P00546","Pais Vasco","TIC","pequena",4,0.284896071528298,2021
+"P00547","Pais Vasco","Servicios profesionales","mediana",2,0.372218049658021,2020
+"P00548","Castilla y Leon","Comercio","mediana",13,0.614614593798911,Inf
+"P00549","Castilla y Leon","Hosteleria","micro",11,0.383516812676609,Inf
+"P00550","Andalucia","Hosteleria","pequena",16,0.66711487830686,Inf
+"P00551","Castilla y Leon","TIC","pequena",31,0.78373142618743,2021
+"P00552","Andalucia","Servicios profesionales","pequena",32,0.252638973619903,2022
+"P00553","Pais Vasco","Manufacturas","pequena",13,0.826322896471704,2021
+"P00554","Pais Vasco","TIC","micro",7,0.659021015583717,2022
+"P00555","Pais Vasco","Comercio","micro",23,0.473812918471625,Inf
+"P00556","Madrid","Comercio","pequena",15,0.357461688919018,Inf
+"P00557","Andalucia","TIC","pequena",40,0.586212875350009,Inf
+"P00558","Pais Vasco","TIC","micro",11,0.662773164091929,2020
+"P00559","Valencia","Comercio","pequena",21,0.467974759189531,Inf
+"P00560","Andalucia","Hosteleria","pequena",20,0.305822941043767,2022
+"P00561","Castilla y Leon","TIC","mediana",6,0.629744195823762,Inf
+"P00562","Cataluna","Comercio","pequena",27,0.522650643721753,2021
+"P00563","Andalucia","Manufacturas","pequena",45,0.583782821312862,2023
+"P00564","Andalucia","Manufacturas","pequena",7,0.31096745688528,2021
+"P00565","Pais Vasco","Manufacturas","micro",24,0.565985067087629,2022
+"P00566","Valencia","Hosteleria","pequena",5,0.627076613867177,2021
+"P00567","Andalucia","Servicios profesionales","pequena",34,0.840031677187204,Inf
+"P00568","Andalucia","TIC","micro",26,0.628818290534783,2023
+"P00569","Valencia","Hosteleria","micro",23,0.501329383620764,2023
+"P00570","Cataluna","Comercio","micro",39,0.13593414980079,2020
+"P00571","Pais Vasco","Servicios profesionales","micro",16,0.633635208755518,Inf
+"P00572","Madrid","Comercio","pequena",13,0.690715889733382,2020
+"P00573","Andalucia","Hosteleria","micro",13,0.458089362674698,Inf
+"P00574","Valencia","Comercio","pequena",7,0.52326699464546,2021
+"P00575","Valencia","Comercio","micro",31,0.671813213803683,Inf
+"P00576","Madrid","TIC","micro",15,0.851467244065841,2022
+"P00577","Andalucia","Comercio","pequena",38,0.432960284393053,Inf
+"P00578","Pais Vasco","TIC","pequena",14,0.553818626219292,2022
+"P00579","Pais Vasco","TIC","mediana",64,0.380482407103285,Inf
+"P00580","Castilla y Leon","Comercio","pequena",58,0.516758377711914,Inf
+"P00581","Madrid","Comercio","mediana",9,0.578036177521496,Inf
+"P00582","Andalucia","Servicios profesionales","pequena",25,0.525347726284276,2020
+"P00583","Andalucia","Hosteleria","pequena",8,0.645960513910621,2022
+"P00584","Madrid","Hosteleria","mediana",5,0.589782717895669,2020
+"P00585","Valencia","TIC","pequena",18,0.383607700556278,2021
+"P00586","Andalucia","Servicios profesionales","pequena",8,0.291853202098767,Inf
+"P00587","Cataluna","Servicios profesionales","mediana",25,0.552736955421711,Inf
+"P00588","Madrid","Comercio","micro",12,0.572975715251989,Inf
+"P00589","Andalucia","Manufacturas","pequena",33,0.511074534288578,2022
+"P00590","Andalucia","Comercio","micro",16,0.739141558486339,2020
+"P00591","Valencia","Servicios profesionales","micro",7,0.458198827269594,Inf
+"P00592","Cataluna","Comercio","pequena",38,0.583921922127128,2021
+"P00593","Cataluna","Comercio","pequena",16,0.36332648631831,Inf
+"P00594","Pais Vasco","Manufacturas","mediana",213,0.275809356987703,Inf
+"P00595","Castilla y Leon","Manufacturas","mediana",18,0.407157661137455,Inf
+"P00596","Castilla y Leon","Servicios profesionales","micro",44,0.305518920736747,Inf
+"P00597","Castilla y Leon","Manufacturas","micro",39,0.487180409320258,Inf
+"P00598","Pais Vasco","Servicios profesionales","micro",15,0.377525063336041,Inf
+"P00599","Andalucia","Servicios profesionales","mediana",41,0.412242818744106,2020
+"P00600","Andalucia","Comercio","mediana",10,0.4868042930665,Inf
+"P00601","Valencia","Servicios profesionales","micro",20,0.745595558117285,2023
+"P00602","Madrid","Manufacturas","mediana",17,0.59742561484059,2021
+"P00603","Valencia","Comercio","micro",38,0.466630741065798,2021
+"P00604","Pais Vasco","Servicios profesionales","micro",61,0.737357729593452,Inf
+"P00605","Castilla y Leon","Servicios profesionales","micro",8,0.481404534465378,2021
+"P00606","Valencia","Manufacturas","micro",8,0.485537331259592,2022
+"P00607","Valencia","Manufacturas","micro",51,0.843105593781933,2022
+"P00608","Castilla y Leon","Comercio","pequena",24,0.443235337921699,2020
+"P00609","Andalucia","Manufacturas","micro",18,0.858131720117014,Inf
+"P00610","Cataluna","TIC","micro",6,0.633772586148437,2021
+"P00611","Castilla y Leon","Comercio","pequena",8,0.349588814105742,2023
+"P00612","Cataluna","Manufacturas","pequena",15,0.768930458775789,2020
+"P00613","Pais Vasco","Hosteleria","mediana",41,0.866967757038178,Inf
+"P00614","Valencia","Manufacturas","micro",27,0.482508390925458,2023
+"P00615","Pais Vasco","Manufacturas","pequena",84,0.701698259745137,2020
+"P00616","Valencia","TIC","micro",24,0.61809913868628,2021
+"P00617","Madrid","TIC","micro",15,0.516656777500066,2022
+"P00618","Madrid","TIC","micro",8,0.488206927248938,2021
+"P00619","Cataluna","TIC","pequena",14,0.468531100336647,Inf
+"P00620","Pais Vasco","Hosteleria","pequena",22,0.494233623839679,2021
+"P00621","Valencia","Hosteleria","mediana",42,0.507506326701032,2020
+"P00622","Pais Vasco","Hosteleria","pequena",11,0.587069653702779,Inf
+"P00623","Pais Vasco","Manufacturas","micro",11,0.397606054289851,2020
+"P00624","Castilla y Leon","Manufacturas","mediana",31,0.348677109509135,2020
+"P00625","Pais Vasco","Comercio","micro",9,0.508985031151552,Inf
+"P00626","Madrid","TIC","mediana",30,0.347507880834377,2020
+"P00627","Andalucia","TIC","pequena",59,0.391486546059583,Inf
+"P00628","Andalucia","Hosteleria","micro",24,0.551315020453423,Inf
+"P00629","Cataluna","TIC","pequena",23,0.643089904131336,Inf
+"P00630","Cataluna","Comercio","micro",12,0.447131829270039,Inf
+"P00631","Castilla y Leon","Comercio","pequena",11,0.506882003800162,Inf
+"P00632","Pais Vasco","Manufacturas","mediana",9,0.398171936396969,2020
+"P00633","Pais Vasco","Servicios profesionales","pequena",13,0.802860607349986,2023
+"P00634","Andalucia","Hosteleria","micro",11,0.70691863051931,Inf
+"P00635","Andalucia","TIC","pequena",54,0.704563504648917,Inf
+"P00636","Cataluna","Comercio","micro",17,0.463601908228864,2020
+"P00637","Valencia","Manufacturas","micro",32,0.760299502336464,2022
+"P00638","Castilla y Leon","TIC","micro",50,0.464330461328628,Inf
+"P00639","Madrid","Comercio","mediana",15,0.393419780172276,2022
+"P00640","Andalucia","TIC","pequena",19,0.260767740875378,2021
+"P00641","Valencia","Servicios profesionales","micro",5,0.614396308114548,2020
+"P00642","Valencia","Manufacturas","pequena",18,0.726078542255058,Inf
+"P00643","Pais Vasco","Hosteleria","micro",14,0.05,Inf
+"P00644","Andalucia","Hosteleria","mediana",12,0.551361546145522,2022
+"P00645","Cataluna","Servicios profesionales","micro",12,0.678369622177105,2020
+"P00646","Madrid","Servicios profesionales","micro",13,0.656973169282902,2023
+"P00647","Pais Vasco","Servicios profesionales","pequena",18,0.684463466998351,2020
+"P00648","Madrid","TIC","pequena",19,0.3972437888317,2021
+"P00649","Castilla y Leon","TIC","mediana",43,0.613743804587484,Inf
+"P00650","Andalucia","Comercio","pequena",24,0.443882383662876,Inf
+"P00651","Castilla y Leon","Manufacturas","micro",24,0.673654243901086,Inf
+"P00652","Madrid","Manufacturas","mediana",12,0.349882836671421,2021
+"P00653","Cataluna","TIC","pequena",17,0.768426788963516,2020
+"P00654","Valencia","TIC","pequena",44,0.524311710168288,Inf
+"P00655","Valencia","Servicios profesionales","pequena",4,0.474273786689674,2022
+"P00656","Pais Vasco","Manufacturas","micro",3,0.420322466950721,Inf
+"P00657","Castilla y Leon","Manufacturas","pequena",19,0.694783557594946,Inf
+"P00658","Castilla y Leon","Hosteleria","micro",10,0.567737087527793,Inf
+"P00659","Castilla y Leon","TIC","pequena",8,0.492293183055287,2021
+"P00660","Madrid","TIC","pequena",23,0.6980162731257,2023
+"P00661","Pais Vasco","TIC","micro",24,0.644217585165735,2021
+"P00662","Pais Vasco","Hosteleria","micro",25,0.582437922866217,2022
+"P00663","Castilla y Leon","Servicios profesionales","micro",12,0.433922042237761,Inf
+"P00664","Castilla y Leon","Servicios profesionales","pequena",29,0.44105938827322,2022
+"P00665","Madrid","Hosteleria","micro",18,0.16008012183875,2023
+"P00666","Madrid","Manufacturas","pequena",10,0.451330777866039,2021
+"P00667","Valencia","Manufacturas","pequena",36,0.606952900867709,2020
+"P00668","Madrid","Manufacturas","micro",9,0.549654332383609,Inf
+"P00669","Andalucia","Manufacturas","micro",38,0.672928939015195,Inf
+"P00670","Cataluna","Hosteleria","pequena",11,0.430216265090316,2021
+"P00671","Pais Vasco","Manufacturas","pequena",19,0.814834036748757,Inf
+"P00672","Andalucia","Comercio","micro",10,0.150384876116852,Inf
+"P00673","Valencia","Manufacturas","mediana",34,0.629011545259672,2020
+"P00674","Madrid","Comercio","micro",10,0.312050857654396,2022
+"P00675","Andalucia","Manufacturas","micro",25,0.305043896936057,2022
+"P00676","Pais Vasco","Hosteleria","micro",26,0.485058133414489,Inf
+"P00677","Andalucia","Comercio","pequena",13,0.444262788473679,2022
+"P00678","Pais Vasco","TIC","pequena",30,0.432378636594243,2020
+"P00679","Pais Vasco","TIC","micro",20,0.124523632063948,Inf
+"P00680","Madrid","Hosteleria","micro",14,0.773546915579226,2022
+"P00681","Andalucia","Manufacturas","micro",27,0.282331086087413,2023
+"P00682","Castilla y Leon","Hosteleria","micro",7,0.214641248088207,2021
+"P00683","Madrid","Servicios profesionales","pequena",15,0.566755369724678,2022
+"P00684","Madrid","Hosteleria","micro",12,1.03728890228278,2020
+"P00685","Pais Vasco","Comercio","micro",22,0.613306118244795,Inf
+"P00686","Cataluna","Comercio","pequena",7,0.546357465902585,Inf
+"P00687","Madrid","TIC","pequena",23,0.543775246936509,Inf
+"P00688","Valencia","Servicios profesionales","pequena",11,0.807525205982809,Inf
+"P00689","Cataluna","Hosteleria","micro",9,0.65440218748987,2022
+"P00690","Cataluna","Servicios profesionales","micro",26,0.698436915700841,Inf
+"P00691","Valencia","TIC","micro",8,0.709460464196509,2022
+"P00692","Cataluna","Comercio","micro",10,0.693769942732633,2021
+"P00693","Valencia","Servicios profesionales","pequena",20,0.414985576051238,2023
+"P00694","Pais Vasco","Servicios profesionales","micro",3,0.240123240941027,2020
+"P00695","Andalucia","Servicios profesionales","micro",7,0.450075273868967,Inf
+"P00696","Cataluna","TIC","micro",38,0.349385197963806,2020
+"P00697","Valencia","Servicios profesionales","pequena",28,0.0938209646822806,2023
+"P00698","Andalucia","Comercio","mediana",7,0.558452060816566,Inf
+"P00699","Castilla y Leon","Comercio","micro",25,0.337965107878025,2023
+"P00700","Valencia","Comercio","pequena",28,0.541767196246243,Inf
+"P00701","Valencia","Manufacturas","micro",14,0.699897190832259,2023
+"P00702","Andalucia","Servicios profesionales","mediana",10,0.396419553072739,Inf
+"P00703","Valencia","TIC","mediana",28,0.282266380173921,Inf
+"P00704","Madrid","Manufacturas","pequena",15,0.299537566556543,Inf
+"P00705","Valencia","Manufacturas","micro",17,1.00026408105279,Inf
+"P00706","Andalucia","TIC","micro",19,0.650631977961333,Inf
+"P00707","Madrid","Hosteleria","micro",4,0.609853992292295,Inf
+"P00708","Valencia","Manufacturas","pequena",17,0.520228193974136,2022
+"P00709","Andalucia","Servicios profesionales","mediana",9,0.417867366695669,Inf
+"P00710","Castilla y Leon","Comercio","micro",6,0.64364284228133,2023
+"P00711","Madrid","TIC","micro",116,0.462714449044983,Inf
+"P00712","Valencia","Hosteleria","pequena",18,0.495042865906266,2023
+"P00713","Castilla y Leon","Servicios profesionales","micro",45,0.737706756161697,2023
+"P00714","Castilla y Leon","Comercio","micro",47,0.550555968801355,Inf
+"P00715","Castilla y Leon","Hosteleria","micro",10,0.739705021624586,2022
+"P00716","Valencia","TIC","pequena",11,0.41845767638917,2021
+"P00717","Castilla y Leon","TIC","pequena",24,0.238661570934242,2023
+"P00718","Cataluna","Hosteleria","micro",26,0.561364829973872,Inf
+"P00719","Castilla y Leon","Servicios profesionales","pequena",22,0.587150173363388,2021
+"P00720","Valencia","Servicios profesionales","pequena",9,0.613446448969392,2021
+"P00721","Cataluna","Servicios profesionales","micro",26,0.625368820732237,2022
+"P00722","Cataluna","Servicios profesionales","micro",113,0.502618081811613,Inf
+"P00723","Andalucia","Manufacturas","micro",50,0.649831040366956,2021
+"P00724","Andalucia","Manufacturas","pequena",12,0.86744827274243,2020
+"P00725","Madrid","Servicios profesionales","micro",40,0.531531173017263,2022
+"P00726","Castilla y Leon","Hosteleria","micro",20,0.483934338916504,2020
+"P00727","Castilla y Leon","Manufacturas","pequena",15,0.32485308335885,Inf
+"P00728","Andalucia","Manufacturas","mediana",39,0.25212009145892,Inf
+"P00729","Madrid","Manufacturas","micro",5,0.572417170338007,2023
+"P00730","Valencia","Manufacturas","micro",5,0.29847435879723,2023
+"P00731","Andalucia","Hosteleria","micro",12,0.719069398050675,2023
+"P00732","Madrid","Servicios profesionales","micro",8,0.430108434358319,Inf
+"P00733","Pais Vasco","Servicios profesionales","pequena",26,0.145640612103941,2020
+"P00734","Andalucia","Comercio","micro",9,0.549978583015248,2023
+"P00735","Valencia","Comercio","pequena",14,0.550082343472271,2020
+"P00736","Pais Vasco","Servicios profesionales","pequena",7,0.578125205968829,Inf
+"P00737","Cataluna","TIC","mediana",25,0.571649738129949,2021
+"P00738","Pais Vasco","Comercio","micro",24,0.41737474687278,2020
+"P00739","Cataluna","Manufacturas","pequena",15,0.300376846021993,2020
+"P00740","Castilla y Leon","Hosteleria","pequena",25,0.875853466692822,Inf
+"P00741","Andalucia","TIC","pequena",11,0.916721993192761,Inf
+"P00742","Pais Vasco","Manufacturas","pequena",8,0.735929774352181,Inf
+"P00743","Andalucia","Hosteleria","pequena",4,0.718073501765941,2021
+"P00744","Valencia","Hosteleria","micro",10,0.801304905556029,2023
+"P00745","Pais Vasco","Servicios profesionales","pequena",28,0.168387269074353,Inf
+"P00746","Madrid","Servicios profesionales","mediana",8,0.391689517798334,2020
+"P00747","Andalucia","Comercio","pequena",14,0.587199001266421,Inf
+"P00748","Madrid","Manufacturas","micro",16,0.726045384908972,2020
+"P00749","Pais Vasco","Servicios profesionales","pequena",95,0.495818004102827,Inf
+"P00750","Cataluna","Hosteleria","pequena",20,0.580397793230389,2021
+"P00751","Valencia","Comercio","pequena",12,0.415106586331995,2023
+"P00752","Cataluna","Manufacturas","mediana",7,0.434958017726226,2022
+"P00753","Cataluna","Servicios profesionales","micro",22,0.526039856866931,2022
+"P00754","Cataluna","Hosteleria","micro",7,0.418718860142585,2021
+"P00755","Madrid","Comercio","micro",34,0.528684520890324,2021
+"P00756","Castilla y Leon","Manufacturas","mediana",23,0.511501366752842,2021
+"P00757","Andalucia","Servicios profesionales","micro",39,0.51772615262047,2021
+"P00758","Valencia","TIC","micro",49,0.38919750999113,Inf
+"P00759","Cataluna","Manufacturas","micro",9,0.693570263057713,2020
+"P00760","Castilla y Leon","Comercio","micro",27,0.483212571356486,2020
+"P00761","Castilla y Leon","Servicios profesionales","pequena",10,0.727217745557848,2022
+"P00762","Castilla y Leon","Manufacturas","micro",10,0.292692702298886,2023
+"P00763","Cataluna","Hosteleria","mediana",115,0.429628345902088,Inf
+"P00764","Castilla y Leon","Servicios profesionales","micro",17,0.284184702306201,2022
+"P00765","Andalucia","Comercio","pequena",34,0.626111117950286,Inf
+"P00766","Andalucia","Comercio","pequena",32,0.373604024783594,Inf
+"P00767","Madrid","Hosteleria","pequena",17,0.599392648204635,2020
+"P00768","Valencia","Hosteleria","micro",17,0.474033622403678,2021
+"P00769","Cataluna","TIC","micro",30,0.360633398780525,2021
+"P00770","Andalucia","Comercio","micro",10,0.777035050618662,2020
+"P00771","Castilla y Leon","Manufacturas","pequena",21,0.480455553756025,Inf
+"P00772","Andalucia","Servicios profesionales","micro",8,0.493973360130077,2022
+"P00773","Andalucia","Servicios profesionales","pequena",6,0.399580052721943,Inf
+"P00774","Cataluna","TIC","pequena",49,0.710400321899191,2021
+"P00775","Madrid","Manufacturas","pequena",14,0.486395227232782,Inf
+"P00776","Andalucia","Manufacturas","mediana",6,0.454919770857735,2023
+"P00777","Valencia","Servicios profesionales","pequena",7,0.639315671228765,Inf
+"P00778","Madrid","Manufacturas","micro",21,0.602162704255161,Inf
+"P00779","Andalucia","Servicios profesionales","micro",14,0.225425680855951,2021
+"P00780","Madrid","Servicios profesionales","micro",38,0.467163226759417,Inf
+"P00781","Valencia","Servicios profesionales","micro",12,0.627984634849495,2021
+"P00782","Valencia","TIC","mediana",21,0.208859356096407,Inf
+"P00783","Valencia","TIC","pequena",17,0.115513008140892,2021
+"P00784","Pais Vasco","Comercio","pequena",43,0.758580144962433,2023
+"P00785","Castilla y Leon","Servicios profesionales","pequena",27,0.550722163341705,2022
+"P00786","Valencia","Servicios profesionales","micro",9,0.519412502843629,Inf
+"P00787","Castilla y Leon","Servicios profesionales","pequena",14,0.15960414486431,Inf
+"P00788","Andalucia","Servicios profesionales","mediana",43,0.639603424727333,2022
+"P00789","Andalucia","Hosteleria","micro",58,0.535079792758868,2021
+"P00790","Madrid","TIC","pequena",22,0.516420458390599,2022
+"P00791","Pais Vasco","TIC","micro",31,0.375772991552154,Inf
+"P00792","Madrid","Servicios profesionales","pequena",8,0.627648591354657,2022
+"P00793","Cataluna","Manufacturas","micro",19,0.658339007093788,Inf
+"P00794","Cataluna","Servicios profesionales","pequena",20,0.56259707339429,2021
+"P00795","Cataluna","Servicios profesionales","pequena",25,0.669940548379288,2020
+"P00796","Pais Vasco","Manufacturas","mediana",11,0.521412180465372,2021
+"P00797","Valencia","Hosteleria","micro",62,0.313053509976522,2021
+"P00798","Pais Vasco","Servicios profesionales","pequena",21,0.50667085204601,2022
+"P00799","Valencia","Manufacturas","micro",27,0.458452420612421,Inf
+"P00800","Valencia","Servicios profesionales","mediana",59,0.541428976530947,2021
+"P00801","Andalucia","Comercio","mediana",17,0.854920543116308,2021
+"P00802","Valencia","Comercio","mediana",17,0.522049269232799,2021
+"P00803","Castilla y Leon","Servicios profesionales","micro",5,0.532179636299434,2022
+"P00804","Valencia","TIC","micro",42,0.294166807011972,Inf
+"P00805","Castilla y Leon","Manufacturas","pequena",28,0.724798765053973,2021
+"P00806","Cataluna","Manufacturas","micro",2,0.426528224960266,2022
+"P00807","Pais Vasco","Comercio","micro",23,0.496431621190491,Inf
+"P00808","Andalucia","Comercio","pequena",12,0.349681359890775,2022
+"P00809","Madrid","TIC","micro",3,0.636967843380927,Inf
+"P00810","Valencia","Comercio","micro",2,0.240898064622607,2023
+"P00811","Castilla y Leon","Servicios profesionales","pequena",7,0.0766493939340793,Inf
+"P00812","Madrid","Manufacturas","pequena",8,0.246935354742755,Inf
+"P00813","Andalucia","Hosteleria","micro",67,0.396530168737401,Inf
+"P00814","Valencia","Servicios profesionales","micro",7,0.716589010717674,Inf
+"P00815","Andalucia","Servicios profesionales","pequena",6,0.591705203289271,2021
+"P00816","Castilla y Leon","Hosteleria","pequena",22,0.523719682019646,2021
+"P00817","Valencia","Hosteleria","micro",13,0.252152324049883,Inf
+"P00818","Valencia","TIC","micro",9,0.579553787840292,Inf
+"P00819","Castilla y Leon","Servicios profesionales","micro",36,0.617835278614381,Inf
+"P00820","Castilla y Leon","Servicios profesionales","pequena",5,0.754725649302906,2020
+"P00821","Madrid","Servicios profesionales","micro",15,0.655241915718671,Inf
+"P00822","Valencia","Manufacturas","micro",31,0.515079128239424,2021
+"P00823","Castilla y Leon","Comercio","pequena",23,0.278451554094761,2022
+"P00824","Andalucia","Comercio","pequena",5,0.676367081640259,Inf
+"P00825","Pais Vasco","Servicios profesionales","pequena",36,0.702564921514821,2021
+"P00826","Castilla y Leon","TIC","micro",19,0.649510558167832,2023
+"P00827","Castilla y Leon","Hosteleria","micro",6,0.52608258888248,2023
+"P00828","Castilla y Leon","Comercio","micro",10,0.576254015334946,2021
+"P00829","Pais Vasco","Manufacturas","micro",26,0.403049389590856,2022
+"P00830","Valencia","Comercio","micro",30,0.332663366962329,2022
+"P00831","Valencia","Servicios profesionales","pequena",6,0.494400457161644,2023
+"P00832","Cataluna","Manufacturas","mediana",4,0.627297819696453,2021
+"P00833","Castilla y Leon","Servicios profesionales","pequena",79,0.221421553895868,Inf
+"P00834","Pais Vasco","Manufacturas","micro",57,0.537571527058546,Inf
+"P00835","Valencia","Hosteleria","pequena",17,0.691274183894667,2021
+"P00836","Castilla y Leon","Hosteleria","pequena",17,0.621073835259979,2021
+"P00837","Andalucia","Servicios profesionales","mediana",14,0.678990616224759,2021
+"P00838","Andalucia","TIC","mediana",7,0.8986505517355,Inf
+"P00839","Castilla y Leon","Servicios profesionales","micro",27,0.696002152720266,Inf
+"P00840","Castilla y Leon","Manufacturas","pequena",8,0.48027830430444,Inf
+"P00841","Cataluna","Hosteleria","pequena",14,0.287652766536671,2021
+"P00842","Cataluna","Hosteleria","pequena",19,0.584359414622415,Inf
+"P00843","Cataluna","Hosteleria","mediana",9,0.804647763344424,2021
+"P00844","Valencia","Comercio","micro",36,0.726996860313241,2021
+"P00845","Cataluna","Comercio","micro",10,0.910581188036449,Inf
+"P00846","Madrid","TIC","mediana",37,0.76441844038403,2020
+"P00847","Valencia","Hosteleria","mediana",6,0.259848162903547,Inf
+"P00848","Castilla y Leon","TIC","micro",23,0.568824476109113,2020
+"P00849","Castilla y Leon","Manufacturas","micro",4,0.415203783992234,Inf
+"P00850","Madrid","Servicios profesionales","pequena",25,0.377673903739101,2022
+"P00851","Pais Vasco","Manufacturas","pequena",3,0.417185043238982,2022
+"P00852","Cataluna","Hosteleria","micro",15,0.760709564395236,2021
+"P00853","Pais Vasco","Manufacturas","pequena",16,0.646467954027268,2020
+"P00854","Madrid","Manufacturas","mediana",54,0.382488775594704,Inf
+"P00855","Andalucia","Comercio","pequena",23,0.580539607544596,2020
+"P00856","Valencia","TIC","mediana",15,0.729273054903889,Inf
+"P00857","Castilla y Leon","Hosteleria","pequena",23,0.534872342601196,2022
+"P00858","Castilla y Leon","Hosteleria","pequena",21,0.670870860317167,2020
+"P00859","Andalucia","Comercio","micro",34,0.653163964561979,Inf
+"P00860","Valencia","Manufacturas","pequena",26,0.190480145766983,Inf
+"P00861","Andalucia","TIC","micro",45,0.474056204701669,2023
+"P00862","Madrid","Manufacturas","micro",3,0.207016956700946,Inf
+"P00863","Valencia","Manufacturas","pequena",14,0.332373661779441,2020
+"P00864","Cataluna","TIC","micro",11,0.313265697593901,2022
+"P00865","Madrid","TIC","micro",45,0.407845237452899,Inf
+"P00866","Madrid","TIC","pequena",48,0.441973553317025,2021
+"P00867","Valencia","Manufacturas","pequena",36,0.30428186166166,Inf
+"P00868","Andalucia","Manufacturas","micro",16,0.251269461883785,Inf
+"P00869","Pais Vasco","Comercio","micro",74,0.516567566840008,Inf
+"P00870","Andalucia","Manufacturas","pequena",6,0.761561246305929,2023
+"P00871","Castilla y Leon","Hosteleria","micro",36,0.840264949382454,Inf
+"P00872","Madrid","Manufacturas","pequena",8,0.582923661128712,Inf
+"P00873","Madrid","Servicios profesionales","pequena",12,0.414160945307987,Inf
+"P00874","Andalucia","Comercio","micro",26,0.684068983080734,2022
+"P00875","Madrid","TIC","micro",35,0.396285660860973,Inf
+"P00876","Pais Vasco","Servicios profesionales","micro",12,0.531615621310102,2022
+"P00877","Castilla y Leon","Manufacturas","micro",31,0.373870552096589,Inf
+"P00878","Cataluna","TIC","micro",23,0.0786181553657349,Inf
+"P00879","Madrid","Servicios profesionales","mediana",19,0.454219230077138,2021
+"P00880","Andalucia","Manufacturas","micro",13,0.445357997133242,2022
+"P00881","Pais Vasco","Comercio","mediana",18,0.691542276801821,2023
+"P00882","Cataluna","Hosteleria","pequena",5,0.556232801667013,2022
+"P00883","Castilla y Leon","TIC","micro",25,0.719895343163143,2022
+"P00884","Castilla y Leon","Comercio","pequena",11,0.227592191144415,2020
+"P00885","Castilla y Leon","Comercio","pequena",55,0.675543274807807,2022
+"P00886","Castilla y Leon","Comercio","pequena",21,0.644003622388468,Inf
+"P00887","Pais Vasco","Manufacturas","micro",15,0.590151425419179,2022
+"P00888","Castilla y Leon","Servicios profesionales","micro",11,0.182283471220406,2020
+"P00889","Pais Vasco","Servicios profesionales","mediana",43,0.703578397838173,2022
+"P00890","Castilla y Leon","Hosteleria","pequena",18,0.454811414556561,2023
+"P00891","Andalucia","Manufacturas","pequena",9,0.727013250686293,2020
+"P00892","Madrid","Comercio","pequena",8,0.569474342188071,Inf
+"P00893","Madrid","Comercio","micro",25,0.680861832397206,2020
+"P00894","Andalucia","Servicios profesionales","mediana",42,0.491139719293663,2022
+"P00895","Cataluna","Comercio","pequena",45,0.69101972420878,2022
+"P00896","Pais Vasco","Manufacturas","micro",19,0.834343815404654,Inf
+"P00897","Andalucia","Manufacturas","pequena",15,0.612195768483679,2022
+"P00898","Madrid","Manufacturas","pequena",14,0.588620239748399,2021
+"P00899","Valencia","Hosteleria","mediana",109,0.403194959847863,Inf
+"P00900","Cataluna","Manufacturas","mediana",34,0.5108827528203,2021
+"P00901","Andalucia","Comercio","micro",26,0.45533129713224,Inf
+"P00902","Castilla y Leon","Servicios profesionales","micro",38,0.302265309583944,2020
+"P00903","Pais Vasco","Manufacturas","micro",28,0.474419609446706,2020
+"P00904","Andalucia","Manufacturas","mediana",7,0.802002859150278,2022
+"P00905","Castilla y Leon","Manufacturas","mediana",47,0.851677123606283,Inf
+"P00906","Cataluna","Hosteleria","mediana",71,0.788195308544562,2023
+"P00907","Andalucia","Manufacturas","micro",50,0.488494262980438,Inf
+"P00908","Valencia","Manufacturas","mediana",21,0.578718830711711,2022
+"P00909","Castilla y Leon","Hosteleria","micro",22,0.298513481105021,2022
+"P00910","Andalucia","Hosteleria","pequena",26,0.659681300313304,Inf
+"P00911","Andalucia","Manufacturas","micro",10,0.223786021290682,Inf
+"P00912","Andalucia","Manufacturas","micro",66,0.333017782657099,Inf
+"P00913","Cataluna","Manufacturas","pequena",15,0.551690618685755,2023
+"P00914","Valencia","Comercio","micro",17,0.725898357396808,2021
+"P00915","Castilla y Leon","TIC","pequena",5,0.425503390773824,Inf
+"P00916","Andalucia","TIC","micro",21,0.348395348265442,2022
+"P00917","Andalucia","Comercio","mediana",36,0.721330201699569,2020
+"P00918","Valencia","Manufacturas","micro",8,0.353042081674195,2020
+"P00919","Valencia","Manufacturas","pequena",23,0.839790339361562,2022
+"P00920","Andalucia","Servicios profesionales","micro",96,0.252276059077006,2021
+"P00921","Castilla y Leon","TIC","pequena",10,0.55550472904896,2021
+"P00922","Madrid","TIC","pequena",11,0.937155867294405,Inf
+"P00923","Madrid","TIC","pequena",17,0.543715645212348,2022
+"P00924","Andalucia","TIC","pequena",15,0.647305843605859,Inf
+"P00925","Cataluna","Hosteleria","micro",20,0.310330273434973,2020
+"P00926","Pais Vasco","TIC","micro",23,0.694180362454575,Inf
+"P00927","Cataluna","Comercio","pequena",6,0.478699497001863,Inf
+"P00928","Andalucia","Hosteleria","micro",15,0.305748968219902,2023
+"P00929","Castilla y Leon","Manufacturas","micro",11,0.736037541797379,2022
+"P00930","Andalucia","Hosteleria","pequena",17,0.708926959832128,2021
+"P00931","Madrid","Servicios profesionales","pequena",7,0.481543727300111,2021
+"P00932","Madrid","Servicios profesionales","micro",170,0.410656669784191,2023
+"P00933","Cataluna","Hosteleria","pequena",12,0.336006437355608,Inf
+"P00934","Cataluna","Comercio","mediana",23,0.74026019505943,2022
+"P00935","Pais Vasco","Hosteleria","mediana",45,0.315854517767733,Inf
+"P00936","Madrid","Servicios profesionales","pequena",11,0.562895035877298,2020
+"P00937","Castilla y Leon","Servicios profesionales","micro",28,0.315866432425245,2023
+"P00938","Castilla y Leon","Servicios profesionales","micro",108,0.776324964039818,Inf
+"P00939","Madrid","TIC","pequena",21,0.335008833242803,2020
+"P00940","Valencia","Servicios profesionales","micro",5,0.790823441069037,2023
+"P00941","Castilla y Leon","Hosteleria","pequena",12,0.852769794748583,2023
+"P00942","Andalucia","Servicios profesionales","pequena",14,0.605343895415923,Inf
+"P00943","Cataluna","Servicios profesionales","micro",21,0.669408081835525,2022
+"P00944","Cataluna","Servicios profesionales","pequena",9,0.466094219393955,Inf
+"P00945","Andalucia","Hosteleria","pequena",24,0.491603929681908,Inf
+"P00946","Andalucia","Manufacturas","micro",8,0.660706312593525,Inf
+"P00947","Pais Vasco","Hosteleria","pequena",8,0.506953770172631,Inf
+"P00948","Madrid","Servicios profesionales","micro",15,0.562097532986691,Inf
+"P00949","Castilla y Leon","Servicios profesionales","pequena",17,0.701979810483894,2022
+"P00950","Cataluna","Comercio","pequena",35,0.483359382895192,Inf
+"P00951","Valencia","Servicios profesionales","pequena",6,0.535078210280211,2021
+"P00952","Madrid","Servicios profesionales","mediana",13,0.594404193565437,Inf
+"P00953","Valencia","Hosteleria","micro",35,0.324062236479527,2021
+"P00954","Cataluna","Comercio","pequena",19,0.389209275455309,Inf
+"P00955","Madrid","Comercio","micro",19,0.506161635335241,Inf
+"P00956","Andalucia","Manufacturas","micro",3,0.54716183279686,Inf
+"P00957","Valencia","Servicios profesionales","mediana",21,0.372977856531251,2021
+"P00958","Pais Vasco","Manufacturas","micro",10,0.221692703011598,2021
+"P00959","Andalucia","Hosteleria","pequena",12,0.379134257423472,2022
+"P00960","Castilla y Leon","Comercio","mediana",27,0.426829969784643,2022
+"P00961","Andalucia","Hosteleria","mediana",26,0.440270852588788,Inf
+"P00962","Pais Vasco","Manufacturas","pequena",95,0.512553021166664,2023
+"P00963","Pais Vasco","TIC","mediana",12,0.599013988426988,Inf
+"P00964","Valencia","Comercio","micro",11,0.757340352405608,Inf
+"P00965","Cataluna","TIC","micro",11,0.423827074688599,2022
+"P00966","Andalucia","Hosteleria","mediana",56,0.35251452477713,2021
+"P00967","Valencia","Servicios profesionales","micro",16,0.807157102164403,2020
+"P00968","Pais Vasco","Hosteleria","mediana",6,0.486596621476421,2021
+"P00969","Valencia","Comercio","mediana",19,0.776137487724495,2023
+"P00970","Andalucia","TIC","micro",25,0.458558173566275,2021
+"P00971","Cataluna","Servicios profesionales","mediana",14,0.188855321906278,Inf
+"P00972","Madrid","Manufacturas","micro",3,0.707824865826181,2021
+"P00973","Andalucia","Comercio","pequena",5,0.754307765797595,2022
+"P00974","Madrid","Hosteleria","pequena",17,0.441734008895478,2020
+"P00975","Cataluna","Manufacturas","micro",6,0.564824936808214,2023
+"P00976","Valencia","TIC","mediana",75,0.628831227840193,2020
+"P00977","Andalucia","Hosteleria","mediana",20,0.388241453194921,Inf
+"P00978","Andalucia","Servicios profesionales","micro",9,0.294554058522058,Inf
+"P00979","Cataluna","Comercio","micro",18,0.262598491547622,Inf
+"P00980","Castilla y Leon","TIC","pequena",20,0.933051262044555,Inf
+"P00981","Pais Vasco","Hosteleria","pequena",22,0.69121621720367,Inf
+"P00982","Valencia","Manufacturas","pequena",21,0.456072015946969,2021
+"P00983","Madrid","TIC","pequena",16,0.771974548736355,Inf
+"P00984","Madrid","Manufacturas","pequena",19,0.759069221501077,Inf
+"P00985","Pais Vasco","Comercio","micro",17,0.664489402060278,2022
+"P00986","Andalucia","Comercio","pequena",17,0.532369987429358,2023
+"P00987","Andalucia","Hosteleria","micro",29,0.209181536664523,Inf
+"P00988","Andalucia","Comercio","pequena",15,0.32450441392254,Inf
+"P00989","Cataluna","Manufacturas","micro",7,0.867691550446893,Inf
+"P00990","Madrid","Servicios profesionales","micro",2,0.383534953396314,2020
+"P00991","Valencia","Manufacturas","pequena",11,0.550018050768913,2021
+"P00992","Valencia","Servicios profesionales","pequena",15,0.63991634792897,2021
+"P00993","Cataluna","Comercio","micro",12,0.512869825712483,Inf
+"P00994","Cataluna","Comercio","pequena",11,0.670226750963411,Inf
+"P00995","Castilla y Leon","Hosteleria","mediana",50000,0.251218431880243,2020
+"P00996","Andalucia","Hosteleria","pequena",37,0.715133784488005,2020
+"P00997","Valencia","Comercio","micro",15,0.197805024557645,2022
+"P00998","Valencia","Manufacturas","pequena",38,0.346694757720828,2022
+"P00999","Madrid","TIC","pequena",18,0.426605748813374,Inf
+"P01000","Andalucia","Comercio","pequena",37,0.195955421449843,2020
+"P01001","Valencia","Hosteleria","micro",25,0.496223264212596,2021
+"P01002","Cataluna","Comercio","pequena",39,0.53796302272288,Inf
+"P01003","Cataluna","Comercio","pequena",6,0.366059201133058,2022
+"P01004","Castilla y Leon","Manufacturas","micro",14,0.46615194701965,2022
+"P01005","Pais Vasco","Servicios profesionales","pequena",9,0.634650771559704,Inf
+"P01006","Madrid","Comercio","pequena",25,0.750162670005065,2021
+"P01007","Andalucia","TIC","pequena",22,0.385528941689245,2023
+"P01008","Andalucia","Manufacturas","pequena",45,0.453635242762412,2020
+"P01009","Castilla y Leon","Comercio","micro",4,0.494891843261554,Inf
+"P01010","Cataluna","Servicios profesionales","micro",9,0.577061680057619,Inf
+"P01011","Valencia","TIC","pequena",22,0.606267769164794,2021
+"P01012","Cataluna","Manufacturas","mediana",19,0.289462800592374,Inf
+"P01013","Madrid","Hosteleria","micro",8,0.451329023310621,2021
+"P01014","Cataluna","Comercio","micro",5,0.44166131779282,Inf
+"P01015","Andalucia","Comercio","micro",17,0.734941017005651,2022
+"P01016","Cataluna","TIC","pequena",32,0.213304010480977,2020
+"P01017","Madrid","Servicios profesionales","micro",22,0.28325843699516,Inf
+"P01018","Pais Vasco","Hosteleria","pequena",11,0.560980045637297,2020
+"P01019","Andalucia","Comercio","pequena",63,0.394208373182939,Inf
+"P01020","Pais Vasco","Comercio","pequena",56,0.437449434558312,2023
+"P01021","Pais Vasco","Hosteleria","pequena",13,0.735268710311313,Inf
+"P01022","Cataluna","Comercio","micro",54,0.47929692235614,Inf
+"P01023","Cataluna","Comercio","micro",22,0.426220808031768,2022
+"P01024","Cataluna","Servicios profesionales","mediana",19,0.437935193812857,Inf
+"P01025","Castilla y Leon","TIC","pequena",28,0.594388979382543,2021
+"P01026","Cataluna","Servicios profesionales","micro",6,0.821228347631205,2022
+"P01027","Pais Vasco","Manufacturas","pequena",16,0.776487601292917,2021
+"P01028","Andalucia","Servicios profesionales","pequena",18,0.440879812814503,Inf
+"P01029","Valencia","Manufacturas","pequena",19,0.489148665311159,Inf
+"P01030","Valencia","Hosteleria","micro",30,0.232884188644838,2022
+"P01031","Castilla y Leon","Manufacturas","micro",11,0.57608971959233,2022
+"P01032","Pais Vasco","TIC","micro",9,0.473402262170576,Inf
+"P01033","Castilla y Leon","Comercio","pequena",18,0.633872125375004,2021
+"P01034","Madrid","Manufacturas","pequena",16,0.341100830521613,2023
+"P01035","Madrid","TIC","micro",5,0.478439922658225,Inf
+"P01036","Castilla y Leon","TIC","micro",8,0.683246263406303,Inf
+"P01037","Pais Vasco","Servicios profesionales","pequena",36,0.48292879373814,Inf
+"P01038","Pais Vasco","TIC","micro",27,0.672472287989648,2020
+"P01039","Madrid","Hosteleria","pequena",6,0.441973228508919,2021
+"P01040","Cataluna","Comercio","micro",19,0.498701867059873,2020
+"P01041","Valencia","Manufacturas","pequena",11,0.696626487725697,2020
+"P01042","Andalucia","Comercio","mediana",4,0.783016670351845,Inf
+"P01043","Valencia","TIC","micro",112,0.554940981147624,2021
+"P01044","Cataluna","TIC","pequena",38,0.604567128197885,Inf
+"P01045","Pais Vasco","Manufacturas","micro",4,0.582587434700703,Inf
+"P01046","Andalucia","Manufacturas","micro",17,0.392149306991881,2020
+"P01047","Valencia","Hosteleria","pequena",21,0.0989809084920673,Inf
+"P01048","Pais Vasco","Comercio","micro",5,0.596607582201843,2021
+"P01049","Andalucia","Manufacturas","mediana",13,0.750985838566827,2020
+"P01050","Castilla y Leon","Hosteleria","micro",36,0.213476025179294,2020
+"P01051","Cataluna","Hosteleria","micro",20,0.548194054797017,Inf
+"P01052","Valencia","Servicios profesionales","micro",56,0.618665757394353,Inf
+"P01053","Madrid","Servicios profesionales","pequena",2,0.545445838853608,Inf
+"P01054","Cataluna","Comercio","micro",29,0.606356499214799,Inf
+"P01055","Valencia","Hosteleria","micro",53,0.82522607155602,2020
+"P01056","Madrid","TIC","pequena",9,0.60856279304078,Inf
+"P01057","Andalucia","Hosteleria","pequena",17,0.65203487454322,Inf
+"P01058","Andalucia","TIC","pequena",5,0.490290836332198,Inf
+"P01059","Valencia","Hosteleria","micro",9,0.332143727604974,2021
+"P01060","Pais Vasco","Servicios profesionales","mediana",30,0.73350005617475,Inf
+"P01061","Madrid","Comercio","micro",14,0.438739449383641,Inf
+"P01062","Castilla y Leon","TIC","micro",37,0.403683967217574,Inf
+"P01063","Valencia","Manufacturas","pequena",9,0.414151117254252,Inf
+"P01064","Pais Vasco","Comercio","pequena",16,0.627378732864195,Inf
+"P01065","Madrid","TIC","micro",10,0.361959224793025,Inf
+"P01066","Valencia","Hosteleria","pequena",16,0.673188664460998,2020
+"P01067","Andalucia","Hosteleria","mediana",25,0.688563105769684,2023
+"P01068","Pais Vasco","Comercio","micro",8,0.504950709565289,Inf
+"P01069","Andalucia","Hosteleria","mediana",26,0.74623354877507,2020
+"P01070","Valencia","Manufacturas","pequena",19,0.525173593874313,2023
+"P01071","Pais Vasco","Hosteleria","micro",5,0.219129110996468,Inf
+"P01072","Andalucia","Hosteleria","pequena",22,0.73857003147771,Inf
+"P01073","Valencia","Hosteleria","pequena",6,0.578632297038623,2022
+"P01074","Valencia","Servicios profesionales","micro",25,0.508314953592957,2022
+"P01075","Castilla y Leon","Manufacturas","micro",22,0.510551685447956,2021
+"P01076","Andalucia","Comercio","micro",13,0.61050898961531,2023
+"P01077","Andalucia","Hosteleria","micro",6,0.15872694835117,Inf
+"P01078","Pais Vasco","Servicios profesionales","mediana",10,0.471237614690668,2020
+"P01079","Cataluna","TIC","pequena",38,0.653909665029105,2021
+"P01080","Valencia","Hosteleria","pequena",39,0.685935171822473,2023
+"P01081","Andalucia","Manufacturas","micro",7,0.413727102909095,Inf
+"P01082","Cataluna","Servicios profesionales","micro",7,0.569053327680763,2023
+"P01083","Cataluna","TIC","pequena",39,0.780068622118265,2020
+"P01084","Castilla y Leon","Hosteleria","micro",22,0.694736045691859,2022
+"P01085","Cataluna","TIC","micro",76,0.337457994573799,2023
+"P01086","Madrid","Manufacturas","pequena",17,0.649621118015586,Inf
+"P01087","Madrid","Comercio","micro",20,0.720861260232345,2023
+"P01088","Valencia","Hosteleria","micro",37,0.424452772303241,Inf
+"P01089","Madrid","Servicios profesionales","micro",33,0.628030442509414,Inf
+"P01090","Castilla y Leon","Hosteleria","pequena",14,0.531559035686529,2023
+"P01091","Cataluna","Servicios profesionales","pequena",120,0.306246300358601,2023
+"P01092","Valencia","Manufacturas","micro",25,0.88942075584194,2021
+"P01093","Pais Vasco","Manufacturas","micro",7,0.529085107572349,2020
+"P01094","Castilla y Leon","Servicios profesionales","micro",26,0.830814148035036,2022
+"P01095","Valencia","Hosteleria","pequena",9,0.695916080908968,2022
+"P01096","Castilla y Leon","Hosteleria","mediana",20,0.695177083186816,2022
+"P01097","Madrid","Servicios profesionales","mediana",10,0.735002630228333,2022
+"P01098","Castilla y Leon","TIC","mediana",23,0.307101789613704,Inf
+"P01099","Pais Vasco","Hosteleria","pequena",18,0.316207533196453,Inf
+"P01100","Pais Vasco","Manufacturas","mediana",19,0.615592297183367,Inf
+"P01101","Madrid","TIC","pequena",8,0.472554207263865,2020
+"P01102","Valencia","Manufacturas","micro",23,0.315393070236199,2022
+"P01103","Pais Vasco","Hosteleria","pequena",7,0.59337909455201,Inf
+"P01104","Valencia","Servicios profesionales","micro",32,0.33204901424707,2022
+"P01105","Cataluna","Comercio","micro",36,0.499545818637034,Inf
+"P01106","Andalucia","Servicios profesionales","mediana",16,0.529590181884306,2023
+"P01107","Madrid","TIC","micro",16,0.352645082212543,2022
+"P01108","Cataluna","Manufacturas","pequena",5,0.229258755246509,2020
+"P01109","Pais Vasco","Servicios profesionales","mediana",11,0.429404122512185,2020
+"P01110","Pais Vasco","TIC","mediana",10,0.321610373280715,2020
+"P01111","Pais Vasco","Servicios profesionales","pequena",11,0.441904746410763,2020
+"P01112","Pais Vasco","Hosteleria","micro",35,0.836297899977403,2020
+"P01113","Andalucia","Manufacturas","micro",9,0.461279173042461,2023
+"P01114","Castilla y Leon","Hosteleria","micro",17,0.739246522796368,2020
+"P01115","Cataluna","Manufacturas","pequena",23,0.82077798010429,2021
+"P01116","Andalucia","TIC","micro",16,0.891117214124854,2020
+"P01117","Castilla y Leon","Servicios profesionales","pequena",11,0.703684931453579,2020
+"P01118","Andalucia","Comercio","mediana",22,0.393821151473165,Inf
+"P01119","Cataluna","Comercio","micro",11,0.307514976956307,Inf
+"P01120","Valencia","Manufacturas","micro",12,0.646099408236207,2020
+"P01121","Castilla y Leon","Hosteleria","pequena",9,0.571511374709237,Inf
+"P01122","Madrid","TIC","pequena",18,0.638518876673342,Inf
+"P01123","Valencia","Comercio","pequena",67,0.472813696308061,Inf
+"P01124","Andalucia","Comercio","pequena",7,0.570728325049296,Inf
+"P01125","Castilla y Leon","Manufacturas","pequena",7,0.462085443725072,Inf
+"P01126","Valencia","TIC","pequena",10,0.170646268290295,2021
+"P01127","Andalucia","TIC","pequena",8,0.430124277900886,Inf
+"P01128","Castilla y Leon","TIC","pequena",37,0.58092581954319,Inf
+"P01129","Pais Vasco","Comercio","micro",13,0.531242331315008,Inf
+"P01130","Madrid","Manufacturas","micro",42,0.384766113054034,2022
+"P01131","Valencia","Manufacturas","micro",31,0.236730271141803,2022
+"P01132","Castilla y Leon","Comercio","pequena",13,0.663563444867111,2021
+"P01133","Pais Vasco","Manufacturas","micro",18,0.685652752775146,2023
+"P01134","Castilla y Leon","Servicios profesionales","micro",5,0.73251705699447,2020
+"P01135","Andalucia","TIC","micro",29,0.434852600621886,2021
+"P01136","Pais Vasco","Manufacturas","pequena",17,0.618999282848868,Inf
+"P01137","Cataluna","Hosteleria","pequena",20,0.384434511514522,2020
+"P01138","Valencia","TIC","pequena",15,0.273311337082672,Inf
+"P01139","Madrid","Comercio","micro",20,0.318684297539795,2021
+"P01140","Madrid","Manufacturas","pequena",12,0.537638276080891,2022
+"P01141","Pais Vasco","Hosteleria","micro",12,0.39704970394813,Inf
+"P01142","Cataluna","Comercio","micro",25,0.56389594347461,Inf
+"P01143","Madrid","TIC","micro",22,0.69553455217442,2021
+"P01144","Castilla y Leon","Servicios profesionales","pequena",43,0.505322882934028,Inf
+"P01145","Castilla y Leon","Servicios profesionales","pequena",8,0.674347528821462,2022
+"P01146","Valencia","Manufacturas","pequena",25,0.10182853310927,Inf
+"P01147","Andalucia","Hosteleria","micro",52,0.525051586618409,2022
+"P01148","Valencia","Comercio","micro",9,0.6287871455285,Inf
+"P01149","Castilla y Leon","Hosteleria","pequena",8,0.503273856693405,2021
+"P01150","Madrid","Manufacturas","pequena",28,0.266620581059971,2022
+"P01151","Valencia","Servicios profesionales","mediana",6,0.613362564122861,Inf
+"P01152","Castilla y Leon","TIC","micro",26,0.583169819109336,Inf
+"P01153","Castilla y Leon","Manufacturas","mediana",4,0.721068925456919,Inf
+"P01154","Castilla y Leon","Comercio","micro",13,0.502835043773796,2022
+"P01155","Valencia","Hosteleria","micro",44,0.207318401464599,2021
+"P01156","Castilla y Leon","Manufacturas","mediana",24,0.755243518562866,2022
+"P01157","Madrid","TIC","pequena",17,0.611576883681388,2020
+"P01158","Andalucia","Hosteleria","pequena",119,0.356577763595251,2022
+"P01159","Cataluna","Servicios profesionales","micro",18,0.359558051725404,Inf
+"P01160","Andalucia","Servicios profesionales","micro",25,0.806149908899094,Inf
+"P01161","Castilla y Leon","Hosteleria","micro",15,0.469007015881759,2020
+"P01162","Valencia","Servicios profesionales","micro",11,0.616712144450612,Inf
+"P01163","Andalucia","Comercio","micro",21,0.566015732227442,Inf
+"P01164","Valencia","Manufacturas","micro",16,0.643085157263885,2022
+"P01165","Pais Vasco","Servicios profesionales","micro",27,0.522092113226273,2023
+"P01166","Valencia","Manufacturas","micro",19,0.68114454222571,2023
+"P01167","Valencia","Servicios profesionales","micro",10,0.507423493225107,2021
+"P01168","Andalucia","Manufacturas","micro",14,0.60943050096726,2020
+"P01169","Madrid","TIC","pequena",13,0.406147843240267,Inf
+"P01170","Cataluna","Comercio","pequena",34,0.134020200203127,2021
+"P01171","Valencia","Manufacturas","mediana",92,0.680121103160997,Inf
+"P01172","Andalucia","Hosteleria","micro",42,0.629890286399504,Inf
+"P01173","Cataluna","TIC","pequena",15,0.487283997509387,2020
+"P01174","Andalucia","Manufacturas","micro",18,0.532746388952131,Inf
+"P01175","Cataluna","Manufacturas","micro",12,0.473441620498239,2023
+"P01176","Cataluna","Servicios profesionales","micro",16,0.515088348185959,2022
+"P01177","Madrid","Servicios profesionales","micro",32,0.41619617237299,Inf
+"P01178","Cataluna","Manufacturas","pequena",34,0.674433672829025,Inf
+"P01179","Pais Vasco","Comercio","pequena",42,0.654539801225303,2020
+"P01180","Pais Vasco","Comercio","pequena",31,0.686459298619544,2022
+"P01181","Pais Vasco","Manufacturas","mediana",34,0.448047195228016,Inf
+"P01182","Pais Vasco","Manufacturas","micro",9,0.579252783017333,Inf
+"P01183","Madrid","Hosteleria","micro",37,0.432873064022196,2021
+"P01184","Castilla y Leon","Manufacturas","micro",30,0.646507612320821,2020
+"P01185","Cataluna","Manufacturas","pequena",22,0.220025491065639,Inf
+"P01186","Madrid","Hosteleria","micro",56,0.52963026296924,Inf
+"P01187","Valencia","Comercio","pequena",7,0.448827692386095,Inf
+"P01188","Andalucia","Hosteleria","micro",20,0.646596938188941,2022
+"P01189","Madrid","Servicios profesionales","pequena",28,0.198514502684759,2023
+"P01190","Valencia","Manufacturas","micro",10,0.563974012041223,Inf
+"P01191","Andalucia","Manufacturas","pequena",11,0.369611245019443,Inf
+"P01192","Castilla y Leon","TIC","mediana",17,0.261173384179244,Inf
+"P01193","Madrid","Manufacturas","micro",22,0.231751176148941,2022
+"P01194","Madrid","Manufacturas","pequena",13,0.477160277642984,2022
+"P01195","Madrid","TIC","mediana",30,0.425358824408856,Inf
+"P01196","Valencia","Servicios profesionales","micro",7,0.308496841109105,Inf
+"P01197","Valencia","Manufacturas","pequena",7,0.251148634128161,Inf
+"P01198","Madrid","Servicios profesionales","pequena",4,0.818097894363917,2020
+"P01199","Cataluna","TIC","pequena",19,0.200370338945256,Inf
+"P01200","Andalucia","Comercio","pequena",29,0.283085227178436,2023

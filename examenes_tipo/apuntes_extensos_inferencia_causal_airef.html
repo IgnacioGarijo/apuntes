@@ -1,0 +1,2851 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="ChatGPT">
+<meta name="dcterms.date" content="2026-05-10">
+
+<title>Apuntes extensos: inferencia causal en evaluaciones de AIReF</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/clipboard/clipboard.min.js"></script>
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/quarto.js"></script>
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/popper.min.js"></script>
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/anchor.min.js"></script>
+<link href="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="apuntes_extensos_inferencia_causal_airef_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="apuntes_extensos_inferencia_causal_airef_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="apuntes_extensos_inferencia_causal_airef_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="apuntes_extensos_inferencia_causal_airef_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#cómo-usar-estos-apuntes" id="toc-cómo-usar-estos-apuntes" class="nav-link active" data-scroll-target="#cómo-usar-estos-apuntes"><span class="header-section-number">1</span> Cómo usar estos apuntes</a></li>
+  <li><a href="#fuentes-públicas-utilizadas" id="toc-fuentes-públicas-utilizadas" class="nav-link" data-scroll-target="#fuentes-públicas-utilizadas"><span class="header-section-number">2</span> Fuentes públicas utilizadas</a></li>
+  <li><a href="#mapa-rápido-por-metodología" id="toc-mapa-rápido-por-metodología" class="nav-link" data-scroll-target="#mapa-rápido-por-metodología"><span class="header-section-number">3</span> Mapa rápido por metodología</a></li>
+  <li><a href="#difference-in-differences-y-event-study" id="toc-difference-in-differences-y-event-study" class="nav-link" data-scroll-target="#difference-in-differences-y-event-study"><span class="header-section-number">4</span> Difference-in-Differences y event-study</a>
+  <ul class="collapse">
+  <li><a href="#gestión-de-residuos-municipales-recogida-puerta-a-puerta-y-ordenanzas" id="toc-gestión-de-residuos-municipales-recogida-puerta-a-puerta-y-ordenanzas" class="nav-link" data-scroll-target="#gestión-de-residuos-municipales-recogida-puerta-a-puerta-y-ordenanzas"><span class="header-section-number">4.1</span> 1. Gestión de residuos municipales: recogida puerta a puerta y ordenanzas</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa" id="toc-qué-se-evalúa" class="nav-link" data-scroll-target="#qué-se-evalúa"><span class="header-section-number">4.1.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis" id="toc-unidad-de-análisis" class="nav-link" data-scroll-target="#unidad-de-análisis"><span class="header-section-number">4.1.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento" id="toc-tratamiento" class="nav-link" data-scroll-target="#tratamiento"><span class="header-section-number">4.1.3</span> Tratamiento</a></li>
+  <li><a href="#variables-resultado" id="toc-variables-resultado" class="nav-link" data-scroll-target="#variables-resultado"><span class="header-section-number">4.1.4</span> Variables resultado</a></li>
+  <li><a href="#estrategia-causal" id="toc-estrategia-causal" class="nav-link" data-scroll-target="#estrategia-causal"><span class="header-section-number">4.1.5</span> Estrategia causal</a></li>
+  <li><a href="#problema-clave-adopción-escalonada" id="toc-problema-clave-adopción-escalonada" class="nav-link" data-scroll-target="#problema-clave-adopción-escalonada"><span class="header-section-number">4.1.6</span> Problema clave: adopción escalonada</a></li>
+  <li><a href="#cómo-responder-en-examen" id="toc-cómo-responder-en-examen" class="nav-link" data-scroll-target="#cómo-responder-en-examen"><span class="header-section-number">4.1.7</span> Cómo responder en examen</a></li>
+  <li><a href="#qué-controles-incluir" id="toc-qué-controles-incluir" class="nav-link" data-scroll-target="#qué-controles-incluir"><span class="header-section-number">4.1.8</span> Qué controles incluir</a></li>
+  <li><a href="#gráficos-imprescindibles" id="toc-gráficos-imprescindibles" class="nav-link" data-scroll-target="#gráficos-imprescindibles"><span class="header-section-number">4.1.9</span> Gráficos imprescindibles</a></li>
+  <li><a href="#robustez" id="toc-robustez" class="nav-link" data-scroll-target="#robustez"><span class="header-section-number">4.1.10</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes" id="toc-errores-frecuentes" class="nav-link" data-scroll-target="#errores-frecuentes"><span class="header-section-number">4.1.11</span> Errores frecuentes</a></li>
+  <li><a href="#si-cae-en-examen" id="toc-si-cae-en-examen" class="nav-link" data-scroll-target="#si-cae-en-examen"><span class="header-section-number">4.1.12</span> Si cae en examen</a></li>
+  </ul></li>
+  <li><a href="#instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr" id="toc-instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr" class="nav-link" data-scroll-target="#instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr"><span class="header-section-number">4.2</span> 2. Instrumentos financieros de apoyo a la pyme reforzados por el PRTR</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-1" id="toc-qué-se-evalúa-1" class="nav-link" data-scroll-target="#qué-se-evalúa-1"><span class="header-section-number">4.2.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis-1" id="toc-unidad-de-análisis-1" class="nav-link" data-scroll-target="#unidad-de-análisis-1"><span class="header-section-number">4.2.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-1" id="toc-tratamiento-1" class="nav-link" data-scroll-target="#tratamiento-1"><span class="header-section-number">4.2.3</span> Tratamiento</a></li>
+  <li><a href="#grupo-de-comparación" id="toc-grupo-de-comparación" class="nav-link" data-scroll-target="#grupo-de-comparación"><span class="header-section-number">4.2.4</span> Grupo de comparación</a></li>
+  <li><a href="#variables-resultado-1" id="toc-variables-resultado-1" class="nav-link" data-scroll-target="#variables-resultado-1"><span class="header-section-number">4.2.5</span> Variables resultado</a></li>
+  <li><a href="#estrategia-causal-1" id="toc-estrategia-causal-1" class="nav-link" data-scroll-target="#estrategia-causal-1"><span class="header-section-number">4.2.6</span> Estrategia causal</a></li>
+  <li><a href="#qué-hace-delicado-este-caso" id="toc-qué-hace-delicado-este-caso" class="nav-link" data-scroll-target="#qué-hace-delicado-este-caso"><span class="header-section-number">4.2.7</span> Qué hace delicado este caso</a></li>
+  <li><a href="#qué-comprobar" id="toc-qué-comprobar" class="nav-link" data-scroll-target="#qué-comprobar"><span class="header-section-number">4.2.8</span> Qué comprobar</a></li>
+  <li><a href="#robustez-1" id="toc-robustez-1" class="nav-link" data-scroll-target="#robustez-1"><span class="header-section-number">4.2.9</span> Robustez</a></li>
+  <li><a href="#claves-para-examen" id="toc-claves-para-examen" class="nav-link" data-scroll-target="#claves-para-examen"><span class="header-section-number">4.2.10</span> Claves para examen</a></li>
+  <li><a href="#errores-frecuentes-1" id="toc-errores-frecuentes-1" class="nav-link" data-scroll-target="#errores-frecuentes-1"><span class="header-section-number">4.2.11</span> Errores frecuentes</a></li>
+  <li><a href="#frase-útil" id="toc-frase-útil" class="nav-link" data-scroll-target="#frase-útil"><span class="header-section-number">4.2.12</span> Frase útil</a></li>
+  </ul></li>
+  <li><a href="#incentivos-a-la-contratación-y-al-trabajo-autónomo" id="toc-incentivos-a-la-contratación-y-al-trabajo-autónomo" class="nav-link" data-scroll-target="#incentivos-a-la-contratación-y-al-trabajo-autónomo"><span class="header-section-number">4.3</span> 3. Incentivos a la contratación y al trabajo autónomo</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-2" id="toc-qué-se-evalúa-2" class="nav-link" data-scroll-target="#qué-se-evalúa-2"><span class="header-section-number">4.3.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis-2" id="toc-unidad-de-análisis-2" class="nav-link" data-scroll-target="#unidad-de-análisis-2"><span class="header-section-number">4.3.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-did" id="toc-tratamiento-did" class="nav-link" data-scroll-target="#tratamiento-did"><span class="header-section-number">4.3.3</span> Tratamiento DiD</a></li>
+  <li><a href="#variables-resultado-2" id="toc-variables-resultado-2" class="nav-link" data-scroll-target="#variables-resultado-2"><span class="header-section-number">4.3.4</span> Variables resultado</a></li>
+  <li><a href="#hallazgos-relevantes-de-la-ficha-pública" id="toc-hallazgos-relevantes-de-la-ficha-pública" class="nav-link" data-scroll-target="#hallazgos-relevantes-de-la-ficha-pública"><span class="header-section-number">4.3.5</span> Hallazgos relevantes de la ficha pública</a></li>
+  <li><a href="#estrategia-did" id="toc-estrategia-did" class="nav-link" data-scroll-target="#estrategia-did"><span class="header-section-number">4.3.6</span> Estrategia DiD</a></li>
+  <li><a href="#qué-vigilar" id="toc-qué-vigilar" class="nav-link" data-scroll-target="#qué-vigilar"><span class="header-section-number">4.3.7</span> Qué vigilar</a></li>
+  <li><a href="#robustez-2" id="toc-robustez-2" class="nav-link" data-scroll-target="#robustez-2"><span class="header-section-number">4.3.8</span> Robustez</a></li>
+  <li><a href="#cómo-puede-aparecer-en-examen" id="toc-cómo-puede-aparecer-en-examen" class="nav-link" data-scroll-target="#cómo-puede-aparecer-en-examen"><span class="header-section-number">4.3.9</span> Cómo puede aparecer en examen</a></li>
+  <li><a href="#errores-frecuentes-2" id="toc-errores-frecuentes-2" class="nav-link" data-scroll-target="#errores-frecuentes-2"><span class="header-section-number">4.3.10</span> Errores frecuentes</a></li>
+  </ul></li>
+  <li><a href="#políticas-activas-de-empleo-en-extremadura" id="toc-políticas-activas-de-empleo-en-extremadura" class="nav-link" data-scroll-target="#políticas-activas-de-empleo-en-extremadura"><span class="header-section-number">4.4</span> 4. Políticas activas de empleo en Extremadura</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-3" id="toc-qué-se-evalúa-3" class="nav-link" data-scroll-target="#qué-se-evalúa-3"><span class="header-section-number">4.4.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis-3" id="toc-unidad-de-análisis-3" class="nav-link" data-scroll-target="#unidad-de-análisis-3"><span class="header-section-number">4.4.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-2" id="toc-tratamiento-2" class="nav-link" data-scroll-target="#tratamiento-2"><span class="header-section-number">4.4.3</span> Tratamiento</a></li>
+  <li><a href="#grupo-de-comparación-1" id="toc-grupo-de-comparación-1" class="nav-link" data-scroll-target="#grupo-de-comparación-1"><span class="header-section-number">4.4.4</span> Grupo de comparación</a></li>
+  <li><a href="#variables-resultado-3" id="toc-variables-resultado-3" class="nav-link" data-scroll-target="#variables-resultado-3"><span class="header-section-number">4.4.5</span> Variables resultado</a></li>
+  <li><a href="#estrategia-causal-2" id="toc-estrategia-causal-2" class="nav-link" data-scroll-target="#estrategia-causal-2"><span class="header-section-number">4.4.6</span> Estrategia causal</a></li>
+  <li><a href="#qué-se-encontró-según-la-ficha-pública" id="toc-qué-se-encontró-según-la-ficha-pública" class="nav-link" data-scroll-target="#qué-se-encontró-según-la-ficha-pública"><span class="header-section-number">4.4.7</span> Qué se encontró según la ficha pública</a></li>
+  <li><a href="#clave-sustantiva" id="toc-clave-sustantiva" class="nav-link" data-scroll-target="#clave-sustantiva"><span class="header-section-number">4.4.8</span> Clave sustantiva</a></li>
+  <li><a href="#qué-covariables-usar-en-examen" id="toc-qué-covariables-usar-en-examen" class="nav-link" data-scroll-target="#qué-covariables-usar-en-examen"><span class="header-section-number">4.4.9</span> Qué covariables usar en examen</a></li>
+  <li><a href="#validaciones-de-matching" id="toc-validaciones-de-matching" class="nav-link" data-scroll-target="#validaciones-de-matching"><span class="header-section-number">4.4.10</span> Validaciones de matching</a></li>
+  <li><a href="#validaciones-did" id="toc-validaciones-did" class="nav-link" data-scroll-target="#validaciones-did"><span class="header-section-number">4.4.11</span> Validaciones DiD</a></li>
+  <li><a href="#cómo-responder-en-examen-1" id="toc-cómo-responder-en-examen-1" class="nav-link" data-scroll-target="#cómo-responder-en-examen-1"><span class="header-section-number">4.4.12</span> Cómo responder en examen</a></li>
+  <li><a href="#errores-frecuentes-3" id="toc-errores-frecuentes-3" class="nav-link" data-scroll-target="#errores-frecuentes-3"><span class="header-section-number">4.4.13</span> Errores frecuentes</a></li>
+  <li><a href="#concepto-importante-lock-in-effect" id="toc-concepto-importante-lock-in-effect" class="nav-link" data-scroll-target="#concepto-importante-lock-in-effect"><span class="header-section-number">4.4.14</span> Concepto importante: lock-in effect</a></li>
+  </ul></li>
+  <li><a href="#incapacidad-temporal" id="toc-incapacidad-temporal" class="nav-link" data-scroll-target="#incapacidad-temporal"><span class="header-section-number">4.5</span> 5. Incapacidad temporal</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-4" id="toc-qué-se-evalúa-4" class="nav-link" data-scroll-target="#qué-se-evalúa-4"><span class="header-section-number">4.5.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis-4" id="toc-unidad-de-análisis-4" class="nav-link" data-scroll-target="#unidad-de-análisis-4"><span class="header-section-number">4.5.2</span> Unidad de análisis</a></li>
+  <li><a href="#caso-1-mejora-de-prestación-age" id="toc-caso-1-mejora-de-prestación-age" class="nav-link" data-scroll-target="#caso-1-mejora-de-prestación-age"><span class="header-section-number">4.5.3</span> Caso 1: mejora de prestación AGE</a></li>
+  <li><a href="#caso-2-conversión-temporal-indefinido" id="toc-caso-2-conversión-temporal-indefinido" class="nav-link" data-scroll-target="#caso-2-conversión-temporal-indefinido"><span class="header-section-number">4.5.4</span> Caso 2: conversión temporal-indefinido</a></li>
+  <li><a href="#caso-3-subida-del-smi-2019" id="toc-caso-3-subida-del-smi-2019" class="nav-link" data-scroll-target="#caso-3-subida-del-smi-2019"><span class="header-section-number">4.5.5</span> Caso 3: subida del SMI 2019</a></li>
+  <li><a href="#especificación-tipo" id="toc-especificación-tipo" class="nav-link" data-scroll-target="#especificación-tipo"><span class="header-section-number">4.5.6</span> Especificación tipo</a></li>
+  <li><a href="#qué-controles-serían-razonables" id="toc-qué-controles-serían-razonables" class="nav-link" data-scroll-target="#qué-controles-serían-razonables"><span class="header-section-number">4.5.7</span> Qué controles serían razonables</a></li>
+  <li><a href="#qué-puede-aparecer-en-examen" id="toc-qué-puede-aparecer-en-examen" class="nav-link" data-scroll-target="#qué-puede-aparecer-en-examen"><span class="header-section-number">4.5.8</span> Qué puede aparecer en examen</a></li>
+  <li><a href="#robustez-3" id="toc-robustez-3" class="nav-link" data-scroll-target="#robustez-3"><span class="header-section-number">4.5.9</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes-4" id="toc-errores-frecuentes-4" class="nav-link" data-scroll-target="#errores-frecuentes-4"><span class="header-section-number">4.5.10</span> Errores frecuentes</a></li>
+  </ul></li>
+  <li><a href="#reducción-por-arrendamiento-de-vivienda-en-irpf" id="toc-reducción-por-arrendamiento-de-vivienda-en-irpf" class="nav-link" data-scroll-target="#reducción-por-arrendamiento-de-vivienda-en-irpf"><span class="header-section-number">4.6</span> 6. Reducción por arrendamiento de vivienda en IRPF</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-5" id="toc-qué-se-evalúa-5" class="nav-link" data-scroll-target="#qué-se-evalúa-5"><span class="header-section-number">4.6.1</span> Qué se evalúa</a></li>
+  <li><a href="#política" id="toc-política" class="nav-link" data-scroll-target="#política"><span class="header-section-number">4.6.2</span> Política</a></li>
+  <li><a href="#tratamiento-6" id="toc-tratamiento-6" class="nav-link" data-scroll-target="#tratamiento-6"><span class="header-section-number">4.6.3</span> Tratamiento</a></li>
+  <li><a href="#resultado-2" id="toc-resultado-2" class="nav-link" data-scroll-target="#resultado-2"><span class="header-section-number">4.6.4</span> Resultado</a></li>
+  <li><a href="#grupo-de-comparación-2" id="toc-grupo-de-comparación-2" class="nav-link" data-scroll-target="#grupo-de-comparación-2"><span class="header-section-number">4.6.5</span> Grupo de comparación</a></li>
+  <li><a href="#hallazgo-público-2" id="toc-hallazgo-público-2" class="nav-link" data-scroll-target="#hallazgo-público-2"><span class="header-section-number">4.6.6</span> Hallazgo público</a></li>
+  <li><a href="#clave-metodológica" id="toc-clave-metodológica" class="nav-link" data-scroll-target="#clave-metodológica"><span class="header-section-number">4.6.7</span> Clave metodológica</a></li>
+  <li><a href="#especificación-tipo-1" id="toc-especificación-tipo-1" class="nav-link" data-scroll-target="#especificación-tipo-1"><span class="header-section-number">4.6.8</span> Especificación tipo</a></li>
+  <li><a href="#qué-controles-serían-razonables-1" id="toc-qué-controles-serían-razonables-1" class="nav-link" data-scroll-target="#qué-controles-serían-razonables-1"><span class="header-section-number">4.6.9</span> Qué controles serían razonables</a></li>
+  <li><a href="#robustez-4" id="toc-robustez-4" class="nav-link" data-scroll-target="#robustez-4"><span class="header-section-number">4.6.10</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes-5" id="toc-errores-frecuentes-5" class="nav-link" data-scroll-target="#errores-frecuentes-5"><span class="header-section-number">4.6.11</span> Errores frecuentes</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#regression-discontinuity-design" id="toc-regression-discontinuity-design" class="nav-link" data-scroll-target="#regression-discontinuity-design"><span class="header-section-number">5</span> Regression Discontinuity Design</a>
+  <ul class="collapse">
+  <li><a href="#beneficios-fiscales-tributación-conjunta" id="toc-beneficios-fiscales-tributación-conjunta" class="nav-link" data-scroll-target="#beneficios-fiscales-tributación-conjunta"><span class="header-section-number">5.1</span> 7. Beneficios fiscales: tributación conjunta</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-6" id="toc-qué-se-evalúa-6" class="nav-link" data-scroll-target="#qué-se-evalúa-6"><span class="header-section-number">5.1.1</span> Qué se evalúa</a></li>
+  <li><a href="#política-1" id="toc-política-1" class="nav-link" data-scroll-target="#política-1"><span class="header-section-number">5.1.2</span> Política</a></li>
+  <li><a href="#posible-discontinuidad" id="toc-posible-discontinuidad" class="nav-link" data-scroll-target="#posible-discontinuidad"><span class="header-section-number">5.1.3</span> Posible discontinuidad</a></li>
+  <li><a href="#unidad-de-análisis-5" id="toc-unidad-de-análisis-5" class="nav-link" data-scroll-target="#unidad-de-análisis-5"><span class="header-section-number">5.1.4</span> Unidad de análisis</a></li>
+  <li><a href="#resultado-3" id="toc-resultado-3" class="nav-link" data-scroll-target="#resultado-3"><span class="header-section-number">5.1.5</span> Resultado</a></li>
+  <li><a href="#running-variable" id="toc-running-variable" class="nav-link" data-scroll-target="#running-variable"><span class="header-section-number">5.1.6</span> Running variable</a></li>
+  <li><a href="#especificación-tipo-2" id="toc-especificación-tipo-2" class="nav-link" data-scroll-target="#especificación-tipo-2"><span class="header-section-number">5.1.7</span> Especificación tipo</a></li>
+  <li><a href="#claves-de-identificación" id="toc-claves-de-identificación" class="nav-link" data-scroll-target="#claves-de-identificación"><span class="header-section-number">5.1.8</span> Claves de identificación</a></li>
+  <li><a href="#qué-comprobar-en-examen" id="toc-qué-comprobar-en-examen" class="nav-link" data-scroll-target="#qué-comprobar-en-examen"><span class="header-section-number">5.1.9</span> Qué comprobar en examen</a></li>
+  <li><a href="#errores-frecuentes-6" id="toc-errores-frecuentes-6" class="nav-link" data-scroll-target="#errores-frecuentes-6"><span class="header-section-number">5.1.10</span> Errores frecuentes</a></li>
+  <li><a href="#frase-útil-1" id="toc-frase-útil-1" class="nav-link" data-scroll-target="#frase-útil-1"><span class="header-section-number">5.1.11</span> Frase útil</a></li>
+  </ul></li>
+  <li><a href="#beneficios-fiscales-planes-de-pensiones-individuales" id="toc-beneficios-fiscales-planes-de-pensiones-individuales" class="nav-link" data-scroll-target="#beneficios-fiscales-planes-de-pensiones-individuales"><span class="header-section-number">5.2</span> 8. Beneficios fiscales: planes de pensiones individuales</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-7" id="toc-qué-se-evalúa-7" class="nav-link" data-scroll-target="#qué-se-evalúa-7"><span class="header-section-number">5.2.1</span> Qué se evalúa</a></li>
+  <li><a href="#política-2" id="toc-política-2" class="nav-link" data-scroll-target="#política-2"><span class="header-section-number">5.2.2</span> Política</a></li>
+  <li><a href="#hallazgo-público-3" id="toc-hallazgo-público-3" class="nav-link" data-scroll-target="#hallazgo-público-3"><span class="header-section-number">5.2.3</span> Hallazgo público</a></li>
+  <li><a href="#posible-diseño-rdd" id="toc-posible-diseño-rdd" class="nav-link" data-scroll-target="#posible-diseño-rdd"><span class="header-section-number">5.2.4</span> Posible diseño RDD</a></li>
+  <li><a href="#variables-resultado-5" id="toc-variables-resultado-5" class="nav-link" data-scroll-target="#variables-resultado-5"><span class="header-section-number">5.2.5</span> Variables resultado</a></li>
+  <li><a href="#qué-es-especialmente-importante" id="toc-qué-es-especialmente-importante" class="nav-link" data-scroll-target="#qué-es-especialmente-importante"><span class="header-section-number">5.2.6</span> Qué es especialmente importante</a></li>
+  <li><a href="#cómo-puede-aparecer-en-examen-1" id="toc-cómo-puede-aparecer-en-examen-1" class="nav-link" data-scroll-target="#cómo-puede-aparecer-en-examen-1"><span class="header-section-number">5.2.7</span> Cómo puede aparecer en examen</a></li>
+  <li><a href="#robustez-5" id="toc-robustez-5" class="nav-link" data-scroll-target="#robustez-5"><span class="header-section-number">5.2.8</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes-7" id="toc-errores-frecuentes-7" class="nav-link" data-scroll-target="#errores-frecuentes-7"><span class="header-section-number">5.2.9</span> Errores frecuentes</a></li>
+  </ul></li>
+  <li><a href="#incentivos-a-conversión-de-contratos-de-formación-en-indefinidos" id="toc-incentivos-a-conversión-de-contratos-de-formación-en-indefinidos" class="nav-link" data-scroll-target="#incentivos-a-conversión-de-contratos-de-formación-en-indefinidos"><span class="header-section-number">5.3</span> 9. Incentivos a conversión de contratos de formación en indefinidos</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-8" id="toc-qué-se-evalúa-8" class="nav-link" data-scroll-target="#qué-se-evalúa-8"><span class="header-section-number">5.3.1</span> Qué se evalúa</a></li>
+  <li><a href="#política-3" id="toc-política-3" class="nav-link" data-scroll-target="#política-3"><span class="header-section-number">5.3.2</span> Política</a></li>
+  <li><a href="#tratamiento-7" id="toc-tratamiento-7" class="nav-link" data-scroll-target="#tratamiento-7"><span class="header-section-number">5.3.3</span> Tratamiento</a></li>
+  <li><a href="#resultado-4" id="toc-resultado-4" class="nav-link" data-scroll-target="#resultado-4"><span class="header-section-number">5.3.4</span> Resultado</a></li>
+  <li><a href="#hallazgo-público-4" id="toc-hallazgo-público-4" class="nav-link" data-scroll-target="#hallazgo-público-4"><span class="header-section-number">5.3.5</span> Hallazgo público</a></li>
+  <li><a href="#running-variable-1" id="toc-running-variable-1" class="nav-link" data-scroll-target="#running-variable-1"><span class="header-section-number">5.3.6</span> Running variable</a></li>
+  <li><a href="#especificación-tipo-3" id="toc-especificación-tipo-3" class="nav-link" data-scroll-target="#especificación-tipo-3"><span class="header-section-number">5.3.7</span> Especificación tipo</a></li>
+  <li><a href="#riesgo-metodológico" id="toc-riesgo-metodológico" class="nav-link" data-scroll-target="#riesgo-metodológico"><span class="header-section-number">5.3.8</span> Riesgo metodológico</a></li>
+  <li><a href="#robustez-6" id="toc-robustez-6" class="nav-link" data-scroll-target="#robustez-6"><span class="header-section-number">5.3.9</span> Robustez</a></li>
+  <li><a href="#claves-para-examen-1" id="toc-claves-para-examen-1" class="nav-link" data-scroll-target="#claves-para-examen-1"><span class="header-section-number">5.3.10</span> Claves para examen</a></li>
+  <li><a href="#errores-frecuentes-8" id="toc-errores-frecuentes-8" class="nav-link" data-scroll-target="#errores-frecuentes-8"><span class="header-section-number">5.3.11</span> Errores frecuentes</a></li>
+  </ul></li>
+  <li><a href="#infraestructuras-de-transporte" id="toc-infraestructuras-de-transporte" class="nav-link" data-scroll-target="#infraestructuras-de-transporte"><span class="header-section-number">5.4</span> 10. Infraestructuras de transporte</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-9" id="toc-qué-se-evalúa-9" class="nav-link" data-scroll-target="#qué-se-evalúa-9"><span class="header-section-number">5.4.1</span> Qué se evalúa</a></li>
+  <li><a href="#ámbitos-posibles" id="toc-ámbitos-posibles" class="nav-link" data-scroll-target="#ámbitos-posibles"><span class="header-section-number">5.4.2</span> Ámbitos posibles</a></li>
+  <li><a href="#unidad-de-análisis-6" id="toc-unidad-de-análisis-6" class="nav-link" data-scroll-target="#unidad-de-análisis-6"><span class="header-section-number">5.4.3</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-8" id="toc-tratamiento-8" class="nav-link" data-scroll-target="#tratamiento-8"><span class="header-section-number">5.4.4</span> Tratamiento</a></li>
+  <li><a href="#variables-resultado-6" id="toc-variables-resultado-6" class="nav-link" data-scroll-target="#variables-resultado-6"><span class="header-section-number">5.4.5</span> Variables resultado</a></li>
+  <li><a href="#did-en-transporte" id="toc-did-en-transporte" class="nav-link" data-scroll-target="#did-en-transporte"><span class="header-section-number">5.4.6</span> DiD en transporte</a></li>
+  <li><a href="#rdd-en-transporte" id="toc-rdd-en-transporte" class="nav-link" data-scroll-target="#rdd-en-transporte"><span class="header-section-number">5.4.7</span> RDD en transporte</a></li>
+  <li><a href="#qué-hace-difícil-estos-análisis" id="toc-qué-hace-difícil-estos-análisis" class="nav-link" data-scroll-target="#qué-hace-difícil-estos-análisis"><span class="header-section-number">5.4.8</span> Qué hace difícil estos análisis</a></li>
+  <li><a href="#robustez-7" id="toc-robustez-7" class="nav-link" data-scroll-target="#robustez-7"><span class="header-section-number">5.4.9</span> Robustez</a></li>
+  <li><a href="#clave-de-examen" id="toc-clave-de-examen" class="nav-link" data-scroll-target="#clave-de-examen"><span class="header-section-number">5.4.10</span> Clave de examen</a></li>
+  <li><a href="#errores-frecuentes-9" id="toc-errores-frecuentes-9" class="nav-link" data-scroll-target="#errores-frecuentes-9"><span class="header-section-number">5.4.11</span> Errores frecuentes</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#matching-propensity-score-matching" id="toc-matching-propensity-score-matching" class="nav-link" data-scroll-target="#matching-propensity-score-matching"><span class="header-section-number">6</span> Matching / Propensity Score Matching</a>
+  <ul class="collapse">
+  <li><a href="#becas-de-educación-universitaria" id="toc-becas-de-educación-universitaria" class="nav-link" data-scroll-target="#becas-de-educación-universitaria"><span class="header-section-number">6.1</span> 11. Becas de educación universitaria</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-10" id="toc-qué-se-evalúa-10" class="nav-link" data-scroll-target="#qué-se-evalúa-10"><span class="header-section-number">6.1.1</span> Qué se evalúa</a></li>
+  <li><a href="#política-4" id="toc-política-4" class="nav-link" data-scroll-target="#política-4"><span class="header-section-number">6.1.2</span> Política</a></li>
+  <li><a href="#periodo" id="toc-periodo" class="nav-link" data-scroll-target="#periodo"><span class="header-section-number">6.1.3</span> Periodo</a></li>
+  <li><a href="#datos" id="toc-datos" class="nav-link" data-scroll-target="#datos"><span class="header-section-number">6.1.4</span> Datos</a></li>
+  <li><a href="#tratamiento-9" id="toc-tratamiento-9" class="nav-link" data-scroll-target="#tratamiento-9"><span class="header-section-number">6.1.5</span> Tratamiento</a></li>
+  <li><a href="#variables-resultado-7" id="toc-variables-resultado-7" class="nav-link" data-scroll-target="#variables-resultado-7"><span class="header-section-number">6.1.6</span> Variables resultado</a></li>
+  <li><a href="#hallazgo-público-5" id="toc-hallazgo-público-5" class="nav-link" data-scroll-target="#hallazgo-público-5"><span class="header-section-number">6.1.7</span> Hallazgo público</a></li>
+  <li><a href="#estrategia-causal-3" id="toc-estrategia-causal-3" class="nav-link" data-scroll-target="#estrategia-causal-3"><span class="header-section-number">6.1.8</span> Estrategia causal</a></li>
+  <li><a href="#covariables-razonables" id="toc-covariables-razonables" class="nav-link" data-scroll-target="#covariables-razonables"><span class="header-section-number">6.1.9</span> Covariables razonables</a></li>
+  <li><a href="#variables-que-no-debes-usar-para-matching" id="toc-variables-que-no-debes-usar-para-matching" class="nav-link" data-scroll-target="#variables-que-no-debes-usar-para-matching"><span class="header-section-number">6.1.10</span> Variables que NO debes usar para matching</a></li>
+  <li><a href="#cómo-hacer-el-matching" id="toc-cómo-hacer-el-matching" class="nav-link" data-scroll-target="#cómo-hacer-el-matching"><span class="header-section-number">6.1.11</span> Cómo hacer el matching</a></li>
+  <li><a href="#comprobaciones-clave" id="toc-comprobaciones-clave" class="nav-link" data-scroll-target="#comprobaciones-clave"><span class="header-section-number">6.1.12</span> Comprobaciones clave</a></li>
+  <li><a href="#por-qué-separar-primer-año-y-años-posteriores" id="toc-por-qué-separar-primer-año-y-años-posteriores" class="nav-link" data-scroll-target="#por-qué-separar-primer-año-y-años-posteriores"><span class="header-section-number">6.1.13</span> Por qué separar primer año y años posteriores</a></li>
+  <li><a href="#cómo-interpretarlo-en-examen" id="toc-cómo-interpretarlo-en-examen" class="nav-link" data-scroll-target="#cómo-interpretarlo-en-examen"><span class="header-section-number">6.1.14</span> Cómo interpretarlo en examen</a></li>
+  <li><a href="#limitaciones" id="toc-limitaciones" class="nav-link" data-scroll-target="#limitaciones"><span class="header-section-number">6.1.15</span> Limitaciones</a></li>
+  <li><a href="#errores-frecuentes-10" id="toc-errores-frecuentes-10" class="nav-link" data-scroll-target="#errores-frecuentes-10"><span class="header-section-number">6.1.16</span> Errores frecuentes</a></li>
+  <li><a href="#si-cae-en-examen-1" id="toc-si-cae-en-examen-1" class="nav-link" data-scroll-target="#si-cae-en-examen-1"><span class="header-section-number">6.1.17</span> Si cae en examen</a></li>
+  </ul></li>
+  <li><a href="#promoción-del-talento-y-empleabilidad-en-idi" id="toc-promoción-del-talento-y-empleabilidad-en-idi" class="nav-link" data-scroll-target="#promoción-del-talento-y-empleabilidad-en-idi"><span class="header-section-number">6.2</span> 12. Promoción del talento y empleabilidad en I+D+i</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-11" id="toc-qué-se-evalúa-11" class="nav-link" data-scroll-target="#qué-se-evalúa-11"><span class="header-section-number">6.2.1</span> Qué se evalúa</a></li>
+  <li><a href="#política-5" id="toc-política-5" class="nav-link" data-scroll-target="#política-5"><span class="header-section-number">6.2.2</span> Política</a></li>
+  <li><a href="#datos-1" id="toc-datos-1" class="nav-link" data-scroll-target="#datos-1"><span class="header-section-number">6.2.3</span> Datos</a></li>
+  <li><a href="#unidad-de-análisis-7" id="toc-unidad-de-análisis-7" class="nav-link" data-scroll-target="#unidad-de-análisis-7"><span class="header-section-number">6.2.4</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-10" id="toc-tratamiento-10" class="nav-link" data-scroll-target="#tratamiento-10"><span class="header-section-number">6.2.5</span> Tratamiento</a></li>
+  <li><a href="#variables-resultado-8" id="toc-variables-resultado-8" class="nav-link" data-scroll-target="#variables-resultado-8"><span class="header-section-number">6.2.6</span> Variables resultado</a></li>
+  <li><a href="#grupo-de-comparación-3" id="toc-grupo-de-comparación-3" class="nav-link" data-scroll-target="#grupo-de-comparación-3"><span class="header-section-number">6.2.7</span> Grupo de comparación</a></li>
+  <li><a href="#covariables-razonables-1" id="toc-covariables-razonables-1" class="nav-link" data-scroll-target="#covariables-razonables-1"><span class="header-section-number">6.2.8</span> Covariables razonables</a></li>
+  <li><a href="#matching-recomendado" id="toc-matching-recomendado" class="nav-link" data-scroll-target="#matching-recomendado"><span class="header-section-number">6.2.9</span> Matching recomendado</a></li>
+  <li><a href="#limitaciones-centrales" id="toc-limitaciones-centrales" class="nav-link" data-scroll-target="#limitaciones-centrales"><span class="header-section-number">6.2.10</span> Limitaciones centrales</a></li>
+  <li><a href="#cómo-responder-bien" id="toc-cómo-responder-bien" class="nav-link" data-scroll-target="#cómo-responder-bien"><span class="header-section-number">6.2.11</span> Cómo responder bien</a></li>
+  <li><a href="#robustez-8" id="toc-robustez-8" class="nav-link" data-scroll-target="#robustez-8"><span class="header-section-number">6.2.12</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes-11" id="toc-errores-frecuentes-11" class="nav-link" data-scroll-target="#errores-frecuentes-11"><span class="header-section-number">6.2.13</span> Errores frecuentes</a></li>
+  </ul></li>
+  <li><a href="#políticas-activas-de-empleo-estatales" id="toc-políticas-activas-de-empleo-estatales" class="nav-link" data-scroll-target="#políticas-activas-de-empleo-estatales"><span class="header-section-number">6.3</span> 13. Políticas activas de empleo estatales</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-12" id="toc-qué-se-evalúa-12" class="nav-link" data-scroll-target="#qué-se-evalúa-12"><span class="header-section-number">6.3.1</span> Qué se evalúa</a></li>
+  <li><a href="#unidad-de-análisis-8" id="toc-unidad-de-análisis-8" class="nav-link" data-scroll-target="#unidad-de-análisis-8"><span class="header-section-number">6.3.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-11" id="toc-tratamiento-11" class="nav-link" data-scroll-target="#tratamiento-11"><span class="header-section-number">6.3.3</span> Tratamiento</a></li>
+  <li><a href="#resultado-5" id="toc-resultado-5" class="nav-link" data-scroll-target="#resultado-5"><span class="header-section-number">6.3.4</span> Resultado</a></li>
+  <li><a href="#grupo-de-comparación-4" id="toc-grupo-de-comparación-4" class="nav-link" data-scroll-target="#grupo-de-comparación-4"><span class="header-section-number">6.3.5</span> Grupo de comparación</a></li>
+  <li><a href="#clave-conceptual" id="toc-clave-conceptual" class="nav-link" data-scroll-target="#clave-conceptual"><span class="header-section-number">6.3.6</span> Clave conceptual</a></li>
+  <li><a href="#matching" id="toc-matching" class="nav-link" data-scroll-target="#matching"><span class="header-section-number">6.3.7</span> Matching</a></li>
+  <li><a href="#qué-pediría-un-examen" id="toc-qué-pediría-un-examen" class="nav-link" data-scroll-target="#qué-pediría-un-examen"><span class="header-section-number">6.3.8</span> Qué pediría un examen</a></li>
+  <li><a href="#error-clave" id="toc-error-clave" class="nav-link" data-scroll-target="#error-clave"><span class="header-section-number">6.3.9</span> Error clave</a></li>
+  </ul></li>
+  <li><a href="#políticas-activas-de-empleo-en-castilla-y-león" id="toc-políticas-activas-de-empleo-en-castilla-y-león" class="nav-link" data-scroll-target="#políticas-activas-de-empleo-en-castilla-y-león"><span class="header-section-number">6.4</span> 14. Políticas activas de empleo en Castilla y León</a>
+  <ul class="collapse">
+  <li><a href="#qué-se-evalúa-13" id="toc-qué-se-evalúa-13" class="nav-link" data-scroll-target="#qué-se-evalúa-13"><span class="header-section-number">6.4.1</span> Qué se evalúa</a></li>
+  <li><a href="#programas" id="toc-programas" class="nav-link" data-scroll-target="#programas"><span class="header-section-number">6.4.2</span> Programas</a></li>
+  <li><a href="#resultado-central" id="toc-resultado-central" class="nav-link" data-scroll-target="#resultado-central"><span class="header-section-number">6.4.3</span> Resultado central</a></li>
+  <li><a href="#hallazgo-metodológico-importante" id="toc-hallazgo-metodológico-importante" class="nav-link" data-scroll-target="#hallazgo-metodológico-importante"><span class="header-section-number">6.4.4</span> Hallazgo metodológico importante</a></li>
+  <li><a href="#orientación-y-acompañamiento" id="toc-orientación-y-acompañamiento" class="nav-link" data-scroll-target="#orientación-y-acompañamiento"><span class="header-section-number">6.4.5</span> Orientación y acompañamiento</a></li>
+  <li><a href="#estrategia" id="toc-estrategia" class="nav-link" data-scroll-target="#estrategia"><span class="header-section-number">6.4.6</span> Estrategia</a></li>
+  <li><a href="#covariables" id="toc-covariables" class="nav-link" data-scroll-target="#covariables"><span class="header-section-number">6.4.7</span> Covariables</a></li>
+  <li><a href="#claves-de-examen" id="toc-claves-de-examen" class="nav-link" data-scroll-target="#claves-de-examen"><span class="header-section-number">6.4.8</span> Claves de examen</a></li>
+  <li><a href="#robustez-9" id="toc-robustez-9" class="nav-link" data-scroll-target="#robustez-9"><span class="header-section-number">6.4.9</span> Robustez</a></li>
+  <li><a href="#errores-frecuentes-12" id="toc-errores-frecuentes-12" class="nav-link" data-scroll-target="#errores-frecuentes-12"><span class="header-section-number">6.4.10</span> Errores frecuentes</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#combinación-matching-did" id="toc-combinación-matching-did" class="nav-link" data-scroll-target="#combinación-matching-did"><span class="header-section-number">7</span> Combinación Matching + DiD</a>
+  <ul class="collapse">
+  <li><a href="#patrón-general-en-políticas-activas-de-empleo" id="toc-patrón-general-en-políticas-activas-de-empleo" class="nav-link" data-scroll-target="#patrón-general-en-políticas-activas-de-empleo"><span class="header-section-number">7.1</span> 15. Patrón general en políticas activas de empleo</a>
+  <ul class="collapse">
+  <li><a href="#estructura-tipo" id="toc-estructura-tipo" class="nav-link" data-scroll-target="#estructura-tipo"><span class="header-section-number">7.1.1</span> Estructura tipo</a></li>
+  <li><a href="#estimador" id="toc-estimador" class="nav-link" data-scroll-target="#estimador"><span class="header-section-number">7.1.2</span> Estimador</a></li>
+  <li><a href="#cuándo-usarlo" id="toc-cuándo-usarlo" class="nav-link" data-scroll-target="#cuándo-usarlo"><span class="header-section-number">7.1.3</span> Cuándo usarlo</a></li>
+  <li><a href="#ventajas" id="toc-ventajas" class="nav-link" data-scroll-target="#ventajas"><span class="header-section-number">7.1.4</span> Ventajas</a></li>
+  <li><a href="#limitaciones-1" id="toc-limitaciones-1" class="nav-link" data-scroll-target="#limitaciones-1"><span class="header-section-number">7.1.5</span> Limitaciones</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#synthetic-control" id="toc-synthetic-control" class="nav-link" data-scroll-target="#synthetic-control"><span class="header-section-number">8</span> Synthetic control</a>
+  <ul class="collapse">
+  <li><a href="#uso-potencial-en-evaluaciones-territoriales" id="toc-uso-potencial-en-evaluaciones-territoriales" class="nav-link" data-scroll-target="#uso-potencial-en-evaluaciones-territoriales"><span class="header-section-number">8.1</span> 16. Uso potencial en evaluaciones territoriales</a>
+  <ul class="collapse">
+  <li><a href="#cuándo-tendría-sentido" id="toc-cuándo-tendría-sentido" class="nav-link" data-scroll-target="#cuándo-tendría-sentido"><span class="header-section-number">8.1.1</span> Cuándo tendría sentido</a></li>
+  <li><a href="#unidad-de-análisis-9" id="toc-unidad-de-análisis-9" class="nav-link" data-scroll-target="#unidad-de-análisis-9"><span class="header-section-number">8.1.2</span> Unidad de análisis</a></li>
+  <li><a href="#tratamiento-12" id="toc-tratamiento-12" class="nav-link" data-scroll-target="#tratamiento-12"><span class="header-section-number">8.1.3</span> Tratamiento</a></li>
+  <li><a href="#grupo-de-donantes" id="toc-grupo-de-donantes" class="nav-link" data-scroll-target="#grupo-de-donantes"><span class="header-section-number">8.1.4</span> Grupo de donantes</a></li>
+  <li><a href="#idea" id="toc-idea" class="nav-link" data-scroll-target="#idea"><span class="header-section-number">8.1.5</span> Idea</a></li>
+  <li><a href="#variables-predictoras" id="toc-variables-predictoras" class="nav-link" data-scroll-target="#variables-predictoras"><span class="header-section-number">8.1.6</span> Variables predictoras</a></li>
+  <li><a href="#validaciones" id="toc-validaciones" class="nav-link" data-scroll-target="#validaciones"><span class="header-section-number">8.1.7</span> Validaciones</a></li>
+  <li><a href="#errores-frecuentes-13" id="toc-errores-frecuentes-13" class="nav-link" data-scroll-target="#errores-frecuentes-13"><span class="header-section-number">8.1.8</span> Errores frecuentes</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#variables-instrumentales" id="toc-variables-instrumentales" class="nav-link" data-scroll-target="#variables-instrumentales"><span class="header-section-number">9</span> Variables instrumentales</a>
+  <ul class="collapse">
+  <li><a href="#uso-como-metodología-potencial" id="toc-uso-como-metodología-potencial" class="nav-link" data-scroll-target="#uso-como-metodología-potencial"><span class="header-section-number">9.1</span> 17. Uso como metodología potencial</a>
+  <ul class="collapse">
+  <li><a href="#cuándo-tendría-sentido-1" id="toc-cuándo-tendría-sentido-1" class="nav-link" data-scroll-target="#cuándo-tendría-sentido-1"><span class="header-section-number">9.1.1</span> Cuándo tendría sentido</a></li>
+  <li><a href="#condiciones" id="toc-condiciones" class="nav-link" data-scroll-target="#condiciones"><span class="header-section-number">9.1.2</span> Condiciones</a></li>
+  <li><a href="#examen" id="toc-examen" class="nav-link" data-scroll-target="#examen"><span class="header-section-number">9.1.3</span> Examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#ensayos-controlados-aleatorizados" id="toc-ensayos-controlados-aleatorizados" class="nav-link" data-scroll-target="#ensayos-controlados-aleatorizados"><span class="header-section-number">10</span> Ensayos controlados aleatorizados</a>
+  <ul class="collapse">
+  <li><a href="#rct-como-recomendación-de-evaluabilidad" id="toc-rct-como-recomendación-de-evaluabilidad" class="nav-link" data-scroll-target="#rct-como-recomendación-de-evaluabilidad"><span class="header-section-number">10.1</span> 18. RCT como recomendación de evaluabilidad</a>
+  <ul class="collapse">
+  <li><a href="#cuándo-tendría-sentido-2" id="toc-cuándo-tendría-sentido-2" class="nav-link" data-scroll-target="#cuándo-tendría-sentido-2"><span class="header-section-number">10.1.1</span> Cuándo tendría sentido</a></li>
+  <li><a href="#claves" id="toc-claves" class="nav-link" data-scroll-target="#claves"><span class="header-section-number">10.1.2</span> Claves</a></li>
+  <li><a href="#examen-1" id="toc-examen-1" class="nav-link" data-scroll-target="#examen-1"><span class="header-section-number">10.1.3</span> Examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#apéndice-plantillas-rápidas-para-examen" id="toc-apéndice-plantillas-rápidas-para-examen" class="nav-link" data-scroll-target="#apéndice-plantillas-rápidas-para-examen"><span class="header-section-number">11</span> Apéndice: plantillas rápidas para examen</a>
+  <ul class="collapse">
+  <li><a href="#plantilla-did" id="toc-plantilla-did" class="nav-link" data-scroll-target="#plantilla-did"><span class="header-section-number">11.1</span> Plantilla DiD</a>
+  <ul class="collapse">
+  <li><a href="#qué-escribir" id="toc-qué-escribir" class="nav-link" data-scroll-target="#qué-escribir"><span class="header-section-number">11.1.1</span> Qué escribir</a></li>
+  </ul></li>
+  <li><a href="#plantilla-matching-psm" id="toc-plantilla-matching-psm" class="nav-link" data-scroll-target="#plantilla-matching-psm"><span class="header-section-number">11.2</span> Plantilla Matching / PSM</a>
+  <ul class="collapse">
+  <li><a href="#qué-escribir-1" id="toc-qué-escribir-1" class="nav-link" data-scroll-target="#qué-escribir-1"><span class="header-section-number">11.2.1</span> Qué escribir</a></li>
+  </ul></li>
+  <li><a href="#plantilla-rdd" id="toc-plantilla-rdd" class="nav-link" data-scroll-target="#plantilla-rdd"><span class="header-section-number">11.3</span> Plantilla RDD</a>
+  <ul class="collapse">
+  <li><a href="#qué-escribir-2" id="toc-qué-escribir-2" class="nav-link" data-scroll-target="#qué-escribir-2"><span class="header-section-number">11.3.1</span> Qué escribir</a></li>
+  </ul></li>
+  <li><a href="#plantilla-matching-did" id="toc-plantilla-matching-did" class="nav-link" data-scroll-target="#plantilla-matching-did"><span class="header-section-number">11.4</span> Plantilla Matching + DiD</a>
+  <ul class="collapse">
+  <li><a href="#qué-escribir-3" id="toc-qué-escribir-3" class="nav-link" data-scroll-target="#qué-escribir-3"><span class="header-section-number">11.4.1</span> Qué escribir</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#apéndice-checklist-de-90-minutos" id="toc-apéndice-checklist-de-90-minutos" class="nav-link" data-scroll-target="#apéndice-checklist-de-90-minutos"><span class="header-section-number">12</span> Apéndice: checklist de 90 minutos</a>
+  <ul class="collapse">
+  <li><a href="#primeros-20-minutos-datos" id="toc-primeros-20-minutos-datos" class="nav-link" data-scroll-target="#primeros-20-minutos-datos"><span class="header-section-number">12.1</span> Primeros 20 minutos: datos</a></li>
+  <li><a href="#minutos-20-40-descriptivo" id="toc-minutos-20-40-descriptivo" class="nav-link" data-scroll-target="#minutos-20-40-descriptivo"><span class="header-section-number">12.2</span> Minutos 20-40: descriptivo</a></li>
+  <li><a href="#minutos-40-70-causal" id="toc-minutos-40-70-causal" class="nav-link" data-scroll-target="#minutos-40-70-causal"><span class="header-section-number">12.3</span> Minutos 40-70: causal</a></li>
+  <li><a href="#minutos-70-90-informe" id="toc-minutos-70-90-informe" class="nav-link" data-scroll-target="#minutos-70-90-informe"><span class="header-section-number">12.4</span> Minutos 70-90: informe</a></li>
+  </ul></li>
+  <li><a href="#apéndice-errores-transversales-que-penalizan" id="toc-apéndice-errores-transversales-que-penalizan" class="nav-link" data-scroll-target="#apéndice-errores-transversales-que-penalizan"><span class="header-section-number">13</span> Apéndice: errores transversales que penalizan</a></li>
+  <li><a href="#orientación-final-para-posibles-exámenes-airef" id="toc-orientación-final-para-posibles-exámenes-airef" class="nav-link" data-scroll-target="#orientación-final-para-posibles-exámenes-airef"><span class="header-section-number">14</span> Orientación final para posibles exámenes AIReF</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Apuntes extensos: inferencia causal en evaluaciones de AIReF</h1>
+<p class="subtitle lead">Guía práctica para orientar ejercicios de oposición</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>ChatGPT </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">May 10, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="cómo-usar-estos-apuntes" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Cómo usar estos apuntes</h1>
+<p>Estos apuntes están pensados para consulta rápida durante la preparación de ejercicios prácticos de evaluación de políticas públicas tipo AIReF.</p>
+<p>El objetivo no es sustituir a los informes originales, sino condensar las <strong>decisiones de inferencia causal</strong> que suelen aparecer en estudios de la División de Evaluación del Gasto Público y convertirlas en una guía de examen:</p>
+<ul>
+<li>qué política se evalúa;</li>
+<li>cuál es la unidad de análisis;</li>
+<li>cuál es el tratamiento;</li>
+<li>cuál es el grupo de comparación;</li>
+<li>qué variable resultado se analiza;</li>
+<li>qué metodología causal se usa;</li>
+<li>qué supuestos hay que defender;</li>
+<li>qué gráficos y comprobaciones conviene hacer;</li>
+<li>qué errores evitar en un examen de 90 minutos.</li>
+</ul>
+<blockquote class="blockquote">
+<p><strong>Nota importante.</strong> Parte de la información pública de AIReF está disponible en fichas-resumen y páginas del Observatorio, no siempre en anexos metodológicos completos. Cuando el detalle exacto de covariables, ancho de banda, especificación o robustez no está disponible en la fuente pública resumida, se indica como <strong>“no especificado en la ficha pública”</strong> y se ofrece una orientación razonable de cómo abordarlo en examen.</p>
+</blockquote>
+</section>
+<section id="fuentes-públicas-utilizadas" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Fuentes públicas utilizadas</h1>
+<p>Principales páginas públicas de AIReF consultadas:</p>
+<ul>
+<li>AIReF, <em>Beneficios fiscales</em>, Spending Review 2018-2021, fase II: <a href="https://www.airef.es/es/estudios-observatorio/beneficios-fiscales/" class="uri">https://www.airef.es/es/estudios-observatorio/beneficios-fiscales/</a></li>
+<li>AIReF, <em>Gestión de los residuos municipales</em>: <a href="https://www.airef.es/es/estudios-observatorio/evaluacion-de-la-gestion-de-los-residuos-urbanos/" class="uri">https://www.airef.es/es/estudios-observatorio/evaluacion-de-la-gestion-de-los-residuos-urbanos/</a></li>
+<li>AIReF, <em>Infraestructuras de transporte</em>: <a href="https://www.airef.es/es/estudios-observatorio/infraestructuras-de-transporte/" class="uri">https://www.airef.es/es/estudios-observatorio/infraestructuras-de-transporte/</a></li>
+<li>AIReF, <em>Becas de educación universitaria</em>: <a href="https://www.airef.es/es/estudios-observatorio/becas-de-educacion-universitaria/" class="uri">https://www.airef.es/es/estudios-observatorio/becas-de-educacion-universitaria/</a></li>
+<li>AIReF, <em>Promoción del talento y su empleabilidad en I+D+i</em>: <a href="https://www.airef.es/es/estudios-observatorio/programa-estatal-de-promocion-del-talento-y-su-empleabilidad-en-idi/" class="uri">https://www.airef.es/es/estudios-observatorio/programa-estatal-de-promocion-del-talento-y-su-empleabilidad-en-idi/</a></li>
+<li>AIReF, <em>Políticas activas de empleo</em>: <a href="https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo/" class="uri">https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo/</a></li>
+<li>AIReF, <em>Incentivos a la contratación y al trabajo autónomo</em>: <a href="https://www.airef.es/es/estudios-observatorio/incentivos-a-la-contratacion-y-al-trabajo-autonomo/" class="uri">https://www.airef.es/es/estudios-observatorio/incentivos-a-la-contratacion-y-al-trabajo-autonomo/</a></li>
+<li>AIReF, <em>Políticas activas de empleo en Extremadura</em>: <a href="https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-extremadura/" class="uri">https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-extremadura/</a></li>
+<li>AIReF, <em>Políticas activas de empleo en Castilla y León</em>: <a href="https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-castilla-y-leon/" class="uri">https://www.airef.es/es/estudios-observatorio/politicas-activas-de-empleo-en-castilla-y-leon/</a></li>
+<li>AIReF, <em>Instrumentos financieros de apoyo a la pyme reforzados por el PRTR</em>: <a href="https://www.airef.es/es/estudios-observatorio/instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr/" class="uri">https://www.airef.es/es/estudios-observatorio/instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr/</a></li>
+<li>AIReF, <em>Incapacidad temporal</em>, Spending Review 2022-2026, fase II: <a href="https://www.airef.es/es/estudios-observatorio/incapacidad-temporal/" class="uri">https://www.airef.es/es/estudios-observatorio/incapacidad-temporal/</a></li>
+<li>AIReF, divulgación metodológica sobre evaluación de políticas públicas: <a href="https://www.airef.es/es/divulgacion/como-evalua-la-airef-combinar-datos-y-experiencia-para-entender-mejor-las-politicas-publicas/" class="uri">https://www.airef.es/es/divulgacion/como-evalua-la-airef-combinar-datos-y-experiencia-para-entender-mejor-las-politicas-publicas/</a></li>
+</ul>
+</section>
+<section id="mapa-rápido-por-metodología" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Mapa rápido por metodología</h1>
+<table class="table">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 28%">
+<col style="width: 28%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Metodología</th>
+<th style="text-align: right;">Estudios/opiniones donde aparece</th>
+<th style="text-align: right;">Probabilidad de aparecer en examen</th>
+<th>Comentario práctico</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Difference-in-Differences</td>
+<td style="text-align: right;">Residuos, incentivos contratación, PAE Extremadura, IT, alquiler vivienda, instrumentos financieros pyme, infraestructuras</td>
+<td style="text-align: right;">Muy alta</td>
+<td>Es la estructura más examinable: panel, tratamiento, año de adopción, event-study</td>
+</tr>
+<tr class="even">
+<td>DiD escalonado / Callaway-Sant’Anna</td>
+<td style="text-align: right;">Residuos, instrumentos financieros pyme, probablemente otros paneles con adopción no simultánea</td>
+<td style="text-align: right;">Muy alta</td>
+<td>Ojo con TWFE cuando hay efectos heterogéneos</td>
+</tr>
+<tr class="odd">
+<td>Matching / PSM</td>
+<td style="text-align: right;">Becas universitarias, talento I+D+i, PAE, PAE Extremadura, PAE Castilla y León</td>
+<td style="text-align: right;">Alta</td>
+<td>Muy probable en ejercicios individuales con beneficiarios/no beneficiarios</td>
+</tr>
+<tr class="even">
+<td>RDD</td>
+<td style="text-align: right;">Beneficios fiscales, incentivos a conversión de contratos, infraestructuras</td>
+<td style="text-align: right;">Media-alta</td>
+<td>Aparece cuando hay umbral normativo claro</td>
+</tr>
+<tr class="odd">
+<td>Modelos panel / FE</td>
+<td style="text-align: right;">Muchos estudios</td>
+<td style="text-align: right;">Alta</td>
+<td>Normalmente acompañan a DiD</td>
+</tr>
+<tr class="even">
+<td>Synthetic control</td>
+<td style="text-align: right;">Mencionado como metodología usada por AIReF, pero no se ha identificado en las fichas revisadas una instancia concreta clara de la División</td>
+<td style="text-align: right;">Baja-media</td>
+<td>Puede aparecer si el examen diseña un caso territorial único</td>
+</tr>
+<tr class="odd">
+<td>RCT</td>
+<td style="text-align: right;">Más como recomendación de diseño de pilotos que como evaluación ex post identificada en fichas</td>
+<td style="text-align: right;">Baja</td>
+<td>Útil saber plantearlo, menos probable que haya datos reales de RCT</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="difference-in-differences-y-event-study" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Difference-in-Differences y event-study</h1>
+<section id="gestión-de-residuos-municipales-recogida-puerta-a-puerta-y-ordenanzas" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="gestión-de-residuos-municipales-recogida-puerta-a-puerta-y-ordenanzas"><span class="header-section-number">4.1</span> 1. Gestión de residuos municipales: recogida puerta a puerta y ordenanzas</h2>
+<section id="qué-se-evalúa" class="level3" data-number="4.1.1">
+<h3 data-number="4.1.1" class="anchored" data-anchor-id="qué-se-evalúa"><span class="header-section-number">4.1.1</span> Qué se evalúa</h3>
+<p>AIReF evalúa políticas de gestión de residuos municipales. En la ficha pública aparece explícitamente el uso de <strong>diferencia en diferencias</strong> y se menciona tanto el estimador estándar como un estimador robusto a efectos heterogéneos tipo <strong>Callaway y Sant’Anna</strong>.</p>
+<p>En el examen de la OPE 2024 se utilizó un caso de recogida separada puerta a puerta municipal con datos de Cataluña entre 2000 y 2023. Ese patrón es muy representativo de un ejercicio AIReF:</p>
+<ul>
+<li>panel municipio-año;</li>
+<li>tratamiento que empieza en años distintos;</li>
+<li>construcción de variables a partir de fechas y fracciones recogidas;</li>
+<li>análisis descriptivo y causal;</li>
+<li>efectos a corto plazo hasta cinco años tras la adopción.</li>
+</ul>
+</section>
+<section id="unidad-de-análisis" class="level3" data-number="4.1.2">
+<h3 data-number="4.1.2" class="anchored" data-anchor-id="unidad-de-análisis"><span class="header-section-number">4.1.2</span> Unidad de análisis</h3>
+<p>La unidad natural es el <strong>municipio-año</strong>.</p>
+<p>Ejemplo:</p>
+<table class="table">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+<col style="width: 17%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>municipio</th>
+<th style="text-align: right;">año</th>
+<th style="text-align: right;">tratamiento</th>
+<th style="text-align: right;">año_inicio</th>
+<th style="text-align: right;">selectiva_pct</th>
+<th style="text-align: right;">residuos_total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td style="text-align: right;">2017</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">34.2</td>
+<td style="text-align: right;">4,500</td>
+</tr>
+<tr class="even">
+<td>A</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2020</td>
+<td style="text-align: right;">48.9</td>
+<td style="text-align: right;">4,300</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="tratamiento" class="level3" data-number="4.1.3">
+<h3 data-number="4.1.3" class="anchored" data-anchor-id="tratamiento"><span class="header-section-number">4.1.3</span> Tratamiento</h3>
+<p>Puede adoptar varias formas:</p>
+<ol type="1">
+<li><p><strong>Dummy de tratamiento simple</strong><br>
+<code>tratamiento_it = 1</code> si el municipio <code>i</code> ya tiene implantada la política en el año <code>t</code>.</p></li>
+<li><p><strong>Cohorte de tratamiento</strong><br>
+<code>g_i = año de primera adopción</code>.</p></li>
+<li><p><strong>Tiempo relativo al tratamiento</strong><br>
+<code>event_time = año - año_inicio</code>.</p></li>
+<li><p><strong>Intensidad del tratamiento</strong><br>
+Número de fracciones recogidas puerta a puerta o dummies por fracción:</p>
+<ul>
+<li>orgánica;</li>
+<li>papel/cartón;</li>
+<li>envases;</li>
+<li>vidrio;</li>
+<li>resto.</li>
+</ul></li>
+</ol>
+</section>
+<section id="variables-resultado" class="level3" data-number="4.1.4">
+<h3 data-number="4.1.4" class="anchored" data-anchor-id="variables-resultado"><span class="header-section-number">4.1.4</span> Variables resultado</h3>
+<p>Las más probables:</p>
+<ul>
+<li>porcentaje de recogida selectiva;</li>
+<li>kilos de residuos por habitante;</li>
+<li>residuos totales;</li>
+<li>tasa de impropios;</li>
+<li>coste por tonelada;</li>
+<li>frecuencia de recogida.</li>
+</ul>
+</section>
+<section id="estrategia-causal" class="level3" data-number="4.1.5">
+<h3 data-number="4.1.5" class="anchored" data-anchor-id="estrategia-causal"><span class="header-section-number">4.1.5</span> Estrategia causal</h3>
+<p>La lógica es comparar la evolución de los municipios tratados antes y después de adoptar la política con la evolución de municipios aún no tratados o nunca tratados.</p>
+<p>Especificación básica:</p>
+<p>[ Y_{it} = <em>i + <em>t + Tratamiento</em>{it} + X</em>{it}’+ _{it} ]</p>
+<p>donde:</p>
+<ul>
+<li>(_i) son efectos fijos de municipio;</li>
+<li>(_t) son efectos fijos de año;</li>
+<li>(X_{it}) son controles municipales observables;</li>
+<li>() mide el efecto medio de la política.</li>
+</ul>
+</section>
+<section id="problema-clave-adopción-escalonada" class="level3" data-number="4.1.6">
+<h3 data-number="4.1.6" class="anchored" data-anchor-id="problema-clave-adopción-escalonada"><span class="header-section-number">4.1.6</span> Problema clave: adopción escalonada</h3>
+<p>Si los municipios adoptan en años diferentes, el estimador TWFE estándar puede ser problemático si:</p>
+<ul>
+<li>los efectos varían por cohorte;</li>
+<li>los efectos cambian con el tiempo desde la adopción;</li>
+<li>municipios ya tratados actúan como controles de municipios tratados más tarde.</li>
+</ul>
+<p>Por eso la ficha pública de AIReF sobre residuos menciona un estimador robusto a efectos heterogéneos, Callaway y Sant’Anna.</p>
+</section>
+<section id="cómo-responder-en-examen" class="level3" data-number="4.1.7">
+<h3 data-number="4.1.7" class="anchored" data-anchor-id="cómo-responder-en-examen"><span class="header-section-number">4.1.7</span> Cómo responder en examen</h3>
+<p>Si tienes poco tiempo, una respuesta sólida debería incluir:</p>
+<ol type="1">
+<li>Construir <code>tratamiento</code>.</li>
+<li>Construir <code>event_time</code>.</li>
+<li>Mostrar tendencias pretratamiento.</li>
+<li>Estimar TWFE como referencia.</li>
+<li>Si es posible, estimar un DiD escalonado robusto.</li>
+<li>Interpretar el efecto en unidades claras.</li>
+<li>Hacer heterogeneidad por tamaño municipal o fracciones recogidas.</li>
+</ol>
+</section>
+<section id="qué-controles-incluir" class="level3" data-number="4.1.8">
+<h3 data-number="4.1.8" class="anchored" data-anchor-id="qué-controles-incluir"><span class="header-section-number">4.1.8</span> Qué controles incluir</h3>
+<p>Covariables típicas:</p>
+<ul>
+<li>población;</li>
+<li>densidad;</li>
+<li>renta municipal;</li>
+<li>provincia;</li>
+<li>turismo;</li>
+<li>envejecimiento;</li>
+<li>estructura urbana/rural;</li>
+<li>residuos per cápita pretratamiento;</li>
+<li>año o tendencia provincial.</li>
+</ul>
+<p>En un examen no siempre necesitas incluir todos. Lo más importante es justificar que:</p>
+<ul>
+<li>los efectos fijos absorben diferencias permanentes entre municipios;</li>
+<li>los efectos de año absorben shocks comunes;</li>
+<li>los controles reducen cambios diferenciales observables.</li>
+</ul>
+</section>
+<section id="gráficos-imprescindibles" class="level3" data-number="4.1.9">
+<h3 data-number="4.1.9" class="anchored" data-anchor-id="gráficos-imprescindibles"><span class="header-section-number">4.1.9</span> Gráficos imprescindibles</h3>
+<ol type="1">
+<li>Evolución media de (Y) para tratados y no tratados.</li>
+<li>Event-study con leads y lags.</li>
+<li>Distribución de años de adopción.</li>
+<li>Heterogeneidad por tamaño municipal.</li>
+<li>Boxplot o histograma de residuos para detectar outliers.</li>
+</ol>
+</section>
+<section id="robustez" class="level3" data-number="4.1.10">
+<h3 data-number="4.1.10" class="anchored" data-anchor-id="robustez"><span class="header-section-number">4.1.10</span> Robustez</h3>
+<ul>
+<li>Excluir grandes municipios.</li>
+<li>Excluir municipios turísticos.</li>
+<li>Limitar a ventanas de ±5 años.</li>
+<li>Comparar con nunca tratados y aún no tratados.</li>
+<li>Clusterizar errores por municipio.</li>
+<li>Probar resultado alternativo: porcentaje selectivo y kilos per cápita.</li>
+<li>Placebo con años pretratamiento.</li>
+</ul>
+</section>
+<section id="errores-frecuentes" class="level3" data-number="4.1.11">
+<h3 data-number="4.1.11" class="anchored" data-anchor-id="errores-frecuentes"><span class="header-section-number">4.1.11</span> Errores frecuentes</h3>
+<ul>
+<li>Comparar tratados vs no tratados solo después de la política.</li>
+<li>No usar efectos fijos.</li>
+<li>No mirar tendencias paralelas.</li>
+<li>Usar municipios tratados como controles sin pensar en adopción escalonada.</li>
+<li>Interpretar correlación descriptiva como causal.</li>
+<li>No clusterizar por unidad de tratamiento.</li>
+</ul>
+</section>
+<section id="si-cae-en-examen" class="level3" data-number="4.1.12">
+<h3 data-number="4.1.12" class="anchored" data-anchor-id="si-cae-en-examen"><span class="header-section-number">4.1.12</span> Si cae en examen</h3>
+<p>Frase útil:</p>
+<blockquote class="blockquote">
+<p>La identificación descansa en que, en ausencia de la política, los municipios tratados habrían seguido una evolución paralela a la de los municipios comparables no tratados o aún no tratados. Dado que la adopción es escalonada, conviene complementar el TWFE con estimadores robustos a heterogeneidad de efectos por cohorte y tiempo desde el tratamiento.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="instrumentos-financieros-de-apoyo-a-la-pyme-reforzados-por-el-prtr"><span class="header-section-number">4.2</span> 2. Instrumentos financieros de apoyo a la pyme reforzados por el PRTR</h2>
+<section id="qué-se-evalúa-1" class="level3" data-number="4.2.1">
+<h3 data-number="4.2.1" class="anchored" data-anchor-id="qué-se-evalúa-1"><span class="header-section-number">4.2.1</span> Qué se evalúa</h3>
+<p>AIReF evalúa instrumentos financieros de apoyo a la pyme, especialmente operaciones que movilizan financiación pública o semipública. La ficha pública indica que la metodología cuantitativa combina estadística descriptiva, econometría y análisis causal contrafactual mediante un <strong>modelo de diferencias en diferencias escalonado</strong>.</p>
+</section>
+<section id="unidad-de-análisis-1" class="level3" data-number="4.2.2">
+<h3 data-number="4.2.2" class="anchored" data-anchor-id="unidad-de-análisis-1"><span class="header-section-number">4.2.2</span> Unidad de análisis</h3>
+<p>La unidad probable es la <strong>empresa-año</strong> o empresa-periodo.</p>
+<p>Datos mencionados en la ficha pública:</p>
+<ul>
+<li>microdatos de agencias públicas;</li>
+<li>Central de Balances;</li>
+<li>Central de Riesgos del Banco de España;</li>
+<li>DIRCE del INE;</li>
+<li>Impuesto de Sociedades de AEAT.</li>
+</ul>
+</section>
+<section id="tratamiento-1" class="level3" data-number="4.2.3">
+<h3 data-number="4.2.3" class="anchored" data-anchor-id="tratamiento-1"><span class="header-section-number">4.2.3</span> Tratamiento</h3>
+<p>Recibir apoyo financiero público:</p>
+<ul>
+<li>garantía;</li>
+<li>reafianzamiento;</li>
+<li>capital riesgo;</li>
+<li>financiación movilizada;</li>
+<li>participación en un instrumento concreto.</li>
+</ul>
+<p>Puede haber:</p>
+<ul>
+<li>fecha de concesión;</li>
+<li>cuantía de financiación;</li>
+<li>intensidad del tratamiento;</li>
+<li>tipo de instrumento.</li>
+</ul>
+</section>
+<section id="grupo-de-comparación" class="level3" data-number="4.2.4">
+<h3 data-number="4.2.4" class="anchored" data-anchor-id="grupo-de-comparación"><span class="header-section-number">4.2.4</span> Grupo de comparación</h3>
+<p>Empresas no beneficiarias, o empresas aún no tratadas, similares en:</p>
+<ul>
+<li>tamaño;</li>
+<li>sector;</li>
+<li>edad;</li>
+<li>productividad;</li>
+<li>endeudamiento previo;</li>
+<li>comunidad autónoma;</li>
+<li>historial financiero;</li>
+<li>crecimiento previo.</li>
+</ul>
+</section>
+<section id="variables-resultado-1" class="level3" data-number="4.2.5">
+<h3 data-number="4.2.5" class="anchored" data-anchor-id="variables-resultado-1"><span class="header-section-number">4.2.5</span> Variables resultado</h3>
+<p>Probables:</p>
+<ul>
+<li>empleo;</li>
+<li>ventas;</li>
+<li>inversión;</li>
+<li>supervivencia empresarial;</li>
+<li>productividad;</li>
+<li>endeudamiento;</li>
+<li>acceso a crédito;</li>
+<li>activos;</li>
+<li>rentabilidad.</li>
+</ul>
+</section>
+<section id="estrategia-causal-1" class="level3" data-number="4.2.6">
+<h3 data-number="4.2.6" class="anchored" data-anchor-id="estrategia-causal-1"><span class="header-section-number">4.2.6</span> Estrategia causal</h3>
+<p>DiD escalonado:</p>
+<p>[ Y_{it} = _i + _t + <em>k <em>k 1(event_time=k) + X</em>{it}’+ </em>{it} ]</p>
+<p>donde el tratamiento empieza en distintos momentos para distintas empresas.</p>
+</section>
+<section id="qué-hace-delicado-este-caso" class="level3" data-number="4.2.7">
+<h3 data-number="4.2.7" class="anchored" data-anchor-id="qué-hace-delicado-este-caso"><span class="header-section-number">4.2.7</span> Qué hace delicado este caso</h3>
+<p>La selección al tratamiento no es aleatoria:</p>
+<ul>
+<li>las empresas que reciben financiación pueden ser mejores;</li>
+<li>o, al contrario, pueden estar más necesitadas;</li>
+<li>puede haber selección administrativa;</li>
+<li>puede depender de expectativas de crecimiento.</li>
+</ul>
+<p>Por eso es clave controlar por trayectoria pretratamiento.</p>
+</section>
+<section id="qué-comprobar" class="level3" data-number="4.2.8">
+<h3 data-number="4.2.8" class="anchored" data-anchor-id="qué-comprobar"><span class="header-section-number">4.2.8</span> Qué comprobar</h3>
+<ol type="1">
+<li>Balance pretratamiento entre beneficiarias y no beneficiarias.</li>
+<li>Tendencias previas en empleo, ventas o inversión.</li>
+<li>Distribución de tamaño empresarial.</li>
+<li>Composición sectorial.</li>
+<li>Año de entrada al programa.</li>
+<li>Posible anticipación: empresas que preparan inversiones antes de recibir apoyo.</li>
+</ol>
+</section>
+<section id="robustez-1" class="level3" data-number="4.2.9">
+<h3 data-number="4.2.9" class="anchored" data-anchor-id="robustez-1"><span class="header-section-number">4.2.9</span> Robustez</h3>
+<ul>
+<li>Matching previo + DiD.</li>
+<li>Restricción a empresas con información completa antes y después.</li>
+<li>Excluir empresas muy grandes.</li>
+<li>Heterogeneidad por sector.</li>
+<li>Heterogeneidad por tamaño: micro, pequeña, mediana.</li>
+<li>Heterogeneidad por instrumento.</li>
+<li>Placebo en años anteriores.</li>
+<li>Estimación con cohortes separadas.</li>
+</ul>
+</section>
+<section id="claves-para-examen" class="level3" data-number="4.2.10">
+<h3 data-number="4.2.10" class="anchored" data-anchor-id="claves-para-examen"><span class="header-section-number">4.2.10</span> Claves para examen</h3>
+<p>Si te dan un dataset empresa-año:</p>
+<ol type="1">
+<li>Crear <code>treated_ever</code>.</li>
+<li>Crear <code>first_treat_year</code>.</li>
+<li>Crear <code>treated_it</code>.</li>
+<li>Crear <code>event_time</code>.</li>
+<li>Comparar trayectorias pre.</li>
+<li>Estimar DiD/event-study.</li>
+<li>Interpretar resultados en términos de adicionalidad.</li>
+</ol>
+</section>
+<section id="errores-frecuentes-1" class="level3" data-number="4.2.11">
+<h3 data-number="4.2.11" class="anchored" data-anchor-id="errores-frecuentes-1"><span class="header-section-number">4.2.11</span> Errores frecuentes</h3>
+<ul>
+<li>Confundir financiación movilizada con impacto causal.</li>
+<li>No distinguir efecto sobre acceso a crédito y efecto sobre empleo/ventas.</li>
+<li>No controlar por sector y año.</li>
+<li>No considerar que empresas beneficiarias pueden haber sido seleccionadas por potencial de crecimiento.</li>
+<li>Interpretar el efecto como retorno social completo sin análisis coste-beneficio.</li>
+</ul>
+</section>
+<section id="frase-útil" class="level3" data-number="4.2.12">
+<h3 data-number="4.2.12" class="anchored" data-anchor-id="frase-útil"><span class="header-section-number">4.2.12</span> Frase útil</h3>
+<blockquote class="blockquote">
+<p>En instrumentos financieros, la pregunta causal no es si las empresas beneficiarias crecen, sino si crecen más de lo que habrían crecido en ausencia del instrumento, descontando su trayectoria previa y shocks comunes por sector, año o territorio.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="incentivos-a-la-contratación-y-al-trabajo-autónomo" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="incentivos-a-la-contratación-y-al-trabajo-autónomo"><span class="header-section-number">4.3</span> 3. Incentivos a la contratación y al trabajo autónomo</h2>
+<section id="qué-se-evalúa-2" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="qué-se-evalúa-2"><span class="header-section-number">4.3.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó incentivos a la contratación y al trabajo autónomo dentro del Spending Review. La ficha pública señala:</p>
+<ul>
+<li><strong>diferencia en diferencias</strong> para el contrato de apoyo a emprendedores;</li>
+<li><strong>regresión en discontinuidad</strong> para incentivos a la conversión de contratos de formación en indefinidos.</li>
+</ul>
+</section>
+<section id="unidad-de-análisis-2" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="unidad-de-análisis-2"><span class="header-section-number">4.3.2</span> Unidad de análisis</h3>
+<p>Probablemente individuo, contrato o relación laboral.</p>
+<p>Posibles estructuras:</p>
+<ul>
+<li>trabajador-mes;</li>
+<li>contrato-mes;</li>
+<li>empresa-trabajador;</li>
+<li>beneficiario/no beneficiario.</li>
+</ul>
+</section>
+<section id="tratamiento-did" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="tratamiento-did"><span class="header-section-number">4.3.3</span> Tratamiento DiD</h3>
+<p>En el caso de incentivos a la contratación indefinida:</p>
+<ul>
+<li>recibir un contrato bonificado;</li>
+<li>entrar en un colectivo elegible;</li>
+<li>estar expuesto a una reforma normativa;</li>
+<li>joven o mayor de 45 frente a otros colectivos.</li>
+</ul>
+</section>
+<section id="variables-resultado-2" class="level3" data-number="4.3.4">
+<h3 data-number="4.3.4" class="anchored" data-anchor-id="variables-resultado-2"><span class="header-section-number">4.3.4</span> Variables resultado</h3>
+<ul>
+<li>probabilidad de encontrar empleo;</li>
+<li>probabilidad de empleo indefinido;</li>
+<li>duración del empleo;</li>
+<li>mantenimiento tras periodo incentivado;</li>
+<li>conversión a indefinido;</li>
+<li>inserción laboral.</li>
+</ul>
+</section>
+<section id="hallazgos-relevantes-de-la-ficha-pública" class="level3" data-number="4.3.5">
+<h3 data-number="4.3.5" class="anchored" data-anchor-id="hallazgos-relevantes-de-la-ficha-pública"><span class="header-section-number">4.3.5</span> Hallazgos relevantes de la ficha pública</h3>
+<p>La ficha pública indica que los incentivos al contrato de apoyo a emprendedores tuvieron:</p>
+<ul>
+<li>efecto positivo pero limitado;</li>
+<li>efecto pequeño sobre probabilidad de encontrar empleo en jóvenes;</li>
+<li>ausencia de efecto en personas con baja formación o mayores de 45;</li>
+<li>mayor efecto sobre mantenimiento del empleo, pero desaparición tras el periodo incentivado.</li>
+</ul>
+</section>
+<section id="estrategia-did" class="level3" data-number="4.3.6">
+<h3 data-number="4.3.6" class="anchored" data-anchor-id="estrategia-did"><span class="header-section-number">4.3.6</span> Estrategia DiD</h3>
+<p>Una especificación típica:</p>
+<p>[ Y_{it} = <em>i + <em>t + Post_t Eligible_i + X</em>{it}’+ </em>{it} ]</p>
+<p>donde:</p>
+<ul>
+<li><code>Eligible_i</code> identifica colectivos afectados;</li>
+<li><code>Post_t</code> identifica el periodo tras la reforma;</li>
+<li>el coeficiente de interacción mide el impacto diferencial.</li>
+</ul>
+</section>
+<section id="qué-vigilar" class="level3" data-number="4.3.7">
+<h3 data-number="4.3.7" class="anchored" data-anchor-id="qué-vigilar"><span class="header-section-number">4.3.7</span> Qué vigilar</h3>
+<ul>
+<li>Las reformas laborales suelen afectar a muchos colectivos simultáneamente.</li>
+<li>Puede haber anticipación de empresas.</li>
+<li>Puede haber composición distinta por edad, formación o sector.</li>
+<li>El resultado puede ser distinto a corto y medio plazo.</li>
+</ul>
+</section>
+<section id="robustez-2" class="level3" data-number="4.3.8">
+<h3 data-number="4.3.8" class="anchored" data-anchor-id="robustez-2"><span class="header-section-number">4.3.8</span> Robustez</h3>
+<ul>
+<li>Ventanas temporales alternativas.</li>
+<li>Placebo antes de la reforma.</li>
+<li>Heterogeneidad por edad.</li>
+<li>Heterogeneidad por nivel educativo.</li>
+<li>Heterogeneidad por sector.</li>
+<li>Separar inserción inicial y mantenimiento posterior.</li>
+</ul>
+</section>
+<section id="cómo-puede-aparecer-en-examen" class="level3" data-number="4.3.9">
+<h3 data-number="4.3.9" class="anchored" data-anchor-id="cómo-puede-aparecer-en-examen"><span class="header-section-number">4.3.9</span> Cómo puede aparecer en examen</h3>
+<p>Te pueden dar:</p>
+<ul>
+<li>base de contratos;</li>
+<li>fecha de reforma;</li>
+<li>edad del trabajador;</li>
+<li>tipo de contrato;</li>
+<li>fecha de inicio y fin;</li>
+<li>indicador de bonificación.</li>
+</ul>
+<p>Preguntas probables:</p>
+<ul>
+<li>crear elegibilidad;</li>
+<li>medir exposición;</li>
+<li>calcular tasa de conversión;</li>
+<li>estimar DiD;</li>
+<li>analizar si el efecto desaparece tras agotar incentivo.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-2" class="level3" data-number="4.3.10">
+<h3 data-number="4.3.10" class="anchored" data-anchor-id="errores-frecuentes-2"><span class="header-section-number">4.3.10</span> Errores frecuentes</h3>
+<ul>
+<li>Usar como resultado “recibir incentivo” en vez de empleo/conversión.</li>
+<li>No separar colectivos elegibles.</li>
+<li>No controlar por shocks de mercado laboral.</li>
+<li>No analizar duración del efecto.</li>
+<li>Olvidar que mayor contratación bonificada puede sustituir contratación no bonificada.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="políticas-activas-de-empleo-en-extremadura" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="políticas-activas-de-empleo-en-extremadura"><span class="header-section-number">4.4</span> 4. Políticas activas de empleo en Extremadura</h2>
+<section id="qué-se-evalúa-3" class="level3" data-number="4.4.1">
+<h3 data-number="4.4.1" class="anchored" data-anchor-id="qué-se-evalúa-3"><span class="header-section-number">4.4.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó políticas activas de empleo en Extremadura. La ficha pública muestra el uso conjunto de:</p>
+<ul>
+<li>métodos de emparejamiento;</li>
+<li>diferencia en diferencias.</li>
+</ul>
+<p>Programas mencionados:</p>
+<ul>
+<li>ayuda a la contratación indefinida;</li>
+<li>ayuda al autoempleo;</li>
+<li>Empleo Experiencia;</li>
+<li>Escuelas Profesionales;</li>
+<li>oferta preferente de formación para desempleados.</li>
+</ul>
+</section>
+<section id="unidad-de-análisis-3" class="level3" data-number="4.4.2">
+<h3 data-number="4.4.2" class="anchored" data-anchor-id="unidad-de-análisis-3"><span class="header-section-number">4.4.2</span> Unidad de análisis</h3>
+<p>Individuo desempleado o demandante de empleo, seguido en el tiempo.</p>
+<p>Posibles periodos:</p>
+<ul>
+<li>meses desde la participación;</li>
+<li>antes/después del programa;</li>
+<li>seguimiento hasta 36 meses en algunos casos.</li>
+</ul>
+</section>
+<section id="tratamiento-2" class="level3" data-number="4.4.3">
+<h3 data-number="4.4.3" class="anchored" data-anchor-id="tratamiento-2"><span class="header-section-number">4.4.3</span> Tratamiento</h3>
+<p>Participar en un programa específico:</p>
+<ul>
+<li>recibir ayuda a la contratación;</li>
+<li>recibir ayuda de autoempleo;</li>
+<li>participar en programa de experiencia;</li>
+<li>participar en formación.</li>
+</ul>
+</section>
+<section id="grupo-de-comparación-1" class="level3" data-number="4.4.4">
+<h3 data-number="4.4.4" class="anchored" data-anchor-id="grupo-de-comparación-1"><span class="header-section-number">4.4.4</span> Grupo de comparación</h3>
+<p>No participantes similares en:</p>
+<ul>
+<li>edad;</li>
+<li>sexo;</li>
+<li>nivel educativo;</li>
+<li>historial laboral;</li>
+<li>duración del desempleo;</li>
+<li>prestaciones;</li>
+<li>ocupación demandada;</li>
+<li>municipio/comarca;</li>
+<li>empleabilidad ex ante.</li>
+</ul>
+</section>
+<section id="variables-resultado-3" class="level3" data-number="4.4.5">
+<h3 data-number="4.4.5" class="anchored" data-anchor-id="variables-resultado-3"><span class="header-section-number">4.4.5</span> Variables resultado</h3>
+<ul>
+<li>inserción laboral;</li>
+<li>empleo a 15 días;</li>
+<li>empleo a 6, 12, 24 o 36 meses;</li>
+<li>contrato indefinido;</li>
+<li>jornada completa;</li>
+<li>supervivencia del autoempleo;</li>
+<li>calidad del empleo.</li>
+</ul>
+</section>
+<section id="estrategia-causal-2" class="level3" data-number="4.4.6">
+<h3 data-number="4.4.6" class="anchored" data-anchor-id="estrategia-causal-2"><span class="header-section-number">4.4.6</span> Estrategia causal</h3>
+<p>Se combinan dos ideas:</p>
+<ol type="1">
+<li><strong>Matching</strong> para construir un grupo de control comparable.</li>
+<li><strong>DiD</strong> para comparar evolución antes/después entre tratados y controles.</li>
+</ol>
+<p>Esto es muy útil cuando la selección depende de observables y también hay diferencias fijas no observadas.</p>
+<p>Esquema:</p>
+<p>[ ATT = E[(Y_{post}^T - Y_{pre}^T) - (Y_{post}^C - Y_{pre}^C) T=1] ]</p>
+</section>
+<section id="qué-se-encontró-según-la-ficha-pública" class="level3" data-number="4.4.7">
+<h3 data-number="4.4.7" class="anchored" data-anchor-id="qué-se-encontró-según-la-ficha-pública"><span class="header-section-number">4.4.7</span> Qué se encontró según la ficha pública</h3>
+<ul>
+<li>Ayuda a contratación indefinida: efecto positivo en calidad del empleo.</li>
+<li>Mayor efecto si se focaliza en personas de baja empleabilidad.</li>
+<li>Ayuda al autoempleo: impacto positivo sobre inserción, con persistencia hasta 36 meses, aunque decreciente.</li>
+<li>Empleo Experiencia: efectos negativos iniciales que desaparecen aproximadamente tras 24 meses, sin llegar a mejorar la inserción.</li>
+<li>Formación: mejores resultados para colectivos de baja empleabilidad, aunque reducidos.</li>
+</ul>
+</section>
+<section id="clave-sustantiva" class="level3" data-number="4.4.8">
+<h3 data-number="4.4.8" class="anchored" data-anchor-id="clave-sustantiva"><span class="header-section-number">4.4.8</span> Clave sustantiva</h3>
+<p>El concepto de <strong>peso muerto</strong> es central.</p>
+<p>Si una ayuda se concede a personas con alta empleabilidad, parte del empleo observado habría ocurrido de todos modos. Por eso AIReF insiste en focalizar en baja empleabilidad.</p>
+</section>
+<section id="qué-covariables-usar-en-examen" class="level3" data-number="4.4.9">
+<h3 data-number="4.4.9" class="anchored" data-anchor-id="qué-covariables-usar-en-examen"><span class="header-section-number">4.4.9</span> Qué covariables usar en examen</h3>
+<p>Para matching:</p>
+<ul>
+<li>edad;</li>
+<li>sexo;</li>
+<li>nacionalidad;</li>
+<li>nivel educativo;</li>
+<li>antigüedad como demandante;</li>
+<li>historial de empleo;</li>
+<li>historial de prestaciones;</li>
+<li>sector/ocupación;</li>
+<li>municipio o comarca;</li>
+<li>experiencia previa;</li>
+<li>empleabilidad predicha.</li>
+</ul>
+</section>
+<section id="validaciones-de-matching" class="level3" data-number="4.4.10">
+<h3 data-number="4.4.10" class="anchored" data-anchor-id="validaciones-de-matching"><span class="header-section-number">4.4.10</span> Validaciones de matching</h3>
+<ol type="1">
+<li>Balance antes/después.</li>
+<li>Diferencia de medias estandarizada.</li>
+<li>Distribución de propensity scores.</li>
+<li>Common support.</li>
+<li>Tamaño efectivo de la muestra.</li>
+<li>Sensibilidad a número de vecinos.</li>
+<li>Caliper.</li>
+</ol>
+</section>
+<section id="validaciones-did" class="level3" data-number="4.4.11">
+<h3 data-number="4.4.11" class="anchored" data-anchor-id="validaciones-did"><span class="header-section-number">4.4.11</span> Validaciones DiD</h3>
+<ol type="1">
+<li>Tendencias pretratamiento.</li>
+<li>Placebo en periodos anteriores.</li>
+<li>Dinámica mensual postratamiento.</li>
+<li>Clustering por individuo o unidad territorial.</li>
+<li>Heterogeneidad por empleabilidad.</li>
+</ol>
+</section>
+<section id="cómo-responder-en-examen-1" class="level3" data-number="4.4.12">
+<h3 data-number="4.4.12" class="anchored" data-anchor-id="cómo-responder-en-examen-1"><span class="header-section-number">4.4.12</span> Cómo responder en examen</h3>
+<p>Una respuesta excelente diría:</p>
+<blockquote class="blockquote">
+<p>Primero emparejaría participantes con no participantes comparables usando variables observadas previas al tratamiento. Después aplicaría una diferencia en diferencias sobre la muestra emparejada para eliminar diferencias fijas entre grupos y estimar el efecto diferencial de la participación sobre la inserción laboral.</p>
+</blockquote>
+</section>
+<section id="errores-frecuentes-3" class="level3" data-number="4.4.13">
+<h3 data-number="4.4.13" class="anchored" data-anchor-id="errores-frecuentes-3"><span class="header-section-number">4.4.13</span> Errores frecuentes</h3>
+<ul>
+<li>Emparejar usando variables posteriores al tratamiento.</li>
+<li>No comprobar common support.</li>
+<li>Comparar beneficiarios con todos los no beneficiarios sin balance.</li>
+<li>No separar programas distintos.</li>
+<li>Evaluar formación justo al terminar, cuando puede haber lock-in effect.</li>
+<li>No distinguir inserción de calidad del empleo.</li>
+</ul>
+</section>
+<section id="concepto-importante-lock-in-effect" class="level3" data-number="4.4.14">
+<h3 data-number="4.4.14" class="anchored" data-anchor-id="concepto-importante-lock-in-effect"><span class="header-section-number">4.4.14</span> Concepto importante: lock-in effect</h3>
+<p>En programas de formación o empleo público temporal, los participantes pueden tener menor empleo mientras participan porque están ocupados en el programa o formándose. Eso no implica necesariamente fracaso inmediato; hay que mirar la dinámica posterior.</p>
+<hr>
+</section>
+</section>
+<section id="incapacidad-temporal" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="incapacidad-temporal"><span class="header-section-number">4.5</span> 5. Incapacidad temporal</h2>
+<section id="qué-se-evalúa-4" class="level3" data-number="4.5.1">
+<h3 data-number="4.5.1" class="anchored" data-anchor-id="qué-se-evalúa-4"><span class="header-section-number">4.5.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó el gasto en incapacidad temporal dentro del Spending Review 2022-2026, fase II. La ficha pública identifica varios análisis de impacto con <strong>diferencia en diferencias</strong>.</p>
+<p>Casos mencionados:</p>
+<ol type="1">
+<li>Real Decreto 956/2018, que mejora la prestación para personal de la AGE.</li>
+<li>Cambio de contrato temporal a indefinido tras la reforma laboral.</li>
+<li>Incremento del SMI de 2019 y su posible efecto sobre IT.</li>
+</ol>
+</section>
+<section id="unidad-de-análisis-4" class="level3" data-number="4.5.2">
+<h3 data-number="4.5.2" class="anchored" data-anchor-id="unidad-de-análisis-4"><span class="header-section-number">4.5.2</span> Unidad de análisis</h3>
+<p>Trabajador-periodo o episodio-periodo.</p>
+<p>Fuentes mencionadas:</p>
+<ul>
+<li>universo de episodios de IT del INSS;</li>
+<li>Muestra Continua de Vidas Laborales;</li>
+<li>afiliación;</li>
+<li>datos de MUFACE;</li>
+<li>BDCAP;</li>
+<li>convenios colectivos REGCON.</li>
+</ul>
+</section>
+<section id="caso-1-mejora-de-prestación-age" class="level3" data-number="4.5.3">
+<h3 data-number="4.5.3" class="anchored" data-anchor-id="caso-1-mejora-de-prestación-age"><span class="header-section-number">4.5.3</span> Caso 1: mejora de prestación AGE</h3>
+<section id="tratamiento-3" class="level4" data-number="4.5.3.1">
+<h4 data-number="4.5.3.1" class="anchored" data-anchor-id="tratamiento-3"><span class="header-section-number">4.5.3.1</span> Tratamiento</h4>
+<p>Personal afectado por el Real Decreto 956/2018, que eleva el complemento retributivo al 100% desde el primer día.</p>
+</section>
+<section id="variables-resultado-4" class="level4" data-number="4.5.3.2">
+<h4 data-number="4.5.3.2" class="anchored" data-anchor-id="variables-resultado-4"><span class="header-section-number">4.5.3.2</span> Variables resultado</h4>
+<ul>
+<li>probabilidad de iniciar una IT al mes;</li>
+<li>duración media del episodio.</li>
+</ul>
+</section>
+<section id="hallazgos-públicos" class="level4" data-number="4.5.3.3">
+<h4 data-number="4.5.3.3" class="anchored" data-anchor-id="hallazgos-públicos"><span class="header-section-number">4.5.3.3</span> Hallazgos públicos</h4>
+<p>La ficha pública indica:</p>
+<ul>
+<li>incremento en torno al 40% de la probabilidad de iniciar una IT al mes;</li>
+<li>reducción aproximada del 30% en duración promedio, equivalente a 17 días menos respecto a una media previa de 55,7 días.</li>
+</ul>
+</section>
+<section id="interpretación" class="level4" data-number="4.5.3.4">
+<h4 data-number="4.5.3.4" class="anchored" data-anchor-id="interpretación"><span class="header-section-number">4.5.3.4</span> Interpretación</h4>
+<p>La mejora de cobertura puede aumentar la incidencia porque reduce el coste económico de iniciar una baja. Pero también puede reducir duración si cambia el perfil de episodios o elimina incentivos a alargar bajas por pérdidas salariales previas.</p>
+</section>
+</section>
+<section id="caso-2-conversión-temporal-indefinido" class="level3" data-number="4.5.4">
+<h3 data-number="4.5.4" class="anchored" data-anchor-id="caso-2-conversión-temporal-indefinido"><span class="header-section-number">4.5.4</span> Caso 2: conversión temporal-indefinido</h3>
+<section id="tratamiento-4" class="level4" data-number="4.5.4.1">
+<h4 data-number="4.5.4.1" class="anchored" data-anchor-id="tratamiento-4"><span class="header-section-number">4.5.4.1</span> Tratamiento</h4>
+<p>Cambio de contrato temporal a indefinido derivado de la reforma laboral.</p>
+</section>
+<section id="resultado" class="level4" data-number="4.5.4.2">
+<h4 data-number="4.5.4.2" class="anchored" data-anchor-id="resultado"><span class="header-section-number">4.5.4.2</span> Resultado</h4>
+<p>Probabilidad de iniciar una IT.</p>
+</section>
+<section id="hallazgo-público" class="level4" data-number="4.5.4.3">
+<h4 data-number="4.5.4.3" class="anchored" data-anchor-id="hallazgo-público"><span class="header-section-number">4.5.4.3</span> Hallazgo público</h4>
+<p>La ficha pública indica que el paso a contrato indefinido incrementa en torno a un 30% la probabilidad de iniciar una IT.</p>
+</section>
+</section>
+<section id="caso-3-subida-del-smi-2019" class="level3" data-number="4.5.5">
+<h3 data-number="4.5.5" class="anchored" data-anchor-id="caso-3-subida-del-smi-2019"><span class="header-section-number">4.5.5</span> Caso 3: subida del SMI 2019</h3>
+<section id="tratamiento-5" class="level4" data-number="4.5.5.1">
+<h4 data-number="4.5.5.1" class="anchored" data-anchor-id="tratamiento-5"><span class="header-section-number">4.5.5.1</span> Tratamiento</h4>
+<p>Aumento salarial para trabajadores próximos al SMI.</p>
+</section>
+<section id="resultado-1" class="level4" data-number="4.5.5.2">
+<h4 data-number="4.5.5.2" class="anchored" data-anchor-id="resultado-1"><span class="header-section-number">4.5.5.2</span> Resultado</h4>
+<p>Probabilidad de iniciar IT.</p>
+</section>
+<section id="hallazgo-público-1" class="level4" data-number="4.5.5.3">
+<h4 data-number="4.5.5.3" class="anchored" data-anchor-id="hallazgo-público-1"><span class="header-section-number">4.5.5.3</span> Hallazgo público</h4>
+<p>No se detectan efectos estadísticamente significativos en la probabilidad de iniciar un episodio de IT.</p>
+</section>
+</section>
+<section id="especificación-tipo" class="level3" data-number="4.5.6">
+<h3 data-number="4.5.6" class="anchored" data-anchor-id="especificación-tipo"><span class="header-section-number">4.5.6</span> Especificación tipo</h3>
+<p>[ Y_{it} = <em>i + <em>t + (Tratado_i Post_t) + X</em>{it}’+ </em>{it} ]</p>
+<p>Para análisis dinámico:</p>
+<p>[ Y_{it} = _i + _t + <em>k <em>k 1(event_time=k) + X</em>{it}’+ </em>{it} ]</p>
+</section>
+<section id="qué-controles-serían-razonables" class="level3" data-number="4.5.7">
+<h3 data-number="4.5.7" class="anchored" data-anchor-id="qué-controles-serían-razonables"><span class="header-section-number">4.5.7</span> Qué controles serían razonables</h3>
+<ul>
+<li>edad;</li>
+<li>sexo;</li>
+<li>grupo de cotización;</li>
+<li>sector;</li>
+<li>ocupación;</li>
+<li>salario/base reguladora;</li>
+<li>tipo de contrato;</li>
+<li>comunidad autónoma;</li>
+<li>historial de IT;</li>
+<li>antigüedad;</li>
+<li>tamaño de empresa;</li>
+<li>mes y año.</li>
+</ul>
+</section>
+<section id="qué-puede-aparecer-en-examen" class="level3" data-number="4.5.8">
+<h3 data-number="4.5.8" class="anchored" data-anchor-id="qué-puede-aparecer-en-examen"><span class="header-section-number">4.5.8</span> Qué puede aparecer en examen</h3>
+<ul>
+<li>Crear una variable <code>post</code> desde julio de 2018.</li>
+<li>Crear grupo tratado y control.</li>
+<li>Estimar impacto en incidencia mensual.</li>
+<li>Estimar impacto en duración.</li>
+<li>Representar impactos trimestrales.</li>
+<li>Comprobar paralelismo previo.</li>
+<li>Interpretar resultados aparentemente contradictorios: más episodios pero menor duración.</li>
+</ul>
+</section>
+<section id="robustez-3" class="level3" data-number="4.5.9">
+<h3 data-number="4.5.9" class="anchored" data-anchor-id="robustez-3"><span class="header-section-number">4.5.9</span> Robustez</h3>
+<ul>
+<li>Excluir COVID o tratarlo con dummies específicas.</li>
+<li>Separar diagnósticos.</li>
+<li>Separar hombres/mujeres.</li>
+<li>Separar duración e incidencia.</li>
+<li>Placebo con fecha falsa.</li>
+<li>Ventanas simétricas alrededor de la reforma.</li>
+<li>Clustering por trabajador o entidad.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-4" class="level3" data-number="4.5.10">
+<h3 data-number="4.5.10" class="anchored" data-anchor-id="errores-frecuentes-4"><span class="header-section-number">4.5.10</span> Errores frecuentes</h3>
+<ul>
+<li>Mezclar incidencia y duración sin interpretar mecanismos.</li>
+<li>Usar episodios post sin controlar cambios de composición.</li>
+<li>No controlar estacionalidad mensual.</li>
+<li>Ignorar shocks COVID.</li>
+<li>No separar efecto intensivo y extensivo.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="reducción-por-arrendamiento-de-vivienda-en-irpf" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="reducción-por-arrendamiento-de-vivienda-en-irpf"><span class="header-section-number">4.6</span> 6. Reducción por arrendamiento de vivienda en IRPF</h2>
+<section id="qué-se-evalúa-5" class="level3" data-number="4.6.1">
+<h3 data-number="4.6.1" class="anchored" data-anchor-id="qué-se-evalúa-5"><span class="header-section-number">4.6.1</span> Qué se evalúa</h3>
+<p>Dentro del estudio de beneficios fiscales, AIReF analiza la reducción del 60% sobre rendimientos netos por alquiler de vivienda. La ficha pública indica que se usa <strong>diferencia en diferencias</strong> junto con análisis documental, descriptivo, comparativa internacional y microsimuladores.</p>
+</section>
+<section id="política" class="level3" data-number="4.6.2">
+<h3 data-number="4.6.2" class="anchored" data-anchor-id="política"><span class="header-section-number">4.6.2</span> Política</h3>
+<p>La reducción fiscal busca fomentar la oferta de viviendas en alquiler.</p>
+</section>
+<section id="tratamiento-6" class="level3" data-number="4.6.3">
+<h3 data-number="4.6.3" class="anchored" data-anchor-id="tratamiento-6"><span class="header-section-number">4.6.3</span> Tratamiento</h3>
+<p>Exposición al incentivo fiscal asociado al alquiler declarado de vivienda habitual.</p>
+<p>En un diseño de examen podría definirse por:</p>
+<ul>
+<li>contribuyentes arrendadores afectados por un cambio normativo;</li>
+<li>viviendas/zonas con diferente exposición;</li>
+<li>años antes/después de una reforma;</li>
+<li>hogares o declarantes elegibles/no elegibles.</li>
+</ul>
+</section>
+<section id="resultado-2" class="level3" data-number="4.6.4">
+<h3 data-number="4.6.4" class="anchored" data-anchor-id="resultado-2"><span class="header-section-number">4.6.4</span> Resultado</h3>
+<ul>
+<li>oferta de vivienda en alquiler;</li>
+<li>declaración de rendimientos por alquiler;</li>
+<li>número de viviendas alquiladas;</li>
+<li>rentas declaradas;</li>
+<li>probabilidad de declarar alquiler.</li>
+</ul>
+</section>
+<section id="grupo-de-comparación-2" class="level3" data-number="4.6.5">
+<h3 data-number="4.6.5" class="anchored" data-anchor-id="grupo-de-comparación-2"><span class="header-section-number">4.6.5</span> Grupo de comparación</h3>
+<p>Dependerá del diseño exacto:</p>
+<ul>
+<li>propietarios no afectados;</li>
+<li>zonas con distinta exposición;</li>
+<li>contribuyentes con inmuebles similares no alquilados;</li>
+<li>periodos antes/después de reforma;</li>
+<li>alquiler frente a otros usos del inmueble.</li>
+</ul>
+</section>
+<section id="hallazgo-público-2" class="level3" data-number="4.6.6">
+<h3 data-number="4.6.6" class="anchored" data-anchor-id="hallazgo-público-2"><span class="header-section-number">4.6.6</span> Hallazgo público</h3>
+<p>La ficha pública indica que la reducción sí consigue fomentar la oferta de vivienda en alquiler, aunque no permite distinguir entre nueva oferta y rentas que emergen de la economía informal.</p>
+</section>
+<section id="clave-metodológica" class="level3" data-number="4.6.7">
+<h3 data-number="4.6.7" class="anchored" data-anchor-id="clave-metodológica"><span class="header-section-number">4.6.7</span> Clave metodológica</h3>
+<p>Este matiz es muy importante en examen:</p>
+<blockquote class="blockquote">
+<p>Un aumento de alquiler declarado puede ser efecto real de mayor oferta o efecto de formalización/declaración de alquileres previamente informales.</p>
+</blockquote>
+<p>Por tanto, la variable observada no necesariamente mide solo el objetivo real.</p>
+</section>
+<section id="especificación-tipo-1" class="level3" data-number="4.6.8">
+<h3 data-number="4.6.8" class="anchored" data-anchor-id="especificación-tipo-1"><span class="header-section-number">4.6.8</span> Especificación tipo</h3>
+<p>[ Y_{it} = <em>i + <em>t + Tratamiento</em>{it} + X</em>{it}’+ _{it} ]</p>
+<p>Pero aquí la dificultad está en construir bien el contrafactual.</p>
+</section>
+<section id="qué-controles-serían-razonables-1" class="level3" data-number="4.6.9">
+<h3 data-number="4.6.9" class="anchored" data-anchor-id="qué-controles-serían-razonables-1"><span class="header-section-number">4.6.9</span> Qué controles serían razonables</h3>
+<ul>
+<li>renta del contribuyente;</li>
+<li>patrimonio/inmuebles;</li>
+<li>provincia/municipio;</li>
+<li>edad;</li>
+<li>mercado inmobiliario local;</li>
+<li>precio de alquiler;</li>
+<li>desempleo local;</li>
+<li>población;</li>
+<li>presión turística.</li>
+</ul>
+</section>
+<section id="robustez-4" class="level3" data-number="4.6.10">
+<h3 data-number="4.6.10" class="anchored" data-anchor-id="robustez-4"><span class="header-section-number">4.6.10</span> Robustez</h3>
+<ul>
+<li>Excluir grandes áreas metropolitanas.</li>
+<li>Analizar por tramos de renta.</li>
+<li>Separar margen extensivo e intensivo.</li>
+<li>Comparar con inmuebles no elegibles.</li>
+<li>Placebo en años previos.</li>
+<li>Sensibilidad a zonas tensionadas.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-5" class="level3" data-number="4.6.11">
+<h3 data-number="4.6.11" class="anchored" data-anchor-id="errores-frecuentes-5"><span class="header-section-number">4.6.11</span> Errores frecuentes</h3>
+<ul>
+<li>Confundir oferta nueva con declaración fiscal.</li>
+<li>No discutir economía informal.</li>
+<li>No separar efectos distributivos de efectos de eficiencia.</li>
+<li>No analizar quién se beneficia fiscalmente.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="regression-discontinuity-design" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Regression Discontinuity Design</h1>
+<section id="beneficios-fiscales-tributación-conjunta" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="beneficios-fiscales-tributación-conjunta"><span class="header-section-number">5.1</span> 7. Beneficios fiscales: tributación conjunta</h2>
+<section id="qué-se-evalúa-6" class="level3" data-number="5.1.1">
+<h3 data-number="5.1.1" class="anchored" data-anchor-id="qué-se-evalúa-6"><span class="header-section-number">5.1.1</span> Qué se evalúa</h3>
+<p>AIReF evalúa la reducción por tributación conjunta en IRPF, especialmente la modalidad matrimonio. La ficha pública indica uso de <strong>regresiones en discontinuidad</strong>.</p>
+</section>
+<section id="política-1" class="level3" data-number="5.1.2">
+<h3 data-number="5.1.2" class="anchored" data-anchor-id="política-1"><span class="header-section-number">5.1.2</span> Política</h3>
+<p>La tributación conjunta permite reducir la carga fiscal de hogares en los que la renta procede principalmente de un miembro. El estudio concluye que cumple el objetivo de adecuar el impuesto a la composición de rentas del hogar, pero genera desincentivos a la participación laboral del segundo perceptor, que son mujeres en más del 80% de los casos según la ficha pública.</p>
+</section>
+<section id="posible-discontinuidad" class="level3" data-number="5.1.3">
+<h3 data-number="5.1.3" class="anchored" data-anchor-id="posible-discontinuidad"><span class="header-section-number">5.1.3</span> Posible discontinuidad</h3>
+<p>En beneficios fiscales, los RDD suelen aparecer porque la norma establece:</p>
+<ul>
+<li>umbrales de renta;</li>
+<li>cuantías que cambian en un punto;</li>
+<li>elegibilidad condicionada a una variable continua.</li>
+</ul>
+<p>El detalle exacto del running variable no está especificado en la ficha pública resumida.</p>
+</section>
+<section id="unidad-de-análisis-5" class="level3" data-number="5.1.4">
+<h3 data-number="5.1.4" class="anchored" data-anchor-id="unidad-de-análisis-5"><span class="header-section-number">5.1.4</span> Unidad de análisis</h3>
+<p>Declaración o contribuyente/hogar.</p>
+</section>
+<section id="resultado-3" class="level3" data-number="5.1.5">
+<h3 data-number="5.1.5" class="anchored" data-anchor-id="resultado-3"><span class="header-section-number">5.1.5</span> Resultado</h3>
+<ul>
+<li>participación laboral del segundo perceptor;</li>
+<li>renta laboral del segundo perceptor;</li>
+<li>probabilidad de presentar conjunta;</li>
+<li>cuota fiscal;</li>
+<li>oferta laboral.</li>
+</ul>
+</section>
+<section id="running-variable" class="level3" data-number="5.1.6">
+<h3 data-number="5.1.6" class="anchored" data-anchor-id="running-variable"><span class="header-section-number">5.1.6</span> Running variable</h3>
+<p>Posibles variables en un ejercicio:</p>
+<ul>
+<li>renta del hogar;</li>
+<li>renta del segundo perceptor;</li>
+<li>diferencia de renta entre cónyuges;</li>
+<li>base imponible;</li>
+<li>proximidad a un umbral de elegibilidad.</li>
+</ul>
+</section>
+<section id="especificación-tipo-2" class="level3" data-number="5.1.7">
+<h3 data-number="5.1.7" class="anchored" data-anchor-id="especificación-tipo-2"><span class="header-section-number">5.1.7</span> Especificación tipo</h3>
+<p>[ Y_i = + D_i + f(X_i - c) + _i ]</p>
+<p>donde:</p>
+<ul>
+<li>(X_i) es la variable de asignación;</li>
+<li>(c) es el umbral;</li>
+<li>(D_i = 1(X_i c));</li>
+<li>() es el salto local.</li>
+</ul>
+</section>
+<section id="claves-de-identificación" class="level3" data-number="5.1.8">
+<h3 data-number="5.1.8" class="anchored" data-anchor-id="claves-de-identificación"><span class="header-section-number">5.1.8</span> Claves de identificación</h3>
+<ol type="1">
+<li>Individuos justo a ambos lados del umbral son comparables.</li>
+<li>No hay manipulación precisa del running variable.</li>
+<li>Las covariables evolucionan suavemente en el umbral.</li>
+<li>El salto en (Y) se atribuye al cambio de tratamiento.</li>
+</ol>
+</section>
+<section id="qué-comprobar-en-examen" class="level3" data-number="5.1.9">
+<h3 data-number="5.1.9" class="anchored" data-anchor-id="qué-comprobar-en-examen"><span class="header-section-number">5.1.9</span> Qué comprobar en examen</h3>
+<ul>
+<li>Gráfico de bins alrededor del umbral.</li>
+<li>Densidad del running variable.</li>
+<li>Balance de covariables.</li>
+<li>Estimación local lineal.</li>
+<li>Sensibilidad a bandwidth.</li>
+<li>Polinomios de bajo orden.</li>
+<li>Placebo cutoffs.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-6" class="level3" data-number="5.1.10">
+<h3 data-number="5.1.10" class="anchored" data-anchor-id="errores-frecuentes-6"><span class="header-section-number">5.1.10</span> Errores frecuentes</h3>
+<ul>
+<li>Usar toda la muestra sin atender a la naturaleza local.</li>
+<li>Ajustar polinomios de grado muy alto.</li>
+<li>No centrar la variable en el cutoff.</li>
+<li>No discutir manipulación.</li>
+<li>Interpretar el efecto local como efecto para toda la población.</li>
+</ul>
+</section>
+<section id="frase-útil-1" class="level3" data-number="5.1.11">
+<h3 data-number="5.1.11" class="anchored" data-anchor-id="frase-útil-1"><span class="header-section-number">5.1.11</span> Frase útil</h3>
+<blockquote class="blockquote">
+<p>El estimador RDD identifica un efecto local para contribuyentes situados en torno al umbral normativo; no necesariamente informa del efecto medio para todos los hogares.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="beneficios-fiscales-planes-de-pensiones-individuales" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="beneficios-fiscales-planes-de-pensiones-individuales"><span class="header-section-number">5.2</span> 8. Beneficios fiscales: planes de pensiones individuales</h2>
+<section id="qué-se-evalúa-7" class="level3" data-number="5.2.1">
+<h3 data-number="5.2.1" class="anchored" data-anchor-id="qué-se-evalúa-7"><span class="header-section-number">5.2.1</span> Qué se evalúa</h3>
+<p>AIReF evalúa la reducción por aportaciones a sistemas de previsión social, en particular planes de pensiones. La ficha pública menciona:</p>
+<ul>
+<li>microsimuladores;</li>
+<li>análisis distributivo;</li>
+<li>descriptivo;</li>
+<li>regresiones en discontinuidad;</li>
+<li>análisis de elasticidades.</li>
+</ul>
+</section>
+<section id="política-2" class="level3" data-number="5.2.2">
+<h3 data-number="5.2.2" class="anchored" data-anchor-id="política-2"><span class="header-section-number">5.2.2</span> Política</h3>
+<p>La reducción fiscal busca incentivar el ahorro a largo plazo como complemento al sistema público de pensiones.</p>
+</section>
+<section id="hallazgo-público-3" class="level3" data-number="5.2.3">
+<h3 data-number="5.2.3" class="anchored" data-anchor-id="hallazgo-público-3"><span class="header-section-number">5.2.3</span> Hallazgo público</h3>
+<p>La ficha pública indica que el beneficio no consigue su objetivo de incentivar ahorro a largo plazo para un conjunto amplio de ahorradores una vez consideradas:</p>
+<ul>
+<li>fiscalidad de prestaciones en jubilación;</li>
+<li>comisiones;</li>
+<li>tasa de preferencia intertemporal.</li>
+</ul>
+</section>
+<section id="posible-diseño-rdd" class="level3" data-number="5.2.4">
+<h3 data-number="5.2.4" class="anchored" data-anchor-id="posible-diseño-rdd"><span class="header-section-number">5.2.4</span> Posible diseño RDD</h3>
+<p>Puede haber discontinuidades por:</p>
+<ul>
+<li>límites máximos de aportación;</li>
+<li>tramos de tipos marginales;</li>
+<li>edad;</li>
+<li>renta;</li>
+<li>cambios normativos.</li>
+</ul>
+<p>El detalle exacto del running variable no está especificado en la ficha pública.</p>
+</section>
+<section id="variables-resultado-5" class="level3" data-number="5.2.5">
+<h3 data-number="5.2.5" class="anchored" data-anchor-id="variables-resultado-5"><span class="header-section-number">5.2.5</span> Variables resultado</h3>
+<ul>
+<li>aportación a planes;</li>
+<li>ahorro financiero;</li>
+<li>riqueza acumulada;</li>
+<li>probabilidad de aportar;</li>
+<li>cuantía aportada;</li>
+<li>sustitución entre activos.</li>
+</ul>
+</section>
+<section id="qué-es-especialmente-importante" class="level3" data-number="5.2.6">
+<h3 data-number="5.2.6" class="anchored" data-anchor-id="qué-es-especialmente-importante"><span class="header-section-number">5.2.6</span> Qué es especialmente importante</h3>
+<p>Distinguir entre:</p>
+<ol type="1">
+<li><strong>Ahorro nuevo</strong>: el incentivo aumenta ahorro total.</li>
+<li><strong>Recomposición de cartera</strong>: el contribuyente cambia de producto financiero para aprovechar deducción.</li>
+<li><strong>Diferimiento fiscal</strong>: ahorro aparente por desplazar tributación al futuro.</li>
+<li><strong>Regresividad</strong>: mayor aprovechamiento por rentas altas.</li>
+</ol>
+</section>
+<section id="cómo-puede-aparecer-en-examen-1" class="level3" data-number="5.2.7">
+<h3 data-number="5.2.7" class="anchored" data-anchor-id="cómo-puede-aparecer-en-examen-1"><span class="header-section-number">5.2.7</span> Cómo puede aparecer en examen</h3>
+<ul>
+<li>Dataset de contribuyentes.</li>
+<li>Variable de renta.</li>
+<li>Variable de aportación.</li>
+<li>Umbral de tipo marginal o límite de deducción.</li>
+<li>Pregunta: ¿aumenta el ahorro o solo cambia composición?</li>
+</ul>
+</section>
+<section id="robustez-5" class="level3" data-number="5.2.8">
+<h3 data-number="5.2.8" class="anchored" data-anchor-id="robustez-5"><span class="header-section-number">5.2.8</span> Robustez</h3>
+<ul>
+<li>Analizar por deciles de renta.</li>
+<li>Separar margen extensivo e intensivo.</li>
+<li>Simular fiscalidad presente/futura.</li>
+<li>Considerar comisiones.</li>
+<li>Comparar resultados con y sin microsimulación.</li>
+<li>RDD en torno a umbrales normativos.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-7" class="level3" data-number="5.2.9">
+<h3 data-number="5.2.9" class="anchored" data-anchor-id="errores-frecuentes-7"><span class="header-section-number">5.2.9</span> Errores frecuentes</h3>
+<ul>
+<li>Llamar impacto al ahorro fiscal, no al ahorro adicional.</li>
+<li>Ignorar la fiscalidad futura.</li>
+<li>No analizar distribución por renta.</li>
+<li>No separar aportaciones nuevas y reasignación de ahorro existente.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="incentivos-a-conversión-de-contratos-de-formación-en-indefinidos" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="incentivos-a-conversión-de-contratos-de-formación-en-indefinidos"><span class="header-section-number">5.3</span> 9. Incentivos a conversión de contratos de formación en indefinidos</h2>
+<section id="qué-se-evalúa-8" class="level3" data-number="5.3.1">
+<h3 data-number="5.3.1" class="anchored" data-anchor-id="qué-se-evalúa-8"><span class="header-section-number">5.3.1</span> Qué se evalúa</h3>
+<p>En la evaluación de incentivos a contratación y trabajo autónomo, AIReF utilizó <strong>regresión en discontinuidad</strong> para evaluar el impacto del incremento de incentivos introducido en febrero de 2012 sobre la tasa de conversión de contratos de formación en indefinidos.</p>
+</section>
+<section id="política-3" class="level3" data-number="5.3.2">
+<h3 data-number="5.3.2" class="anchored" data-anchor-id="política-3"><span class="header-section-number">5.3.2</span> Política</h3>
+<p>Reducciones anuales por convertir contratos de formación y aprendizaje en indefinidos.</p>
+</section>
+<section id="tratamiento-7" class="level3" data-number="5.3.3">
+<h3 data-number="5.3.3" class="anchored" data-anchor-id="tratamiento-7"><span class="header-section-number">5.3.3</span> Tratamiento</h3>
+<p>Estar expuesto al incremento del incentivo tras la reforma de febrero de 2012.</p>
+</section>
+<section id="resultado-4" class="level3" data-number="5.3.4">
+<h3 data-number="5.3.4" class="anchored" data-anchor-id="resultado-4"><span class="header-section-number">5.3.4</span> Resultado</h3>
+<p>Tasa de conversión de contratos de formación en indefinidos.</p>
+</section>
+<section id="hallazgo-público-4" class="level3" data-number="5.3.5">
+<h3 data-number="5.3.5" class="anchored" data-anchor-id="hallazgo-público-4"><span class="header-section-number">5.3.5</span> Hallazgo público</h3>
+<p>La ficha pública indica que el incremento generó un aumento medio de la tasa de conversión de 0,5 puntos porcentuales, equivalente a un 6,1% respecto a la tasa anterior a la reforma. El efecto se considera pequeño y limitado por el reducido uso del contrato de formación.</p>
+</section>
+<section id="running-variable-1" class="level3" data-number="5.3.6">
+<h3 data-number="5.3.6" class="anchored" data-anchor-id="running-variable-1"><span class="header-section-number">5.3.6</span> Running variable</h3>
+<p>Tiempo alrededor de la reforma:</p>
+<p>[ X_t = fecha - febrero&nbsp;2012 ]</p>
+<p>Esto se parece a un RDD temporal o interrupted time series local.</p>
+</section>
+<section id="especificación-tipo-3" class="level3" data-number="5.3.7">
+<h3 data-number="5.3.7" class="anchored" data-anchor-id="especificación-tipo-3"><span class="header-section-number">5.3.7</span> Especificación tipo</h3>
+<p>[ Y_t = + Post_t + f(t-c) + _t ]</p>
+<p>donde:</p>
+<ul>
+<li>(c) es la fecha de entrada en vigor;</li>
+<li><code>Post</code> indica después de la reforma;</li>
+<li>(Y_t) es tasa de conversión.</li>
+</ul>
+</section>
+<section id="riesgo-metodológico" class="level3" data-number="5.3.8">
+<h3 data-number="5.3.8" class="anchored" data-anchor-id="riesgo-metodológico"><span class="header-section-number">5.3.8</span> Riesgo metodológico</h3>
+<p>Los RDD temporales son más débiles que los RDD con running variable individual porque pueden coincidir otros shocks en la misma fecha.</p>
+<p>Por eso conviene controlar o discutir:</p>
+<ul>
+<li>estacionalidad;</li>
+<li>ciclo económico;</li>
+<li>otras reformas laborales;</li>
+<li>cambios de composición;</li>
+<li>tendencias previas.</li>
+</ul>
+</section>
+<section id="robustez-6" class="level3" data-number="5.3.9">
+<h3 data-number="5.3.9" class="anchored" data-anchor-id="robustez-6"><span class="header-section-number">5.3.9</span> Robustez</h3>
+<ul>
+<li>Ventanas temporales estrechas y amplias.</li>
+<li>Placebo en fechas falsas.</li>
+<li>Control por estacionalidad mensual.</li>
+<li>Comparación con contratos no afectados.</li>
+<li>Gráficos de bins antes/después.</li>
+<li>Excluir meses de transición.</li>
+</ul>
+</section>
+<section id="claves-para-examen-1" class="level3" data-number="5.3.10">
+<h3 data-number="5.3.10" class="anchored" data-anchor-id="claves-para-examen-1"><span class="header-section-number">5.3.10</span> Claves para examen</h3>
+<p>Si aparece una reforma con fecha concreta:</p>
+<ol type="1">
+<li>Crear variable tiempo centrada en la reforma.</li>
+<li>Crear <code>post</code>.</li>
+<li>Graficar resultado alrededor del cutoff.</li>
+<li>Estimar local lineal a ambos lados.</li>
+<li>Probar bandwidths.</li>
+<li>Discutir shocks simultáneos.</li>
+</ol>
+</section>
+<section id="errores-frecuentes-8" class="level3" data-number="5.3.11">
+<h3 data-number="5.3.11" class="anchored" data-anchor-id="errores-frecuentes-8"><span class="header-section-number">5.3.11</span> Errores frecuentes</h3>
+<ul>
+<li>No controlar estacionalidad.</li>
+<li>Usar una ventana demasiado larga.</li>
+<li>No separar efecto de reforma y tendencia macro.</li>
+<li>Interpretar efecto pequeño como irrelevante sin tener en cuenta coste o población objetivo.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="infraestructuras-de-transporte" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="infraestructuras-de-transporte"><span class="header-section-number">5.4</span> 10. Infraestructuras de transporte</h2>
+<section id="qué-se-evalúa-9" class="level3" data-number="5.4.1">
+<h3 data-number="5.4.1" class="anchored" data-anchor-id="qué-se-evalúa-9"><span class="header-section-number">5.4.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó infraestructuras de transporte en Spending Review. La ficha pública indica el uso de:</p>
+<ul>
+<li>análisis descriptivo;</li>
+<li>análisis coste-beneficio;</li>
+<li>análisis input-output;</li>
+<li>regresión en discontinuidad;</li>
+<li>diferencia en diferencias;</li>
+<li>regresión por quintiles;</li>
+<li>modelos paramétricos lineales.</li>
+</ul>
+</section>
+<section id="ámbitos-posibles" class="level3" data-number="5.4.2">
+<h3 data-number="5.4.2" class="anchored" data-anchor-id="ámbitos-posibles"><span class="header-section-number">5.4.2</span> Ámbitos posibles</h3>
+<p>La ficha menciona, entre otros, subvenciones al transporte, transporte aéreo insular, transporte urbano/metropolitano y financiación de infraestructuras.</p>
+</section>
+<section id="unidad-de-análisis-6" class="level3" data-number="5.4.3">
+<h3 data-number="5.4.3" class="anchored" data-anchor-id="unidad-de-análisis-6"><span class="header-section-number">5.4.3</span> Unidad de análisis</h3>
+<p>Depende del subanálisis:</p>
+<ul>
+<li>ruta-año;</li>
+<li>aeropuerto-ruta-mes;</li>
+<li>área metropolitana-año;</li>
+<li>territorio-año;</li>
+<li>proyecto-infraestructura;</li>
+<li>usuario/viaje.</li>
+</ul>
+</section>
+<section id="tratamiento-8" class="level3" data-number="5.4.4">
+<h3 data-number="5.4.4" class="anchored" data-anchor-id="tratamiento-8"><span class="header-section-number">5.4.4</span> Tratamiento</h3>
+<p>Puede ser:</p>
+<ul>
+<li>incremento de subvención;</li>
+<li>cambio normativo;</li>
+<li>condición de residente;</li>
+<li>acceso a infraestructura;</li>
+<li>pertenencia a territorio afectado;</li>
+<li>umbral de renta para subvención.</li>
+</ul>
+</section>
+<section id="variables-resultado-6" class="level3" data-number="5.4.5">
+<h3 data-number="5.4.5" class="anchored" data-anchor-id="variables-resultado-6"><span class="header-section-number">5.4.5</span> Variables resultado</h3>
+<ul>
+<li>precio del billete;</li>
+<li>demanda de viajes;</li>
+<li>frecuencia;</li>
+<li>competencia;</li>
+<li>coste público;</li>
+<li>distribución por renta;</li>
+<li>accesibilidad;</li>
+<li>uso de transporte.</li>
+</ul>
+</section>
+<section id="did-en-transporte" class="level3" data-number="5.4.6">
+<h3 data-number="5.4.6" class="anchored" data-anchor-id="did-en-transporte"><span class="header-section-number">5.4.6</span> DiD en transporte</h3>
+<p>Ejemplo de diseño:</p>
+<p>[ Precio_{rt} = _r + <em>t + Tratada_r Post_t + </em>{rt} ]</p>
+<p>donde:</p>
+<ul>
+<li>(r) es ruta;</li>
+<li>tratamiento es ruta afectada por cambio de subvención;</li>
+<li>controles son rutas no afectadas.</li>
+</ul>
+</section>
+<section id="rdd-en-transporte" class="level3" data-number="5.4.7">
+<h3 data-number="5.4.7" class="anchored" data-anchor-id="rdd-en-transporte"><span class="header-section-number">5.4.7</span> RDD en transporte</h3>
+<p>Puede aparecer por:</p>
+<ul>
+<li>umbrales de renta;</li>
+<li>elegibilidad territorial;</li>
+<li>límites administrativos;</li>
+<li>distancia;</li>
+<li>población;</li>
+<li>criterios de subvención.</li>
+</ul>
+</section>
+<section id="qué-hace-difícil-estos-análisis" class="level3" data-number="5.4.8">
+<h3 data-number="5.4.8" class="anchored" data-anchor-id="qué-hace-difícil-estos-análisis"><span class="header-section-number">5.4.8</span> Qué hace difícil estos análisis</h3>
+<ul>
+<li>mercados con competencia imperfecta;</li>
+<li>precios dinámicos;</li>
+<li>estacionalidad;</li>
+<li>rutas turísticas;</li>
+<li>shock COVID;</li>
+<li>endogeneidad de oferta;</li>
+<li>cambios simultáneos en demanda.</li>
+</ul>
+</section>
+<section id="robustez-7" class="level3" data-number="5.4.9">
+<h3 data-number="5.4.9" class="anchored" data-anchor-id="robustez-7"><span class="header-section-number">5.4.9</span> Robustez</h3>
+<ul>
+<li>Controles por ruta y mes.</li>
+<li>Efectos fijos ruta y año/mes.</li>
+<li>Separar temporada alta/baja.</li>
+<li>Excluir rutas con pocas observaciones.</li>
+<li>Placebo en rutas no afectadas.</li>
+<li>Heterogeneidad por competencia.</li>
+<li>Comparar precios medios, mínimos y percentiles.</li>
+</ul>
+</section>
+<section id="clave-de-examen" class="level3" data-number="5.4.10">
+<h3 data-number="5.4.10" class="anchored" data-anchor-id="clave-de-examen"><span class="header-section-number">5.4.10</span> Clave de examen</h3>
+<p>En transporte, no basta con mirar si baja el precio para usuarios. Hay que mirar:</p>
+<ul>
+<li>cuánto se traslada la subvención al precio;</li>
+<li>cuánto capturan las empresas;</li>
+<li>si aumenta demanda;</li>
+<li>impacto distributivo;</li>
+<li>coste por usuario adicional.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-9" class="level3" data-number="5.4.11">
+<h3 data-number="5.4.11" class="anchored" data-anchor-id="errores-frecuentes-9"><span class="header-section-number">5.4.11</span> Errores frecuentes</h3>
+<ul>
+<li>No controlar estacionalidad.</li>
+<li>Comparar islas/península sin grupo de control.</li>
+<li>Ignorar precios dinámicos.</li>
+<li>No separar cantidad y precio.</li>
+<li>Confundir análisis coste-beneficio con estimación causal.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="matching-propensity-score-matching" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Matching / Propensity Score Matching</h1>
+<section id="becas-de-educación-universitaria" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="becas-de-educación-universitaria"><span class="header-section-number">6.1</span> 11. Becas de educación universitaria</h2>
+<section id="qué-se-evalúa-10" class="level3" data-number="6.1.1">
+<h3 data-number="6.1.1" class="anchored" data-anchor-id="qué-se-evalúa-10"><span class="header-section-number">6.1.1</span> Qué se evalúa</h3>
+<p>AIReF evalúa el sistema estatal de becas universitarias del Ministerio de Educación. La ficha pública indica uso de técnicas de evaluación de impacto y, en los hallazgos, <strong>métodos de emparejamiento</strong>.</p>
+</section>
+<section id="política-4" class="level3" data-number="6.1.2">
+<h3 data-number="6.1.2" class="anchored" data-anchor-id="política-4"><span class="header-section-number">6.1.2</span> Política</h3>
+<p>Becas universitarias para garantizar igualdad de oportunidades.</p>
+</section>
+<section id="periodo" class="level3" data-number="6.1.3">
+<h3 data-number="6.1.3" class="anchored" data-anchor-id="periodo"><span class="header-section-number">6.1.3</span> Periodo</h3>
+<p>Cursos 2010 a 2018 según la ficha pública.</p>
+</section>
+<section id="datos" class="level3" data-number="6.1.4">
+<h3 data-number="6.1.4" class="anchored" data-anchor-id="datos"><span class="header-section-number">6.1.4</span> Datos</h3>
+<p>La ficha pública menciona:</p>
+<ul>
+<li>Sistema Integrado de Información Universitaria;</li>
+<li>encuesta AIReF a estudiantes universitarios.</li>
+</ul>
+</section>
+<section id="tratamiento-9" class="level3" data-number="6.1.5">
+<h3 data-number="6.1.5" class="anchored" data-anchor-id="tratamiento-9"><span class="header-section-number">6.1.5</span> Tratamiento</h3>
+<p>Recibir beca.</p>
+<p>Es importante distinguir:</p>
+<ol type="1">
+<li>Recibir beca en primer año.</li>
+<li>Recibir beca a partir de segundo año.</li>
+<li>Tipo o cuantía de beca.</li>
+<li>Componente de matrícula vs cuantía variable/fija.</li>
+</ol>
+</section>
+<section id="variables-resultado-7" class="level3" data-number="6.1.6">
+<h3 data-number="6.1.6" class="anchored" data-anchor-id="variables-resultado-7"><span class="header-section-number">6.1.6</span> Variables resultado</h3>
+<ul>
+<li>continuar en segundo año;</li>
+<li>rendimiento académico;</li>
+<li>créditos superados;</li>
+<li>permanencia;</li>
+<li>graduación;</li>
+<li>abandono;</li>
+<li>tiempo hasta título.</li>
+</ul>
+</section>
+<section id="hallazgo-público-5" class="level3" data-number="6.1.7">
+<h3 data-number="6.1.7" class="anchored" data-anchor-id="hallazgo-público-5"><span class="header-section-number">6.1.7</span> Hallazgo público</h3>
+<p>La ficha pública resume:</p>
+<ul>
+<li>no puede afirmarse que recibir beca el primer año favorezca continuar en segundo año;</li>
+<li>el impacto sobre rendimiento en primer año es muy limitado;</li>
+<li>recibir alguna beca a partir de segundo año tiene impacto positivo;</li>
+<li>favorece la consecución del título;</li>
+<li>mejora modestamente el rendimiento académico.</li>
+</ul>
+</section>
+<section id="estrategia-causal-3" class="level3" data-number="6.1.8">
+<h3 data-number="6.1.8" class="anchored" data-anchor-id="estrategia-causal-3"><span class="header-section-number">6.1.8</span> Estrategia causal</h3>
+<p>Matching entre becarios y no becarios con características similares.</p>
+<p>El estimando natural es el ATT:</p>
+<p>[ ATT = E[Y(1) - Y(0) T=1] ]</p>
+</section>
+<section id="covariables-razonables" class="level3" data-number="6.1.9">
+<h3 data-number="6.1.9" class="anchored" data-anchor-id="covariables-razonables"><span class="header-section-number">6.1.9</span> Covariables razonables</h3>
+<p>Antes del tratamiento:</p>
+<ul>
+<li>nota de acceso;</li>
+<li>rama de conocimiento;</li>
+<li>universidad;</li>
+<li>titulación;</li>
+<li>sexo;</li>
+<li>edad;</li>
+<li>nacionalidad;</li>
+<li>renta familiar;</li>
+<li>nivel educativo de padres, si disponible;</li>
+<li>situación laboral familiar;</li>
+<li>modalidad de acceso;</li>
+<li>residencia;</li>
+<li>rendimiento previo;</li>
+<li>curso académico.</li>
+</ul>
+</section>
+<section id="variables-que-no-debes-usar-para-matching" class="level3" data-number="6.1.10">
+<h3 data-number="6.1.10" class="anchored" data-anchor-id="variables-que-no-debes-usar-para-matching"><span class="header-section-number">6.1.10</span> Variables que NO debes usar para matching</h3>
+<p>No usar variables posteriores al tratamiento, por ejemplo:</p>
+<ul>
+<li>créditos superados después de recibir beca;</li>
+<li>nota del curso evaluado;</li>
+<li>abandono posterior;</li>
+<li>cambios de matrícula posteriores.</li>
+</ul>
+</section>
+<section id="cómo-hacer-el-matching" class="level3" data-number="6.1.11">
+<h3 data-number="6.1.11" class="anchored" data-anchor-id="cómo-hacer-el-matching"><span class="header-section-number">6.1.11</span> Cómo hacer el matching</h3>
+<p>Opciones razonables:</p>
+<ol type="1">
+<li>Propensity Score Matching con logit/probit.</li>
+<li>Nearest neighbor.</li>
+<li>Caliper.</li>
+<li>Matching exacto por universidad/rama/cohorte y PSM dentro de estratos.</li>
+<li>Inverse Probability Weighting.</li>
+<li>Entropy balancing.</li>
+</ol>
+<p>En examen, PSM + balance suele ser suficiente.</p>
+</section>
+<section id="comprobaciones-clave" class="level3" data-number="6.1.12">
+<h3 data-number="6.1.12" class="anchored" data-anchor-id="comprobaciones-clave"><span class="header-section-number">6.1.12</span> Comprobaciones clave</h3>
+<ol type="1">
+<li>Common support.</li>
+<li>Balance de covariables.</li>
+<li>Distribución del propensity score.</li>
+<li>Diferencias estandarizadas antes/después.</li>
+<li>Número de tratados perdidos por falta de soporte.</li>
+<li>Sensibilidad a caliper.</li>
+<li>Estimación separada por curso.</li>
+</ol>
+</section>
+<section id="por-qué-separar-primer-año-y-años-posteriores" class="level3" data-number="6.1.13">
+<h3 data-number="6.1.13" class="anchored" data-anchor-id="por-qué-separar-primer-año-y-años-posteriores"><span class="header-section-number">6.1.13</span> Por qué separar primer año y años posteriores</h3>
+<p>El primer año es especial:</p>
+<ul>
+<li>la beca puede estar muy ligada a renta y requisitos iniciales;</li>
+<li>el rendimiento de entrada importa mucho;</li>
+<li>puede haber adaptación universitaria;</li>
+<li>puede haber selección fuerte en quién continúa.</li>
+</ul>
+<p>A partir de segundo año ya se observa historial universitario, lo que mejora el emparejamiento.</p>
+</section>
+<section id="cómo-interpretarlo-en-examen" class="level3" data-number="6.1.14">
+<h3 data-number="6.1.14" class="anchored" data-anchor-id="cómo-interpretarlo-en-examen"><span class="header-section-number">6.1.14</span> Cómo interpretarlo en examen</h3>
+<p>Frase útil:</p>
+<blockquote class="blockquote">
+<p>El matching intenta aproximar el contrafactual de los becarios con estudiantes no becarios comparables en características observables previas. La interpretación causal exige asumir independencia condicional: dado el conjunto de covariables, la recepción de beca es as-if random.</p>
+</blockquote>
+</section>
+<section id="limitaciones" class="level3" data-number="6.1.15">
+<h3 data-number="6.1.15" class="anchored" data-anchor-id="limitaciones"><span class="header-section-number">6.1.15</span> Limitaciones</h3>
+<ul>
+<li>Puede haber motivación no observada.</li>
+<li>La renta familiar puede estar medida con error.</li>
+<li>Los no becarios pueden no ser comparables si no solicitan beca.</li>
+<li>Efectos distintos por tipo de beca.</li>
+<li>Sesgo por supervivencia si se analiza solo quienes siguen matriculados.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-10" class="level3" data-number="6.1.16">
+<h3 data-number="6.1.16" class="anchored" data-anchor-id="errores-frecuentes-10"><span class="header-section-number">6.1.16</span> Errores frecuentes</h3>
+<ul>
+<li>No separar elegibles, solicitantes y beneficiarios.</li>
+<li>Usar todos los no becarios como control.</li>
+<li>No hacer balance.</li>
+<li>No distinguir matrícula gratuita de transferencia monetaria.</li>
+<li>No analizar abandono y rendimiento como resultados distintos.</li>
+<li>No discutir variables no observadas.</li>
+</ul>
+</section>
+<section id="si-cae-en-examen-1" class="level3" data-number="6.1.17">
+<h3 data-number="6.1.17" class="anchored" data-anchor-id="si-cae-en-examen-1"><span class="header-section-number">6.1.17</span> Si cae en examen</h3>
+<p>Pasos mínimos:</p>
+<ol type="1">
+<li>Limpiar base estudiante-curso.</li>
+<li>Definir tratamiento <code>beca</code>.</li>
+<li>Definir resultado <code>continua</code>, <code>creditos_superados</code> o <code>titula</code>.</li>
+<li>Estimar propensity score con covariables pre.</li>
+<li>Comprobar balance.</li>
+<li>Estimar ATT.</li>
+<li>Heterogeneidad por renta, nota de acceso o rama.</li>
+<li>Discutir limitaciones.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="promoción-del-talento-y-empleabilidad-en-idi" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="promoción-del-talento-y-empleabilidad-en-idi"><span class="header-section-number">6.2</span> 12. Promoción del talento y empleabilidad en I+D+i</h2>
+<section id="qué-se-evalúa-11" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="qué-se-evalúa-11"><span class="header-section-number">6.2.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó el Programa Estatal de Promoción del Talento y su Empleabilidad en I+D+i. La ficha pública indica uso de <strong>métodos de emparejamiento</strong> y análisis descriptivo.</p>
+</section>
+<section id="política-5" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="política-5"><span class="header-section-number">6.2.2</span> Política</h3>
+<p>Ayudas de investigación dirigidas a promover carrera investigadora y empleabilidad.</p>
+</section>
+<section id="datos-1" class="level3" data-number="6.2.3">
+<h3 data-number="6.2.3" class="anchored" data-anchor-id="datos-1"><span class="header-section-number">6.2.3</span> Datos</h3>
+<p>La ficha pública señala limitaciones relevantes:</p>
+<ul>
+<li>información de solicitantes de convocatorias 2008-2012;</li>
+<li>periodo marcado por la crisis financiera;</li>
+<li>falta de integración con solicitantes de otras ayudas;</li>
+<li>falta de información para seguir trayectoria laboral fuera de España.</li>
+</ul>
+<p>También se menciona una imputación/supuesto:</p>
+<blockquote class="blockquote">
+<p>individuos sin contrato vigente y con inactividad en Seguridad Social superior a tres años se consideran realizando actividades en el extranjero.</p>
+</blockquote>
+</section>
+<section id="unidad-de-análisis-7" class="level3" data-number="6.2.4">
+<h3 data-number="6.2.4" class="anchored" data-anchor-id="unidad-de-análisis-7"><span class="header-section-number">6.2.4</span> Unidad de análisis</h3>
+<p>Solicitante o investigador.</p>
+</section>
+<section id="tratamiento-10" class="level3" data-number="6.2.5">
+<h3 data-number="6.2.5" class="anchored" data-anchor-id="tratamiento-10"><span class="header-section-number">6.2.5</span> Tratamiento</h3>
+<p>Recibir una ayuda.</p>
+<p>Una estrategia muy plausible es comparar:</p>
+<ul>
+<li>solicitantes beneficiarios;</li>
+<li>solicitantes no beneficiarios;</li>
+<li>posiblemente cerca de umbrales de puntuación si existiesen, aunque la ficha menciona matching, no RDD.</li>
+</ul>
+</section>
+<section id="variables-resultado-8" class="level3" data-number="6.2.6">
+<h3 data-number="6.2.6" class="anchored" data-anchor-id="variables-resultado-8"><span class="header-section-number">6.2.6</span> Variables resultado</h3>
+<ul>
+<li>empleo en investigación;</li>
+<li>afiliación a Seguridad Social;</li>
+<li>tipo de contrato;</li>
+<li>permanencia en sistema científico;</li>
+<li>salida al extranjero;</li>
+<li>carrera académica;</li>
+<li>estabilidad laboral;</li>
+<li>salario o base de cotización.</li>
+</ul>
+</section>
+<section id="grupo-de-comparación-3" class="level3" data-number="6.2.7">
+<h3 data-number="6.2.7" class="anchored" data-anchor-id="grupo-de-comparación-3"><span class="header-section-number">6.2.7</span> Grupo de comparación</h3>
+<p>No beneficiarios similares entre solicitantes.</p>
+<p>Esto es mejor que comparar beneficiarios con cualquier joven investigador, porque todos los solicitantes revelan interés y elegibilidad.</p>
+</section>
+<section id="covariables-razonables-1" class="level3" data-number="6.2.8">
+<h3 data-number="6.2.8" class="anchored" data-anchor-id="covariables-razonables-1"><span class="header-section-number">6.2.8</span> Covariables razonables</h3>
+<ul>
+<li>puntuación de evaluación;</li>
+<li>área científica;</li>
+<li>universidad/centro;</li>
+<li>año convocatoria;</li>
+<li>edad;</li>
+<li>sexo;</li>
+<li>expediente;</li>
+<li>experiencia previa;</li>
+<li>publicaciones, si disponible;</li>
+<li>tipo de ayuda solicitada;</li>
+<li>región;</li>
+<li>situación laboral previa.</li>
+</ul>
+</section>
+<section id="matching-recomendado" class="level3" data-number="6.2.9">
+<h3 data-number="6.2.9" class="anchored" data-anchor-id="matching-recomendado"><span class="header-section-number">6.2.9</span> Matching recomendado</h3>
+<ul>
+<li>Matching exacto por convocatoria y área.</li>
+<li>PSM dentro de convocatoria.</li>
+<li>Nearest neighbor con caliper.</li>
+<li>Control por puntuación si está disponible.</li>
+<li>Balance por variables académicas y laborales previas.</li>
+</ul>
+</section>
+<section id="limitaciones-centrales" class="level3" data-number="6.2.10">
+<h3 data-number="6.2.10" class="anchored" data-anchor-id="limitaciones-centrales"><span class="header-section-number">6.2.10</span> Limitaciones centrales</h3>
+<p>Este es un caso perfecto para que en examen te pidan discutir problemas de datos:</p>
+<ol type="1">
+<li>Periodo 2008-2012 no extrapolable.</li>
+<li>Crisis financiera como shock agregado.</li>
+<li>Trayectorias fuera de España mal observadas.</li>
+<li>Falta de información de otras ayudas.</li>
+<li>Posible selección por calidad investigadora no observada.</li>
+</ol>
+</section>
+<section id="cómo-responder-bien" class="level3" data-number="6.2.11">
+<h3 data-number="6.2.11" class="anchored" data-anchor-id="cómo-responder-bien"><span class="header-section-number">6.2.11</span> Cómo responder bien</h3>
+<p>No prometas más causalidad de la que el diseño permite.</p>
+<p>Frase útil:</p>
+<blockquote class="blockquote">
+<p>El matching mejora la comparabilidad entre beneficiarios y no beneficiarios observacionalmente similares, pero no elimina sesgos por características no observadas como motivación, redes académicas, calidad investigadora no medida o oportunidades internacionales.</p>
+</blockquote>
+</section>
+<section id="robustez-8" class="level3" data-number="6.2.12">
+<h3 data-number="6.2.12" class="anchored" data-anchor-id="robustez-8"><span class="header-section-number">6.2.12</span> Robustez</h3>
+<ul>
+<li>Restricción a solicitantes no beneficiarios como control.</li>
+<li>Matching dentro de convocatoria.</li>
+<li>Sensibilidad a no observables.</li>
+<li>Resultados alternativos imputando de forma distinta la salida al extranjero.</li>
+<li>Separar áreas científicas.</li>
+<li>Separar hombres y mujeres.</li>
+<li>Comparar corto y medio plazo.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-11" class="level3" data-number="6.2.13">
+<h3 data-number="6.2.13" class="anchored" data-anchor-id="errores-frecuentes-11"><span class="header-section-number">6.2.13</span> Errores frecuentes</h3>
+<ul>
+<li>Tratar inactividad en Seguridad Social como desempleo sin matices.</li>
+<li>No separar emigración de no empleo.</li>
+<li>Usar controles no solicitantes.</li>
+<li>Ignorar crisis 2008.</li>
+<li>Mezclar convocatorias heterogéneas.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="políticas-activas-de-empleo-estatales" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="políticas-activas-de-empleo-estatales"><span class="header-section-number">6.3</span> 13. Políticas activas de empleo estatales</h2>
+<section id="qué-se-evalúa-12" class="level3" data-number="6.3.1">
+<h3 data-number="6.3.1" class="anchored" data-anchor-id="qué-se-evalúa-12"><span class="header-section-number">6.3.1</span> Qué se evalúa</h3>
+<p>En el Spending Review de Políticas Activas de Empleo, AIReF identificó criterios heterogéneos de gestión y falta de orientación clara a colectivos específicos. La ficha pública menciona uso de <strong>métodos de emparejamiento</strong>.</p>
+</section>
+<section id="unidad-de-análisis-8" class="level3" data-number="6.3.2">
+<h3 data-number="6.3.2" class="anchored" data-anchor-id="unidad-de-análisis-8"><span class="header-section-number">6.3.2</span> Unidad de análisis</h3>
+<p>Demandante de empleo / participante en servicio o programa.</p>
+</section>
+<section id="tratamiento-11" class="level3" data-number="6.3.3">
+<h3 data-number="6.3.3" class="anchored" data-anchor-id="tratamiento-11"><span class="header-section-number">6.3.3</span> Tratamiento</h3>
+<p>Participación en servicios o programas de empleo.</p>
+<p>Puede incluir:</p>
+<ul>
+<li>orientación;</li>
+<li>formación;</li>
+<li>intermediación;</li>
+<li>incentivos;</li>
+<li>itinerarios.</li>
+</ul>
+</section>
+<section id="resultado-5" class="level3" data-number="6.3.4">
+<h3 data-number="6.3.4" class="anchored" data-anchor-id="resultado-5"><span class="header-section-number">6.3.4</span> Resultado</h3>
+<ul>
+<li>inserción laboral;</li>
+<li>duración del desempleo;</li>
+<li>empleo estable;</li>
+<li>salario;</li>
+<li>permanencia en empleo.</li>
+</ul>
+</section>
+<section id="grupo-de-comparación-4" class="level3" data-number="6.3.5">
+<h3 data-number="6.3.5" class="anchored" data-anchor-id="grupo-de-comparación-4"><span class="header-section-number">6.3.5</span> Grupo de comparación</h3>
+<p>Demandantes no participantes o participantes en otros servicios, emparejados por características previas.</p>
+</section>
+<section id="clave-conceptual" class="level3" data-number="6.3.6">
+<h3 data-number="6.3.6" class="anchored" data-anchor-id="clave-conceptual"><span class="header-section-number">6.3.6</span> Clave conceptual</h3>
+<p>El mayor reto es la asignación no aleatoria:</p>
+<ul>
+<li>los servicios públicos pueden seleccionar a personas más empleables;</li>
+<li>o priorizar colectivos vulnerables;</li>
+<li>los participantes pueden tener más motivación;</li>
+<li>las comunidades autónomas aplican criterios heterogéneos.</li>
+</ul>
+</section>
+<section id="matching" class="level3" data-number="6.3.7">
+<h3 data-number="6.3.7" class="anchored" data-anchor-id="matching"><span class="header-section-number">6.3.7</span> Matching</h3>
+<p>Covariables habituales:</p>
+<ul>
+<li>edad;</li>
+<li>sexo;</li>
+<li>nivel educativo;</li>
+<li>experiencia;</li>
+<li>duración del desempleo;</li>
+<li>ocupación;</li>
+<li>prestación;</li>
+<li>discapacidad;</li>
+<li>nacionalidad;</li>
+<li>historial laboral;</li>
+<li>comunidad autónoma;</li>
+<li>oficina de empleo.</li>
+</ul>
+</section>
+<section id="qué-pediría-un-examen" class="level3" data-number="6.3.8">
+<h3 data-number="6.3.8" class="anchored" data-anchor-id="qué-pediría-un-examen"><span class="header-section-number">6.3.8</span> Qué pediría un examen</h3>
+<ul>
+<li>Construir grupo tratado/control.</li>
+<li>Estimar propensity score.</li>
+<li>Revisar balance.</li>
+<li>Calcular ATT sobre inserción.</li>
+<li>Comparar resultados por colectivo.</li>
+<li>Discutir sesgo de selección.</li>
+</ul>
+</section>
+<section id="error-clave" class="level3" data-number="6.3.9">
+<h3 data-number="6.3.9" class="anchored" data-anchor-id="error-clave"><span class="header-section-number">6.3.9</span> Error clave</h3>
+<p>No comparar participantes con no participantes brutos. En PAE, esa comparación casi siempre está contaminada por selección.</p>
+<hr>
+</section>
+</section>
+<section id="políticas-activas-de-empleo-en-castilla-y-león" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="políticas-activas-de-empleo-en-castilla-y-león"><span class="header-section-number">6.4</span> 14. Políticas activas de empleo en Castilla y León</h2>
+<section id="qué-se-evalúa-13" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="qué-se-evalúa-13"><span class="header-section-number">6.4.1</span> Qué se evalúa</h3>
+<p>AIReF evaluó políticas activas de empleo en Castilla y León. La ficha pública indica que se aplicaron:</p>
+<ul>
+<li>métodos de emparejamiento;</li>
+<li>técnicas de análisis contrafactual cuasiexperimental;</li>
+<li>modelos de regresión paramétrica lineales y no lineales en algunos hallazgos.</li>
+</ul>
+</section>
+<section id="programas" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="programas"><span class="header-section-number">6.4.2</span> Programas</h3>
+<p>La ficha menciona, entre otros:</p>
+<ul>
+<li>PRORGAN;</li>
+<li>orientación y acompañamiento a la inserción;</li>
+<li>programas de formación.</li>
+</ul>
+</section>
+<section id="resultado-central" class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="resultado-central"><span class="header-section-number">6.4.3</span> Resultado central</h3>
+<p>Empleabilidad posterior de participantes.</p>
+</section>
+<section id="hallazgo-metodológico-importante" class="level3" data-number="6.4.4">
+<h3 data-number="6.4.4" class="anchored" data-anchor-id="hallazgo-metodológico-importante"><span class="header-section-number">6.4.4</span> Hallazgo metodológico importante</h3>
+<p>Para algunos programas, como PRORGAN, la ficha pública indica que no se puede realizar una evaluación de impacto por falta de información adecuada y por problemas de diseño del programa.</p>
+<p>Esto es muy importante para examen: a veces la respuesta correcta es decir que <strong>no hay identificación causal válida</strong>.</p>
+</section>
+<section id="orientación-y-acompañamiento" class="level3" data-number="6.4.5">
+<h3 data-number="6.4.5" class="anchored" data-anchor-id="orientación-y-acompañamiento"><span class="header-section-number">6.4.5</span> Orientación y acompañamiento</h3>
+<p>La ficha pública indica que la evaluación de impacto muestra efectos positivos de orientación y acompañamiento, aunque limitados a un proyecto concreto.</p>
+</section>
+<section id="estrategia" class="level3" data-number="6.4.6">
+<h3 data-number="6.4.6" class="anchored" data-anchor-id="estrategia"><span class="header-section-number">6.4.6</span> Estrategia</h3>
+<p>Matching + modelos paramétricos:</p>
+<ul>
+<li>emparejar participantes y no participantes;</li>
+<li>controlar por covariables;</li>
+<li>estimar probabilidad de inserción;</li>
+<li>comparar resultados.</li>
+</ul>
+</section>
+<section id="covariables" class="level3" data-number="6.4.7">
+<h3 data-number="6.4.7" class="anchored" data-anchor-id="covariables"><span class="header-section-number">6.4.7</span> Covariables</h3>
+<ul>
+<li>historial laboral;</li>
+<li>edad;</li>
+<li>sexo;</li>
+<li>formación;</li>
+<li>ocupación;</li>
+<li>duración del desempleo;</li>
+<li>oficina/territorio;</li>
+<li>prestaciones;</li>
+<li>colectivo objetivo;</li>
+<li>nivel de empleabilidad.</li>
+</ul>
+</section>
+<section id="claves-de-examen" class="level3" data-number="6.4.8">
+<h3 data-number="6.4.8" class="anchored" data-anchor-id="claves-de-examen"><span class="header-section-number">6.4.8</span> Claves de examen</h3>
+<p>Una buena respuesta debe reconocer evaluabilidad:</p>
+<blockquote class="blockquote">
+<p>Antes de estimar impacto, hay que verificar si el programa tiene criterios de selección claros, registros suficientes, fechas de entrada, grupo potencial de comparación y resultados medibles.</p>
+</blockquote>
+</section>
+<section id="robustez-9" class="level3" data-number="6.4.9">
+<h3 data-number="6.4.9" class="anchored" data-anchor-id="robustez-9"><span class="header-section-number">6.4.9</span> Robustez</h3>
+<ul>
+<li>Balance.</li>
+<li>Restricción a personas elegibles.</li>
+<li>Matching exacto por programa y convocatoria.</li>
+<li>Sensibilidad a especificación.</li>
+<li>Estimaciones por subgrupos.</li>
+<li>Seguimiento temporal.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-12" class="level3" data-number="6.4.10">
+<h3 data-number="6.4.10" class="anchored" data-anchor-id="errores-frecuentes-12"><span class="header-section-number">6.4.10</span> Errores frecuentes</h3>
+<ul>
+<li>Forzar una evaluación causal cuando el diseño no lo permite.</li>
+<li>No distinguir evaluación descriptiva y evaluación de impacto.</li>
+<li>No reconocer que programas generalistas dificultan el contrafactual.</li>
+<li>Usar como controles personas no elegibles.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="combinación-matching-did" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Combinación Matching + DiD</h1>
+<section id="patrón-general-en-políticas-activas-de-empleo" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="patrón-general-en-políticas-activas-de-empleo"><span class="header-section-number">7.1</span> 15. Patrón general en políticas activas de empleo</h2>
+<p>Muchos estudios de empleo combinan matching y DiD porque:</p>
+<ul>
+<li>el matching controla diferencias observables;</li>
+<li>el DiD controla diferencias fijas inobservables;</li>
+<li>juntos mejoran la credibilidad frente a una comparación simple.</li>
+</ul>
+<section id="estructura-tipo" class="level3" data-number="7.1.1">
+<h3 data-number="7.1.1" class="anchored" data-anchor-id="estructura-tipo"><span class="header-section-number">7.1.1</span> Estructura tipo</h3>
+<ol type="1">
+<li>Definir población elegible.</li>
+<li>Estimar propensity score con variables pretratamiento.</li>
+<li>Emparejar tratados y controles.</li>
+<li>Comprobar balance.</li>
+<li>Construir panel antes/después.</li>
+<li>Estimar DiD sobre muestra emparejada.</li>
+<li>Analizar dinámica mensual.</li>
+</ol>
+</section>
+<section id="estimador" class="level3" data-number="7.1.2">
+<h3 data-number="7.1.2" class="anchored" data-anchor-id="estimador"><span class="header-section-number">7.1.2</span> Estimador</h3>
+<p>[ ATT_{DiD} = (<em>{T,post} - </em>{T,pre}) - (<em>{C,post} - </em>{C,pre}) ]</p>
+</section>
+<section id="cuándo-usarlo" class="level3" data-number="7.1.3">
+<h3 data-number="7.1.3" class="anchored" data-anchor-id="cuándo-usarlo"><span class="header-section-number">7.1.3</span> Cuándo usarlo</h3>
+<ul>
+<li>Programas de empleo.</li>
+<li>Formación.</li>
+<li>Ayudas a contratación.</li>
+<li>Autoempleo.</li>
+<li>Becas con observaciones pre/post.</li>
+<li>Programas empresariales.</li>
+</ul>
+</section>
+<section id="ventajas" class="level3" data-number="7.1.4">
+<h3 data-number="7.1.4" class="anchored" data-anchor-id="ventajas"><span class="header-section-number">7.1.4</span> Ventajas</h3>
+<ul>
+<li>Más defendible que matching puro.</li>
+<li>Permite controlar diferencias permanentes.</li>
+<li>Da lugar a gráficos dinámicos.</li>
+</ul>
+</section>
+<section id="limitaciones-1" class="level3" data-number="7.1.5">
+<h3 data-number="7.1.5" class="anchored" data-anchor-id="limitaciones-1"><span class="header-section-number">7.1.5</span> Limitaciones</h3>
+<ul>
+<li>Sigue requiriendo tendencias paralelas condicionales.</li>
+<li>No corrige shocks diferenciales no observados.</li>
+<li>Puede perder muestra.</li>
+<li>Sensible a mala especificación del propensity score.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="synthetic-control" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Synthetic control</h1>
+<section id="uso-potencial-en-evaluaciones-territoriales" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="uso-potencial-en-evaluaciones-territoriales"><span class="header-section-number">8.1</span> 16. Uso potencial en evaluaciones territoriales</h2>
+<p>AIReF menciona el control sintético como una metodología de evaluación de impacto dentro de su repertorio metodológico. En las fichas públicas revisadas no se ha identificado una instancia concreta y clara de la División de Evaluación del Gasto Público donde se detalle su uso aplicado.</p>
+<p>Por tanto, conviene tratarlo como una metodología posible, pero menos probable que DiD, RDD o matching en examen.</p>
+<section id="cuándo-tendría-sentido" class="level3" data-number="8.1.1">
+<h3 data-number="8.1.1" class="anchored" data-anchor-id="cuándo-tendría-sentido"><span class="header-section-number">8.1.1</span> Cuándo tendría sentido</h3>
+<ul>
+<li>Una única comunidad autónoma tratada.</li>
+<li>Una ciudad que adopta una política.</li>
+<li>Una reforma territorial.</li>
+<li>Una infraestructura concreta.</li>
+<li>Una intervención sin muchos tratados.</li>
+</ul>
+</section>
+<section id="unidad-de-análisis-9" class="level3" data-number="8.1.2">
+<h3 data-number="8.1.2" class="anchored" data-anchor-id="unidad-de-análisis-9"><span class="header-section-number">8.1.2</span> Unidad de análisis</h3>
+<p>Territorio-año.</p>
+</section>
+<section id="tratamiento-12" class="level3" data-number="8.1.3">
+<h3 data-number="8.1.3" class="anchored" data-anchor-id="tratamiento-12"><span class="header-section-number">8.1.3</span> Tratamiento</h3>
+<p>Intervención que afecta a una unidad agregada:</p>
+<ul>
+<li>reforma sanitaria regional;</li>
+<li>cambio educativo autonómico;</li>
+<li>política fiscal regional;</li>
+<li>infraestructura;</li>
+<li>programa piloto regional.</li>
+</ul>
+</section>
+<section id="grupo-de-donantes" class="level3" data-number="8.1.4">
+<h3 data-number="8.1.4" class="anchored" data-anchor-id="grupo-de-donantes"><span class="header-section-number">8.1.4</span> Grupo de donantes</h3>
+<p>Territorios no tratados.</p>
+</section>
+<section id="idea" class="level3" data-number="8.1.5">
+<h3 data-number="8.1.5" class="anchored" data-anchor-id="idea"><span class="header-section-number">8.1.5</span> Idea</h3>
+<p>Construir una combinación ponderada de territorios no tratados que reproduzca la trayectoria pretratamiento del territorio tratado.</p>
+<p>[ Y_{treated,t} - <em>j w_j Y</em>{j,t} ]</p>
+</section>
+<section id="variables-predictoras" class="level3" data-number="8.1.6">
+<h3 data-number="8.1.6" class="anchored" data-anchor-id="variables-predictoras"><span class="header-section-number">8.1.6</span> Variables predictoras</h3>
+<ul>
+<li>resultado pretratamiento;</li>
+<li>PIB per cápita;</li>
+<li>población;</li>
+<li>desempleo;</li>
+<li>estructura sectorial;</li>
+<li>gasto público;</li>
+<li>variables demográficas.</li>
+</ul>
+</section>
+<section id="validaciones" class="level3" data-number="8.1.7">
+<h3 data-number="8.1.7" class="anchored" data-anchor-id="validaciones"><span class="header-section-number">8.1.7</span> Validaciones</h3>
+<ul>
+<li>Ajuste pretratamiento.</li>
+<li>RMSPE pre.</li>
+<li>Placebos espaciales.</li>
+<li>Placebo temporal.</li>
+<li>Sensibilidad a unidades donantes.</li>
+<li>Leave-one-out.</li>
+</ul>
+</section>
+<section id="errores-frecuentes-13" class="level3" data-number="8.1.8">
+<h3 data-number="8.1.8" class="anchored" data-anchor-id="errores-frecuentes-13"><span class="header-section-number">8.1.8</span> Errores frecuentes</h3>
+<ul>
+<li>Usarlo con muchos tratados cuando DiD sería más natural.</li>
+<li>No mirar ajuste pretratamiento.</li>
+<li>Incluir unidades contaminadas en el donor pool.</li>
+<li>Interpretar resultados sin placebos.</li>
+<li>Elegir predictores postratamiento.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="variables-instrumentales" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Variables instrumentales</h1>
+<section id="uso-como-metodología-potencial" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="uso-como-metodología-potencial"><span class="header-section-number">9.1</span> 17. Uso como metodología potencial</h2>
+<p>AIReF menciona variables instrumentales entre las técnicas cuantitativas de evaluación de impacto. En las fichas revisadas para estos apuntes no se ha identificado una instancia concreta con detalle suficiente para documentar un caso aplicado específico de la División.</p>
+<p>Aun así, conviene saber reconocer cuándo podría aparecer.</p>
+<section id="cuándo-tendría-sentido-1" class="level3" data-number="9.1.1">
+<h3 data-number="9.1.1" class="anchored" data-anchor-id="cuándo-tendría-sentido-1"><span class="header-section-number">9.1.1</span> Cuándo tendría sentido</h3>
+<ul>
+<li>Tratamiento endógeno.</li>
+<li>Elegibilidad o intensidad determinada por una regla externa.</li>
+<li>Distancia a oficina/centro.</li>
+<li>Variación administrativa.</li>
+<li>Sorteo parcial.</li>
+<li>Cambios normativos que afectan a unos grupos más que otros.</li>
+</ul>
+</section>
+<section id="condiciones" class="level3" data-number="9.1.2">
+<h3 data-number="9.1.2" class="anchored" data-anchor-id="condiciones"><span class="header-section-number">9.1.2</span> Condiciones</h3>
+<p>Un instrumento (Z) debe cumplir:</p>
+<ol type="1">
+<li>Relevancia: afecta al tratamiento.</li>
+<li>Exclusión: afecta al resultado solo a través del tratamiento.</li>
+<li>Independencia: no correlaciona con no observables.</li>
+<li>Monotonicidad si se interpreta LATE.</li>
+</ol>
+</section>
+<section id="examen" class="level3" data-number="9.1.3">
+<h3 data-number="9.1.3" class="anchored" data-anchor-id="examen"><span class="header-section-number">9.1.3</span> Examen</h3>
+<p>Si aparece IV, lo más probable es que pidan:</p>
+<ul>
+<li>primera etapa;</li>
+<li>segunda etapa;</li>
+<li>interpretación LATE;</li>
+<li>discutir exclusión;</li>
+<li>F-stat de instrumento débil.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="ensayos-controlados-aleatorizados" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> Ensayos controlados aleatorizados</h1>
+<section id="rct-como-recomendación-de-evaluabilidad" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="rct-como-recomendación-de-evaluabilidad"><span class="header-section-number">10.1</span> 18. RCT como recomendación de evaluabilidad</h2>
+<p>En la ficha de Políticas Activas de Empleo en Castilla y León se menciona que, cuando proceda, pueden realizarse proyectos piloto que permitan estimar impacto mediante ensayos controlados aleatorizados antes de escalar programas.</p>
+<p>Esto sugiere que AIReF valora RCT como diseño ex ante, aunque no sea lo más habitual en evaluaciones ex post.</p>
+<section id="cuándo-tendría-sentido-2" class="level3" data-number="10.1.1">
+<h3 data-number="10.1.1" class="anchored" data-anchor-id="cuándo-tendría-sentido-2"><span class="header-section-number">10.1.1</span> Cuándo tendría sentido</h3>
+<ul>
+<li>Programa piloto.</li>
+<li>Exceso de demanda.</li>
+<li>Fases de despliegue.</li>
+<li>Asignación aleatoria de invitaciones.</li>
+<li>Nudges administrativos.</li>
+<li>Servicios de orientación.</li>
+</ul>
+</section>
+<section id="claves" class="level3" data-number="10.1.2">
+<h3 data-number="10.1.2" class="anchored" data-anchor-id="claves"><span class="header-section-number">10.1.2</span> Claves</h3>
+<ul>
+<li>Randomización individual o por oficina.</li>
+<li>Balance basal.</li>
+<li>Cumplimiento imperfecto.</li>
+<li>ITT y TOT.</li>
+<li>Attrition.</li>
+<li>Spillovers.</li>
+</ul>
+</section>
+<section id="examen-1" class="level3" data-number="10.1.3">
+<h3 data-number="10.1.3" class="anchored" data-anchor-id="examen-1"><span class="header-section-number">10.1.3</span> Examen</h3>
+<p>Podría aparecer como pregunta conceptual:</p>
+<blockquote class="blockquote">
+<p>Diseñe una evaluación ex ante para estimar el impacto causal de un nuevo programa.</p>
+</blockquote>
+<p>Respuesta:</p>
+<ol type="1">
+<li>Definir población elegible.</li>
+<li>Aleatorizar oferta o acceso.</li>
+<li>Registrar tratamiento asignado y recibido.</li>
+<li>Medir outcomes administrativos.</li>
+<li>Estimar ITT.</li>
+<li>Si hay incumplimiento, usar asignación como instrumento para tratamiento recibido.</li>
+</ol>
+<hr>
+</section>
+</section>
+</section>
+<section id="apéndice-plantillas-rápidas-para-examen" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Apéndice: plantillas rápidas para examen</h1>
+<section id="plantilla-did" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="plantilla-did"><span class="header-section-number">11.1</span> Plantilla DiD</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Variables básicas</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">treated =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(first_treat_year) <span class="sc">&amp;</span> year <span class="sc">&gt;=</span> first_treat_year, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">ever_treated =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(first_treat_year), <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">event_time =</span> year <span class="sc">-</span> first_treat_year</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># TWFE básico</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> fixest<span class="sc">::</span><span class="fu">feols</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> treated <span class="sc">+</span> controls <span class="sc">|</span> id <span class="sc">+</span> year,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span>id,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Event-study</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>event <span class="ot">&lt;-</span> fixest<span class="sc">::</span><span class="fu">feols</span>(</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> <span class="fu">i</span>(event_time, ever_treated, <span class="at">ref =</span> <span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> controls <span class="sc">|</span> id <span class="sc">+</span> year,</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span>id,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="qué-escribir" class="level3" data-number="11.1.1">
+<h3 data-number="11.1.1" class="anchored" data-anchor-id="qué-escribir"><span class="header-section-number">11.1.1</span> Qué escribir</h3>
+<ul>
+<li>El coeficiente mide el cambio diferencial en tratados respecto al contrafactual.</li>
+<li>Identificación: tendencias paralelas.</li>
+<li>Validación: leads no significativos.</li>
+<li>Errores clusterizados por unidad.</li>
+<li>Si adopción escalonada: usar estimadores robustos.</li>
+</ul>
+</section>
+</section>
+<section id="plantilla-matching-psm" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="plantilla-matching-psm"><span class="header-section-number">11.2</span> Plantilla Matching / PSM</h2>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>ps <span class="ot">&lt;-</span> <span class="fu">glm</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  treat <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> education <span class="sc">+</span> prior_employment <span class="sc">+</span> region,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">family =</span> <span class="fu">binomial</span>(),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df_pre</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>df_pre<span class="sc">$</span>pscore <span class="ot">&lt;-</span> <span class="fu">predict</span>(ps, <span class="at">type =</span> <span class="st">"response"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="qué-escribir-1" class="level3" data-number="11.2.1">
+<h3 data-number="11.2.1" class="anchored" data-anchor-id="qué-escribir-1"><span class="header-section-number">11.2.1</span> Qué escribir</h3>
+<ul>
+<li>El propensity score estima la probabilidad de recibir tratamiento dadas covariables pretratamiento.</li>
+<li>El ATT compara tratados con controles similares.</li>
+<li>La clave es el balance, no el AUC del modelo.</li>
+<li>No usar variables postratamiento.</li>
+</ul>
+</section>
+</section>
+<section id="plantilla-rdd" class="level2" data-number="11.3">
+<h2 data-number="11.3" class="anchored" data-anchor-id="plantilla-rdd"><span class="header-section-number">11.3</span> Plantilla RDD</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">running_centered =</span> running <span class="sc">-</span> cutoff,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">treat =</span> <span class="fu">if_else</span>(running <span class="sc">&gt;=</span> cutoff, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> <span class="fu">lm</span>(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> treat <span class="sc">+</span> running_centered <span class="sc">+</span> treat<span class="sc">:</span>running_centered,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> df <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="fu">abs</span>(running_centered) <span class="sc">&lt;=</span> bandwidth)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="qué-escribir-2" class="level3" data-number="11.3.1">
+<h3 data-number="11.3.1" class="anchored" data-anchor-id="qué-escribir-2"><span class="header-section-number">11.3.1</span> Qué escribir</h3>
+<ul>
+<li>El efecto es local alrededor del umbral.</li>
+<li>Hay que comprobar densidad y balance.</li>
+<li>Probar bandwidths alternativos.</li>
+<li>Evitar polinomios altos.</li>
+</ul>
+</section>
+</section>
+<section id="plantilla-matching-did" class="level2" data-number="11.4">
+<h2 data-number="11.4" class="anchored" data-anchor-id="plantilla-matching-did"><span class="header-section-number">11.4</span> Plantilla Matching + DiD</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Estimar pscore pretratamiento</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Emparejar</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># 3. Recuperar panel de matched ids</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 4. DiD en muestra emparejada</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>model <span class="ot">&lt;-</span> fixest<span class="sc">::</span><span class="fu">feols</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  y <span class="sc">~</span> treated_post <span class="sc">|</span> id <span class="sc">+</span> time,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster =</span> <span class="sc">~</span>id,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> matched_panel</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="qué-escribir-3" class="level3" data-number="11.4.1">
+<h3 data-number="11.4.1" class="anchored" data-anchor-id="qué-escribir-3"><span class="header-section-number">11.4.1</span> Qué escribir</h3>
+<ul>
+<li>Matching crea comparabilidad en observables.</li>
+<li>DiD controla diferencias fijas.</li>
+<li>El supuesto es tendencias paralelas condicionales.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="apéndice-checklist-de-90-minutos" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Apéndice: checklist de 90 minutos</h1>
+<section id="primeros-20-minutos-datos" class="level2" data-number="12.1">
+<h2 data-number="12.1" class="anchored" data-anchor-id="primeros-20-minutos-datos"><span class="header-section-number">12.1</span> Primeros 20 minutos: datos</h2>
+<ul>
+<li>Importar correctamente.</li>
+<li>Revisar dimensiones.</li>
+<li>Revisar tipos.</li>
+<li>Detectar duplicados.</li>
+<li>Fusionar bases.</li>
+<li>Crear tratamiento.</li>
+<li>Crear outcomes.</li>
+<li>Revisar missing/outliers.</li>
+</ul>
+</section>
+<section id="minutos-20-40-descriptivo" class="level2" data-number="12.2">
+<h2 data-number="12.2" class="anchored" data-anchor-id="minutos-20-40-descriptivo"><span class="header-section-number">12.2</span> Minutos 20-40: descriptivo</h2>
+<ul>
+<li>Tabla de tratados/no tratados.</li>
+<li>Evolución outcome.</li>
+<li>Distribución tratamiento.</li>
+<li>Balance básico.</li>
+<li>Gráfico pre/post.</li>
+</ul>
+</section>
+<section id="minutos-40-70-causal" class="level2" data-number="12.3">
+<h2 data-number="12.3" class="anchored" data-anchor-id="minutos-40-70-causal"><span class="header-section-number">12.3</span> Minutos 40-70: causal</h2>
+<p>Elegir metodología:</p>
+<ul>
+<li>panel + adopción temporal → DiD/event-study;</li>
+<li>umbral → RDD;</li>
+<li>beneficiarios/no beneficiarios cross-section → matching;</li>
+<li>programa empleo con panel → matching + DiD;</li>
+<li>una región tratada → synthetic control.</li>
+</ul>
+</section>
+<section id="minutos-70-90-informe" class="level2" data-number="12.4">
+<h2 data-number="12.4" class="anchored" data-anchor-id="minutos-70-90-informe"><span class="header-section-number">12.4</span> Minutos 70-90: informe</h2>
+<ul>
+<li>Explicar identificación.</li>
+<li>Poner tabla principal.</li>
+<li>Poner gráfico clave.</li>
+<li>Interpretar magnitud.</li>
+<li>Mencionar limitaciones.</li>
+<li>Proponer robustez.</li>
+</ul>
+</section>
+</section>
+<section id="apéndice-errores-transversales-que-penalizan" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> Apéndice: errores transversales que penalizan</h1>
+<ol type="1">
+<li>No explicar el contrafactual.</li>
+<li>No separar análisis descriptivo de causal.</li>
+<li>No construir bien el tratamiento.</li>
+<li>Usar variables posteriores como controles.</li>
+<li>No mirar tendencias previas.</li>
+<li>No clusterizar errores.</li>
+<li>Interpretar coeficientes sin unidades.</li>
+<li>No discutir limitaciones.</li>
+<li>No distinguir corto y largo plazo.</li>
+<li>No conectar resultado con política pública.</li>
+</ol>
+</section>
+<section id="orientación-final-para-posibles-exámenes-airef" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> Orientación final para posibles exámenes AIReF</h1>
+<p>Los diseños más probables, por frecuencia y facilidad de examen, son:</p>
+<ol type="1">
+<li><p><strong>DiD con panel y tratamiento escalonado</strong><br>
+Ejemplo: residuos, programas empresariales, incapacidad temporal, ayudas de empleo.</p></li>
+<li><p><strong>Matching o PSM</strong><br>
+Ejemplo: becas, talento I+D+i, políticas activas de empleo.</p></li>
+<li><p><strong>Matching + DiD</strong><br>
+Ejemplo: programas de empleo con seguimiento temporal.</p></li>
+<li><p><strong>RDD básico</strong><br>
+Ejemplo: beneficios fiscales, reformas con umbral o fecha de corte.</p></li>
+<li><p><strong>Event-study</strong><br>
+Casi siempre como extensión natural del DiD.</p></li>
+</ol>
+<p>La regla práctica es:</p>
+<blockquote class="blockquote">
+<p>Si ves municipios/empresas/personas durante varios años y una política que empieza en distinto momento, piensa en DiD/event-study.<br>
+Si ves beneficiarios y no beneficiarios sin regla clara de asignación, piensa en matching.<br>
+Si ves un umbral normativo, piensa en RDD.<br>
+Si ves una sola región tratada, piensa en synthetic control.</p>
+</blockquote>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

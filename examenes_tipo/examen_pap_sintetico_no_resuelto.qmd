@@ -1,0 +1,766 @@
+---
+title: "Examen práctico no resuelto: evaluación del sistema PaP de recogida de residuos"
+subtitle: "Versión para practicar con datos sintéticos"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# Instrucciones
+
+Este documento es una **versión no resuelta** del examen práctico sobre la evaluación del sistema de recogida puerta a puerta (PaP).
+
+El primer bloque de código genera datos sintéticos y crea dos ficheros CSV con formato europeo:
+
+- `PaP.csv`
+- `Estadisticas_residuos.csv`
+
+A partir de ahí, el ejercicio consiste en elaborar un breve informe respondiendo a los bloques planteados. Puedes escribir código, tablas, gráficos e interpretación debajo de cada pregunta.
+
+El examen está pensado para resolverse en **90 minutos**, sin ayuda de IA, pero con posibilidad de consultar internet o documentación.
+
+## Ficheros de datos generados
+
+Tras ejecutar la sección de generación de datos, tendrás disponibles en tu directorio de trabajo:
+
+- `PaP.csv`
+- `Estadisticas_residuos.csv`
+
+Ambos ficheros usan:
+
+- separador `;`;
+- coma como separador decimal.
+
+
+# 0. Paquetes y generación de datos sintéticos
+
+```{r}
+# install.packages(c(
+#   "tidyverse", "janitor", "lubridate", "stringr",
+#   "fixest", "did", "modelsummary", "broom", "scales"
+# ))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(fixest)
+library(did)
+library(modelsummary)
+library(broom)
+library(scales)
+
+theme_set(theme_minimal())
+set.seed(1234)
+```
+
+# 1. Generación de datos sintéticos
+
+En el examen original se proporcionan dos ficheros:
+
+- `PaP.csv`;
+- `Estadisticas_residuos.csv`.
+
+Como no disponemos de esos datos, creamos dos bases sintéticas y luego las exportamos a CSV con formato europeo, es decir, separador `;` y coma decimal. Después las volvemos a importar con `read_csv2()` para reproducir el flujo real del examen.
+
+## 1.1. Base municipal
+
+```{r}
+n_muni <- 947
+years <- 2000:2023
+
+municipios <- tibble(
+  codigo_municipio_base = str_pad(as.character(1:n_muni), width = 5, pad = "0"),
+  municipio = paste("Municipio", str_pad(1:n_muni, 3, pad = "0")),
+  provincia_codigo = sample(
+    c("08", "17", "25", "43"),
+    size = n_muni,
+    replace = TRUE,
+    prob = c(0.55, 0.20, 0.12, 0.13)
+  ),
+  codigo_municipio = paste0(provincia_codigo, str_sub(codigo_municipio_base, 3, 5)),
+  comarca = paste("Comarca", sample(1:35, n_muni, replace = TRUE)),
+  poblacion_base = round(exp(rnorm(n_muni, log(3500), 1.05))),
+  renta_media = round(rnorm(n_muni, 24500, 4200)),
+  densidad = round(exp(rnorm(n_muni, log(180), 1.1)), 1),
+  zona_costera = rbinom(n_muni, 1, 0.28),
+  rural = as.integer(poblacion_base < 2500)
+) |>
+  mutate(
+    provincia = case_when(
+      provincia_codigo == "08" ~ "Barcelona",
+      provincia_codigo == "17" ~ "Girona",
+      provincia_codigo == "25" ~ "Lleida",
+      provincia_codigo == "43" ~ "Tarragona"
+    ),
+    poblacion_base = if_else(row_number() == 10, poblacion_base * 25, poblacion_base),
+    poblacion_base = if_else(row_number() == 20, poblacion_base * 18, poblacion_base)
+  )
+
+glimpse(municipios)
+```
+
+## 1.2. Base de adopción PaP
+
+```{r}
+adopcion <- municipios |>
+  mutate(
+    prob_adopta = plogis(
+      -0.7 +
+        0.55 * rural +
+        0.25 * zona_costera -
+        0.00002 * poblacion_base +
+        if_else(provincia == "Girona", 0.25, 0) +
+        if_else(provincia == "Barcelona", -0.10, 0)
+    ),
+    ever_pap = rbinom(n(), 1, prob_adopta),
+    anyo_inicio_pap = if_else(
+      ever_pap == 1,
+      sample(2004:2021, n(), replace = TRUE),
+      NA_integer_
+    )
+  ) |>
+  select(codigo_municipio, anyo_inicio_pap, ever_pap)
+
+pap_raw <- expand_grid(
+  codigo_municipio = municipios$codigo_municipio,
+  year = years
+) |>
+  left_join(municipios |> select(codigo_municipio, municipio, provincia), by = "codigo_municipio") |>
+  left_join(adopcion, by = "codigo_municipio") |>
+  mutate(
+    pap_activo = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap),
+    n_frac_latente = case_when(
+      pap_activo == 0 ~ 0L,
+      year - anyo_inicio_pap <= 1 ~ sample(2:3, n(), replace = TRUE),
+      year - anyo_inicio_pap <= 4 ~ sample(3:4, n(), replace = TRUE),
+      TRUE ~ sample(4:5, n(), replace = TRUE)
+    ),
+    frac_recogidas_pap = case_when(
+      pap_activo == 0 ~ NA_character_,
+      n_frac_latente == 2 ~ "Orgánica, Resto",
+      n_frac_latente == 3 ~ "Orgánica, Papel y cartón, Envases",
+      n_frac_latente == 4 ~ "Orgánica, Papel y cartón, Envases, Vidrio",
+      n_frac_latente == 5 ~ "Orgánica, Papel y cartón, Envases, Vidrio, Resto",
+      TRUE ~ NA_character_
+    )
+  ) |>
+  select(codigo_municipio, year, frac_recogidas_pap, anyo_inicio_pap)
+
+pap_raw |> head()
+```
+
+## 1.3. Base de estadísticas de residuos
+
+```{r}
+estadisticas_raw <- expand_grid(
+  codigo_municipio = municipios$codigo_municipio,
+  year = years
+) |>
+  left_join(municipios, by = "codigo_municipio") |>
+  left_join(adopcion, by = "codigo_municipio") |>
+  arrange(codigo_municipio, year) |>
+  group_by(codigo_municipio) |>
+  mutate(
+    tratamiento_real = as.integer(!is.na(anyo_inicio_pap) & year >= anyo_inicio_pap),
+    rel_time = if_else(tratamiento_real == 1, year - anyo_inicio_pap, NA_integer_),
+    trend_pop = 1 + rnorm(1, 0.004, 0.006) * (year - min(year)),
+    poblacion = round(poblacion_base * trend_pop + rnorm(n(), 0, pmax(25, poblacion_base * 0.025))),
+    residuos_pc_base = 0.42 + 0.0000015 * renta_media + 0.04 * zona_costera - 0.02 * rural,
+    efecto_pap_residuos_pc = if_else(tratamiento_real == 1, -0.015 * pmin(rel_time, 5), 0),
+    residuos_total_tn = pmax(
+      20,
+      poblacion * (residuos_pc_base + efecto_pap_residuos_pc + rnorm(n(), 0, 0.035))
+    ),
+    tendencia_selectiva = 28 + 0.75 * (year - min(year)),
+    efecto_pap_selectiva = if_else(
+      tratamiento_real == 1,
+      4 + 2.2 * pmin(rel_time, 5) + 2.5 * rural,
+      0
+    ),
+    pct_selectiva = pmin(
+      pmax(
+        tendencia_selectiva +
+          efecto_pap_selectiva +
+          1.5 * zona_costera -
+          0.00008 * poblacion_base +
+          rnorm(n(), 0, 5),
+        5
+      ),
+      95
+    ),
+    residuos_selectiva_tn = residuos_total_tn * pct_selectiva / 100
+  ) |>
+  ungroup() |>
+  select(
+    codigo_municipio, municipio, year, comarca,
+    poblacion, renta_media, densidad, zona_costera, rural,
+    residuos_total_tn, residuos_selectiva_tn, pct_selectiva
+  )
+
+set.seed(777)
+idx_out <- sample(1:nrow(estadisticas_raw), 3)
+idx_na <- sample(1:nrow(estadisticas_raw), 25)
+
+estadisticas_raw$poblacion[idx_out] <- estadisticas_raw$poblacion[idx_out] * 14
+estadisticas_raw$renta_media[idx_na] <- NA
+
+estadisticas_raw |> head()
+```
+
+## 1.4. Exportar e importar como CSV europeo
+
+```{r}
+dir.create("datos_sinteticos", showWarnings = FALSE)
+
+write_csv2(pap_raw, "datos_sinteticos/PaP.csv")
+write_csv2(estadisticas_raw, "datos_sinteticos/Estadisticas_residuos.csv")
+
+pap <- read_csv2("datos_sinteticos/PaP.csv") |>
+  clean_names()
+
+residuos <- read_csv2("datos_sinteticos/Estadisticas_residuos.csv") |>
+  clean_names()
+
+glimpse(pap)
+glimpse(residuos)
+```
+
+
+# Bloque 1: preparación y transformación de datos
+
+## Pregunta 1.a
+
+Importe ambos ficheros CSV, teniendo en cuenta que los valores numéricos usan la coma como separador decimal, y fusione la información en un único fichero.
+
+A continuación:
+
+1. compruebe la estructura de los datos;
+2. detecte posibles duplicados;
+3. identifique valores atípicos (*outliers*) en las variables demográficas;
+4. proponga e implemente una imputación razonable para los valores atípicos detectados.
+
+```{r}
+datos<-"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos_sinteticos/"
+
+df1<-read.csv(paste0(datos, "Estadisticas_residuos.csv"), sep=";",dec = ",")
+df2<-read.csv(paste0(datos, "PaP.csv"), sep=";", dec = ",")
+
+df<-inner_join(df1, df2, by=c("codigo_municipio", "year"))
+
+summary(df)
+
+colSums(is.na(df))
+
+
+df<-df %>% 
+  group_by(codigo_municipio) %>% 
+  mutate(renta_media= ifelse(is.na(renta_media), median(renta_media, na.rm=T), renta_media)) 
+
+colSums(is.na(df))
+
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 1.b
+
+A partir de la variable `frac_recogidas_pap`:
+
+1. construya una variable que indique el número de fracciones distintas recogidas con sistema PaP;
+2. cree variables dummies que indiquen si cada municipio recoge o no cada fracción mediante PaP;
+3. calcule cuántos municipios recogen la fracción orgánica mediante sistema PaP cada año.
+
+```{r}
+df<-df %>% 
+  group_by(codigo_municipio) %>% 
+  mutate(papel_carton=as.numeric(str_detect(frac_recogidas_pap, "Papel y cartón")),
+         variedad_pap=n_distinct(frac_recogidas_pap)) 
+
+valores<-unique(df$frac_recogidas_pap)
+
+for (i in valores) {
+  df<-df %>% 
+    mutate(!!sym(paste0("var_", i)):= ifelse(frac_recogidas_pap==i, 1, 0))
+}
+
+df %>% 
+  drop_na(frac_recogidas_pap) %>% 
+  group_by(frac_recogidas_pap, year) %>% 
+  summarise(value=n_distinct(codigo_municipio)) %>% 
+  ggplot(aes(year, value, fill=frac_recogidas_pap)) +
+  geom_col()+
+  geom_label(aes(label=value, y=value), position="stack")+
+  theme(legend.position = "bottom")
+  
+  
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 1.c
+
+Para el año 2021, calcule cuál fue la provincia con mayor porcentaje de recogida selectiva sobre el total de residuos municipales recogidos.
+
+Tenga en cuenta que la provincia se obtiene de los dos primeros dígitos del código municipal:
+
+- `08` = Barcelona
+- `17` = Girona
+- `25` = Lleida
+- `43` = Tarragona
+
+```{r}
+df<-df %>% 
+  mutate(provincia= substr(codigo_municipio,1,2))
+
+df %>% 
+  filter(year==2021) %>% 
+  group_by(provincia) %>% 
+  summarise(selectiva=sum(residuos_selectiva_tn, na.rm=T), 
+            total=sum(residuos_total_tn, na.rm=T)) %>% 
+  ungroup() %>% 
+  mutate(ratio=selectiva/total*100) %>% 
+  arrange(-ratio)
+
+
+```
+
+### Respuesta
+
+la 84
+---
+
+## Pregunta 1.d
+
+Genere una variable dummy llamada `tratamiento` que tome valor 1 si, para cada año, un municipio tiene en funcionamiento un sistema PaP.
+
+A continuación:
+
+1. calcule cuántos municipios adoptan el sistema PaP cada año;
+2. calcule cuántos municipios no adoptan nunca el sistema PaP.
+
+```{r}
+df<-df %>% 
+  mutate(tratamiento= ifelse(!is.na(frac_recogidas_pap), 1, 0))
+
+df %>% 
+  filter(!is.na(anyo_inicio_pap), anyo_inicio_pap!=0) %>% 
+  group_by(codigo_municipio) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  group_by(anyo_inicio_pap) %>% 
+  summarise(n_mun=n()) %>% 
+  ggplot(aes(anyo_inicio_pap, n_mun))+
+  geom_col()+
+  geom_label(aes(label=n_mun, y=n_mun/2))
+
+dfnotratado<-df %>% 
+  group_by(codigo_municipio) %>% 
+  slice(1) %>% 
+  mutate(tratado= ifelse(is.na(anyo_inicio_pap),1 ,0)) %>% 
+  ungroup()
+
+table(dfnotratado$tratado)
+
+```
+
+### Respuesta
+
+347 que no 
+
+
+# Bloque 2: análisis descriptivo y visualización
+
+## Pregunta 2.a.1
+
+Realice uno o varios gráficos que permitan responder a la siguiente pregunta:
+
+> ¿El porcentaje de residuos recogidos de forma selectiva aumenta tras la adopción del sistema PaP?
+
+
+
+```{r}
+df3<-df %>% 
+  mutate(timeto=anyo_inicio_pap-year+1, 
+         ratio= residuos_selectiva_tn/residuos_total_tn, 
+         codigo_municipio=as.character(codigo_municipio)) %>% 
+  group_by(timeto, codigo_municipio) %>%
+  summarise(value=sum(ratio, na.rm=T)) %>% 
+  filter(!is.na(value)) 
+
+
+df3 %>% 
+    ggplot(aes(timeto, value, color=codigo_municipio, group=codigo_municipio))+
+  geom_line()+
+  guides(color="none")+
+  coord_cartesian(ylim=c(0,1))+
+  geom_vline(xintercept = 0)
+
+
+df %>% 
+  filter(!is.na(anyo_inicio_pap) & anyo_inicio_pap!=0) %>% 
+  mutate(timeto=anyo_inicio_pap-year+1, 
+         ratio= residuos_selectiva_tn/residuos_total_tn, 
+         codigo_municipio=as.character(codigo_municipio)) %>% 
+  group_by(timeto) %>%
+  summarise(value=sum(ratio, na.rm=T)) %>% 
+  filter(!is.na(value)) %>% 
+  ggplot(aes(timeto, value))+
+  geom_line()+
+  geom_vline(xintercept = 0)
+  
+
+
+
+
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 2.a.2
+
+Realice uno o varios gráficos que permitan responder a la siguiente pregunta:
+
+> ¿A mayor cantidad de residuos recogidos menor es el porcentaje de residuos recogidos de forma selectiva?
+
+Puede representar la relación en niveles, en logaritmos, por años o diferenciando municipios tratados y no tratados.
+
+```{r}
+  df %>% 
+    mutate(ratio= residuos_selectiva_tn/residuos_total_tn) %>% 
+    ggplot(aes(residuos_total_tn, ratio))+
+    geom_point()+
+    geom_smooth(method="loess")+
+    geom_smooth(method="lm")
+
+
+df %>% 
+    mutate(ratio= residuos_selectiva_tn/residuos_total_tn) %>% 
+    ggplot(aes(log(residuos_total_tn), ratio))+
+    geom_point()+
+    geom_smooth(method="loess")+
+    geom_smooth(method="lm")
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+# Bloque 3: análisis econométrico e inferencia causal
+
+## Preparación del análisis causal
+
+Antes de estimar el impacto causal, prepare la base para el análisis econométrico.
+
+Se recomienda:
+
+1. construir el año de primera adopción del PaP;
+2. generar una variable de tiempo relativo al tratamiento;
+3. limitar el análisis a una ventana razonable si se desea estudiar efectos de corto plazo;
+4. decidir qué variables resultado se van a analizar;
+5. justificar cuál es el grupo de comparación.
+
+```{r}
+df<-df %>% 
+  mutate(anyo_inicio_pap=ifelse(is.na(anyo_inicio_pap), 0, anyo_inicio_pap))
+
+
+modelo1<-att_gt(
+  yname= "residuos_total_tn", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df, 
+  panel=T,
+  control_group = "nevertreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+modelo1agg<-aggte(modelo1, type = "simple")
+
+modelo2<-att_gt(
+  yname= "pct_selectiva", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df, 
+  panel=T,
+  control_group = "nevertreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+modelo2agg<-aggte(modelo2, type = "simple")
+
+
+modelsummary(models=list("total"=modelo1agg, "ratio selectiva"=modelo2agg))
+```
+
+### Comentario metodológico
+
+Escriba aquí cómo define el tratamiento, el grupo de control y el periodo de análisis.
+
+---
+
+## Pregunta 3.a
+
+Utilice análisis econométrico para estimar el impacto causal del establecimiento del sistema PaP sobre:
+
+1. la cantidad total de residuos recogidos;
+2. el porcentaje de residuos recogidos de manera selectiva.
+
+Centre la interpretación en los efectos a corto plazo, como máximo durante los cinco años posteriores al inicio del tratamiento.
+
+Puede utilizar, por ejemplo:
+
+- modelos de diferencias en diferencias;
+- modelos con efectos fijos de municipio y año;
+- estimadores adaptados a adopción escalonada;
+- análisis de eventos (*event-study*).
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación causal.
+
+---
+
+## Pregunta 3.b
+
+Analice si el impacto varía:
+
+1. en función de los años que han pasado desde la puesta en marcha del sistema PaP;
+2. en función del año o cohorte de adopción del PaP.
+
+```{r}
+
+dynamic<-aggte(modelo1, type="dynamic")
+dynamic2<-aggte(modelo2, type="dynamic")
+ggdid(dynamic)
+ggdid(dynamic2)
+```
+
+```{r}
+time=aggte(modelo1)
+time2<-aggte(modelo2)
+
+ggdid(time)
+ggdid(time2)
+```
+
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 3.c
+
+Analice si el impacto varía en función de:
+
+1. las características del municipio;
+2. las características del tratamiento aplicado.
+
+Puede considerar, por ejemplo:
+
+- tamaño municipal;
+- ruralidad;
+- provincia;
+- renta municipal;
+- número de fracciones recogidas mediante PaP;
+- recogida de fracción orgánica;
+- intensidad del tratamiento.
+
+```{r}
+
+modelo_rural<-att_gt(
+  yname= "residuos_total_tn", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(rural==1), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+modelo_urbano<-att_gt(
+  yname= "residuos_total_tn", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(rural==0), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+modelo_nocosta<-att_gt(
+  yname= "residuos_total_tn", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(zona_costera==0), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+modelo_costa<-att_gt(
+  yname= "residuos_total_tn", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(zona_costera==1), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+
+
+
+modelsummary(models= list("costa"=aggte(modelo_costa, "simple"), "no costa"=aggte(modelo_nocosta, type="simple"), "rural"=aggte(modelo_rural, type="simple"), "urbano"=aggte(modelo_urbano, type="simple")))
+
+```
+
+```{r}
+modelo_rural<-att_gt(
+  yname= "pct_selectiva", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(rural==1), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+modelo_urbano<-att_gt(
+  yname= "pct_selectiva", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(rural==0), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+modelo_nocosta<-att_gt(
+  yname= "pct_selectiva", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(zona_costera==0), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+modelo_costa<-att_gt(
+  yname= "pct_selectiva", 
+  tname="year", 
+  idname="codigo_municipio", 
+  gname="anyo_inicio_pap", 
+  data= df %>% filter(zona_costera==1), 
+  panel=T,
+  control_group = "notyettreated", 
+  bstrap = T, 
+  biters=100, 
+  cband=T
+)
+
+
+
+
+
+modelsummary(models= list("costa"=aggte(modelo_costa, "simple"), "no costa"=aggte(modelo_nocosta, type="simple"), "rural"=aggte(modelo_rural, type="simple"), "urbano"=aggte(modelo_urbano, type="simple")))
+
+```
+
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+# Robustez y limitaciones
+
+Incluya, si tiene tiempo, alguna comprobación de robustez o discusión sobre las principales limitaciones del análisis.
+
+Algunas posibilidades:
+
+- comparar distintos estimadores;
+- analizar ventanas temporales alternativas;
+- excluir municipios extremos;
+- comprobar tendencias previas;
+- usar errores estándar agrupados por municipio;
+- discutir posibles sesgos de selección en la adopción del PaP;
+- discutir si el tratamiento puede estar correlacionado con otras políticas ambientales.
+
+```{r}
+# Escriba aquí su código, si procede
+```
+
+### Comentario final
+
+Escriba aquí sus principales conclusiones y limitaciones.
+
+# Guía rápida para entregar
+
+Antes de finalizar, compruebe que su informe contiene:
+
+- importación y fusión de datos;
+- limpieza básica;
+- variables de tratamiento;
+- descriptivos y gráficos;
+- al menos una estimación causal;
+- interpretación de resultados;
+- discusión de supuestos y limitaciones.

@@ -1,0 +1,282 @@
+---
+title: "Examen practico - RDD - Beneficios fiscales I+D+i"
+format:
+  html:
+    toc: true
+    number-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r datos-sinteticos}
+# Primer chunk: genera datos sinteticos para el examen
+set.seed(20260510)
+options(scipen = 999)
+
+# Inspiracion: AIReF, Spending Review de Beneficios Fiscales, que combina
+# Diff-in-Diff, regresiones en discontinuidad y microsimuladores fiscales.
+# El ejercicio simula una deduccion fiscal por I+D+i con un umbral de elegibilidad.
+
+n <- 3500
+empresas <- data.frame(
+  id_empresa = sprintf("E%05d", 1:n),
+  sector = sample(c("Industria", "TIC", "Servicios", "Comercio"), n, TRUE, c(.30,.22,.28,.20)),
+  ccaa = sample(c("Andalucia", "Cataluna", "Madrid", "Valencia", "Pais Vasco", "Galicia"), n, TRUE),
+  empleados_2020 = round(exp(rnorm(n, log(45), .85))),
+  facturacion_2020_miles = round(exp(rnorm(n, log(3500), .9)), 1),
+  intensidad_idi = pmax(0, pmin(.20, rnorm(n, .050, .035)))
+)
+# Outliers intencionados
+empresas$empleados_2020[sample(n,1)] <- 99999
+empresas$facturacion_2020_miles[sample(n,1)] <- -25
+
+# Umbral de elegibilidad: intensidad de gasto en I+D+i >= 5% de la facturacion
+empresas$running <- empresas$intensidad_idi - .05
+empresas$elegible <- as.integer(empresas$running >= 0)
+
+anios <- 2019:2023
+panel <- merge(empresas, data.frame(anio = anios))
+panel$post <- as.integer(panel$anio >= 2021)
+panel$deduccion_miles <- ifelse(panel$elegible == 1 & panel$post == 1,
+                                pmax(0, 25 + 1400*panel$running + rnorm(nrow(panel), 0, 18)), 0)
+sector_eff <- setNames(c(5,12,0,-3), c("Industria","TIC","Servicios","Comercio"))
+trend <- (panel$anio - 2019) * 3
+trat_effect <- ifelse(panel$elegible == 1 & panel$post == 1, 9 + 2*(panel$anio-2021), 0)
+panel$gasto_idi_miles <- 80 + 0.012*panel$facturacion_2020_miles +
+  0.18*panel$empleados_2020 + sector_eff[panel$sector] + trend + trat_effect +
+  45*panel$running + rnorm(nrow(panel), 0, 22)
+panel$gasto_idi_miles <- pmax(0, panel$gasto_idi_miles)
+panel$empleo <- round(pmax(1, panel$empleados_2020 + (panel$anio-2020)*rnorm(nrow(panel), 1.2, .6) +
+                            ifelse(panel$elegible == 1 & panel$post == 1, 1.5, 0)))
+
+if (!dir.exists("datos")) dir.create("datos")
+write.csv(empresas, "datos/empresas_idi.csv", row.names = FALSE)
+write.csv(panel, "datos/panel_idi.csv", row.names = FALSE)
+
+cat("Se han creado datos/empresas_idi.csv y datos/panel_idi.csv\n")
+```
+
+# Contexto
+
+Este examen simula una evaluacion inspirada en el Spending Review de beneficios fiscales de AIReF. La politica evaluada es una deduccion fiscal para empresas con intensidad de gasto en I+D+i igual o superior al 5% de la facturacion. El objetivo es valorar si el umbral de elegibilidad genera un aumento causal del gasto en I+D+i.
+
+Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, pero no utilizar IA.
+
+# Bloque 1: preparacion y data wrangling (12 puntos)
+
+a. Importe `datos/empresas_idi.csv` y `datos/panel_idi.csv`. Compruebe tipos de variables, dimensiones y claves de identificacion. Detecte valores atipicos en empleados y facturacion. Proponga e implemente una imputacion razonable.
+
+
+```{r}
+library(tidyverse)
+theme_set(theme_minimal()+
+            theme(axis.line = element_line(color="black"),
+                  axis.ticks = element_line(color="black"), 
+                  panel.grid.major.y = element_line(color="grey70"))
+          )
+datos<-"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos/"
+
+df_empresa<-read.csv(paste0(datos, "empresas_idi.csv"))
+df_panel<-read.csv(paste0(datos, "panel_idi.csv"))
+
+summary(df_empresa)
+
+quantile(df_panel$empleados_2020, probs= c(seq(0,.9, by=.1),seq(.91, 1, by=.01)) )
+quantile(df_panel$facturacion_2020_miles, probs= c(seq(0,.9, by=.1),seq(.91, 1, by=.01)) )
+quantile(df_panel$gasto_idi_miles, probs= c(seq(0,.9, by=.1),seq(.91, 1, by=.01)) )
+
+colSums(is.na(df_panel))
+
+df_panel<- df_panel %>% 
+  mutate(empleados_2020= ifelse(empleados_2020>quantile(df_panel$empleados_2020,.9998), median(empleados_2020), empleados_2020),
+         empleo= ifelse(empleo>quantile(df_panel$empleo,.9997), median(empleo), empleo),
+         gasto_idi_miles= ifelse(gasto_idi_miles>1100, 1100, gasto_idi_miles)
+         )
+
+
+
+```
+
+b. Construya las variables `running`, `elegible`, `post`, `tratamiento` y una variable de distancia al umbral en puntos porcentuales. Compruebe que coinciden con la definicion de la politica.
+
+```{r}
+df_panel<-df_panel %>% 
+  mutate(running= intensidad_idi-0.05, 
+         elegible= ifelse(running>=0, 1, 0), 
+         post= ifelse(anio>=2021, 1, 0), 
+         tratamiento= elegible*post)
+
+```
+
+
+c. Para 2021, calcule por sector el porcentaje de empresas elegibles, la deduccion media y el gasto medio en I+D+i.
+
+```{r}
+df_panel %>% 
+  filter(anio==2021) %>% 
+  group_by(sector) %>% 
+  summarise(deduccion_media=mean(deduccion_miles, na.rm=T), 
+            gasto_medio= mean(gasto_idi_miles,na.rm=T))
+```
+
+d. Restrinja una muestra de ventana local alrededor del umbral: |running| <= 0,03. Indique cuantas empresas quedan a cada lado del umbral y si la densidad parece razonablemente equilibrada.
+
+```{r}
+
+df_panel1<-df_panel %>% 
+  filter(running>=-0.03 & running <=0.03) 
+
+  df_panel1 %>% 
+    group_by(elegible=ifelse(elegible==1, "Derecha de umbral", "Izquierda de umbral")) %>% 
+  summarise(n=n())
+
+```
+
+
+# Bloque 2: descriptivos y graficos (10 puntos)
+
+a. Represente la relacion entre la variable de asignacion y el gasto en I+D+i en 2021. Use bins o medias por intervalos.
+
+```{r}
+
+df_panel1 %>% 
+  filter(anio==2021) %>% 
+  group_by(gasto_idi_miles= cut(gasto_idi_miles, breaks = seq(0, 1100, by=50))) %>% 
+  summarise(intensidad_idi=mean(intensidad_idi, na.rm=T)) %>%
+  ggplot(aes(gasto_idi_miles, intensidad_idi))+
+  geom_col()
+
+```
+
+
+b. Compare la evolucion 2019-2023 del gasto en I+D+i para empresas elegibles y no elegibles dentro de la ventana local.
+
+```{r}
+df_panel1 %>% 
+  group_by(elegible=factor(elegible), anio) %>% 
+  summarise(value=mean(gasto_idi_miles,na.rm=T)) %>% 
+  ggplot(aes(anio, value, color=elegible, group=elegible))+
+  geom_point()+
+  geom_line()+
+  geom_vline(xintercept = 2020, linetype="longdash")
+```
+
+c. Analice visualmente si hay discontinuidades en covariables predeterminadas: empleados y facturacion de 2020.
+
+```{r}
+df_panel1 %>% 
+  filter(anio==2020) %>% 
+  ggplot(aes(empleo))+
+  geom_density()+
+  geom_histogram()
+
+df_panel1 %>% 
+  filter(anio==2020) %>% 
+  ggplot(aes(facturacion_2020_miles))+
+  geom_histogram()
+
+rdplot(
+  y = df_panel1$empleados_2020[df_panel1$anio == 2020],
+  x = df_panel1$running[df_panel1$anio == 2020],
+  c = 0
+)
+
+summary(rdrobust(
+  y = df_panel1$empleados_2020[df_panel1$anio == 2020],
+  x = df_panel1$running[df_panel1$anio == 2020],
+  c = 0
+))
+
+```
+
+
+# Bloque 3: analisis causal RDD (8 puntos)
+
+a. Estime el impacto causal local de ser elegible sobre el gasto en I+D+i en 2021 mediante una regresion en discontinuidad lineal local. Use al menos dos especificaciones: con y sin controles.
+
+```{r}
+library(rdrobust)
+library(rddensity)
+
+df_panel2<-df_panel1
+
+df_elegible<-df_panel1 %>% 
+  filter(anio==2020) %>% 
+  transmute(id_empresa, running_2020=running)
+
+df_panel1<-left_join(df_panel1, df_elegible, by=c("id_empresa"))
+
+df_panel1 <-df_panel1 %>%
+  filter(anio==2021) 
+  
+
+density_test<-rddensity::rddensity(X=df_panel1$running_2020,
+                     c=0)
+
+rddensity::rdplotdensity(density_test, X=df_panel1$running_2020)
+summary(density_test)
+```
+```{r}
+model<-rdrobust(y=df_panel1$gasto_idi_miles, 
+         x=df_panel1$running_2020, 
+         c=0)
+summary(model)
+
+rdplot(y=df_panel1$gasto_idi_miles, 
+         x=df_panel1$running_2020, 
+         c=0)
+
+
+model_covs<-rdrobust(y=df_panel1$gasto_idi_miles, 
+         x=df_panel1$running_2020, 
+         c=0,
+         covs = df_panel1 %>% select(empleo, facturacion_2020_miles))
+summary(model_covs)
+
+rdplot(y=df_panel1$gasto_idi_miles, 
+         x=df_panel1$running_2020, 
+         c=0,
+       covs = df_panel1 %>% select(empleo, facturacion_2020_miles))
+```
+
+
+b. Repita la estimacion con ventanas alternativas, por ejemplo 0,02 y 0,04. Comente robustez.
+
+```{r}
+df_panel2 <-df_panel %>% 
+  left_join(df_elegible, by="id_empresa") %>% 
+  filter(anio==2021, running_2020 >=-0.04 & running_2020<=0.04)
+
+modelo2<-rdrobust(y=df_panel2$gasto_idi_miles, 
+         x=df_panel2$running_2020, 
+         covs=df_panel2 %>% select(empleados_2020, facturacion_2020_miles),
+         c=0,
+         h=0.02)
+
+summary(modelo2)
+
+
+df_panel2 <-df_panel %>% 
+    left_join(df_elegible, by="id_empresa") %>%
+  filter(anio==2021, running_2020 >=-0.02 & running_2020<=0.02) 
+
+modelo2<-rdrobust(y=df_panel2$gasto_idi_miles, 
+         x=df_panel2$running_2020, 
+                  covs=df_panel2 %>% select(empleados_2020),
+         h=0.02,
+         c=0)
+
+summary(modelo2)
+
+
+```
+
+
+c. Interprete el coeficiente de elegibilidad. Indique supuestos clave del RDD y posibles amenazas a la validez.
+
+```{r}
+
+```
+

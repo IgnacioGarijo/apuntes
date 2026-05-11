@@ -217,6 +217,8 @@ En ese caso, el RDD identifica el efecto conjunto del paquete institucional, no 
 
 El tratamiento de una unidad no debería afectar al outcome de otra unidad cerca del cutoff.
 
+"El outcome potencial de una observación no debería depender del tratamiento asignado de otras"
+
 Ejemplo de posible violación:
 
 - una política municipal afecta a municipios vecinos;
@@ -238,7 +240,7 @@ Necesitas:
 
 No todo umbral genera un RDD creíble.
 
-Un RDD no es convincente si:
+Un RDD **no** es convincente si:
 
 - el cutoff se eligió después de ver outcomes;
 - las unidades pueden manipular con precisión la running variable;
@@ -338,7 +340,7 @@ Un análisis RDD aplicado debería seguir este orden:
 4. Graficar outcome contra running variable.
 5. Comprobar si el tratamiento cambia en el cutoff.
 6. Elegir sharp o fuzzy.
-7. Estimar especificación principal no paramétrica local.
+7. Estimar especificación principal no paramétrica local (reportar el coeficiente robusto y dejar que p=1 siempre)
 8. Revisar bandwidth elegido.
 9. Testear manipulación de la running variable.
 10. Comprobar continuidad de covariables predeterminadas.
@@ -528,7 +530,7 @@ El **bandwidth** determina qué observaciones se usan alrededor del cutoff.
 | Pequeño | Bajo | Alta | Poca potencia |
 | Grande | Alto | Baja | Mala forma funcional |
 
-Nunca deberías elegir bandwidth mirando qué especificación da significatividad. Lo correcto es usar un criterio data-driven y después mostrar sensibilidad.
+Nunca deberías elegir bandwidth mirando qué especificación da significatividad. Lo correcto es usar un criterio data-driven y después mostrar sensibilidad. Utilizar el mserd en general, es el óptimo
 
 ```{r}
 bw_sharp <- rdbwselect(
@@ -798,7 +800,7 @@ El signo del salto depende de si comparas derecha menos izquierda o defines el t
 
 # 28. Test de manipulación de la running variable
 
-Un supuesto clave es que no haya manipulación precisa de \(X\).
+Un supuesto clave es que no haya manipulación precisa de \(X\). Este test es como el McCrary pero más moderno
 
 ```{r}
 density_test <- rddensity(
@@ -811,9 +813,12 @@ summary(density_test)
 
 Interpretación:
 
-- Hipótesis nula: no hay discontinuidad en la densidad en el cutoff.
+- Hipótesis nula: no hay discontinuidad en la densidad en el cutoff (si p valor>0.05, no hay manipulación)
 - Si el p-valor es bajo, hay evidencia de sorting/manipulación.
 - Si no rechazas, no demuestras validez, pero reduces una preocupación importante.
+
+- Eff. number of observations: las que se usan realmente después de la ponderación
+- Abajo más tests con diferentes cutoffs
 
 ## 28.1. Gráfico de densidad
 
@@ -1142,6 +1147,11 @@ rd_fuzzy <- rdrobust(
 summary(rd_fuzzy)
 ```
 
+El first stage comprueba que pasar el cutoff aumenta la probabilidad de tratamiento, como p-valor<0.05 es que sí. 
+
+Interpretación final: para los individuos cuya participación en el tratamiento cambia por cruzar el cutoff, recibir el tratamiento incrementa el outcome en aproximadamente tau unidades.
+
+Order est. (p) dice el polinomio que se usa para ajustar, pero luego se corrige por Order bias (q) que suele ser p+1 porque podría generar sesgo hacer lineal. 
 Tabla:
 
 ```{r}
@@ -1916,3 +1926,4 @@ Para profundizar:
 - Calonico, Cattaneo, Farrell y Titiunik: bandwidths, cobertura y covariables.
 - Cattaneo, Jansson y Ma: manipulación de la running variable y `rddensity`.
 - Documentación de `rdrobust`, `rddensity` y `rdplot`.
+- https://rpubs.com/bebejar/1336111

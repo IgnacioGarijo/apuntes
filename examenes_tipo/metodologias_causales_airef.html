@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="ChatGPT">
+
+<title>Metodologías de inferencia causal en evaluaciones de AIReF</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="metodologias_causales_airef_files/libs/clipboard/clipboard.min.js"></script>
+<script src="metodologias_causales_airef_files/libs/quarto-html/quarto.js"></script>
+<script src="metodologias_causales_airef_files/libs/quarto-html/popper.min.js"></script>
+<script src="metodologias_causales_airef_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="metodologias_causales_airef_files/libs/quarto-html/anchor.min.js"></script>
+<link href="metodologias_causales_airef_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="metodologias_causales_airef_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="metodologias_causales_airef_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="metodologias_causales_airef_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="metodologias_causales_airef_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#objetivo" id="toc-objetivo" class="nav-link active" data-scroll-target="#objetivo">Objetivo</a></li>
+  <li><a href="#difference-in-differences-did" id="toc-difference-in-differences-did" class="nav-link" data-scroll-target="#difference-in-differences-did">Difference-in-Differences (DiD)</a>
+  <ul class="collapse">
+  <li><a href="#recogida-puerta-a-puerta-pap-de-residuos" id="toc-recogida-puerta-a-puerta-pap-de-residuos" class="nav-link" data-scroll-target="#recogida-puerta-a-puerta-pap-de-residuos">Recogida puerta a puerta (PaP) de residuos</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen" id="toc-ideas-tipo-examen" class="nav-link" data-scroll-target="#ideas-tipo-examen">Ideas tipo examen</a></li>
+  </ul></li>
+  <li><a href="#instrumentos-financieros-para-empresas-ico-financiación-pública" id="toc-instrumentos-financieros-para-empresas-ico-financiación-pública" class="nav-link" data-scroll-target="#instrumentos-financieros-para-empresas-ico-financiación-pública">Instrumentos financieros para empresas (ICO / financiación pública)</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-1" id="toc-ideas-tipo-examen-1" class="nav-link" data-scroll-target="#ideas-tipo-examen-1">Ideas tipo examen</a></li>
+  </ul></li>
+  <li><a href="#políticas-activas-de-empleo" id="toc-políticas-activas-de-empleo" class="nav-link" data-scroll-target="#políticas-activas-de-empleo">Políticas activas de empleo</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-2" id="toc-ideas-tipo-examen-2" class="nav-link" data-scroll-target="#ideas-tipo-examen-2">Ideas tipo examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#regression-discontinuity-design-rdd" id="toc-regression-discontinuity-design-rdd" class="nav-link" data-scroll-target="#regression-discontinuity-design-rdd">Regression Discontinuity Design (RDD)</a>
+  <ul class="collapse">
+  <li><a href="#beneficios-fiscales-y-umbrales-de-renta" id="toc-beneficios-fiscales-y-umbrales-de-renta" class="nav-link" data-scroll-target="#beneficios-fiscales-y-umbrales-de-renta">Beneficios fiscales y umbrales de renta</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-3" id="toc-ideas-tipo-examen-3" class="nav-link" data-scroll-target="#ideas-tipo-examen-3">Ideas tipo examen</a></li>
+  </ul></li>
+  <li><a href="#becas-y-ayudas-educativas" id="toc-becas-y-ayudas-educativas" class="nav-link" data-scroll-target="#becas-y-ayudas-educativas">Becas y ayudas educativas</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-4" id="toc-ideas-tipo-examen-4" class="nav-link" data-scroll-target="#ideas-tipo-examen-4">Ideas tipo examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#matching-propensity-score-matching-psm" id="toc-matching-propensity-score-matching-psm" class="nav-link" data-scroll-target="#matching-propensity-score-matching-psm">Matching / Propensity Score Matching (PSM)</a>
+  <ul class="collapse">
+  <li><a href="#programas-de-empleo-y-formación" id="toc-programas-de-empleo-y-formación" class="nav-link" data-scroll-target="#programas-de-empleo-y-formación">Programas de empleo y formación</a>
+  <ul class="collapse">
+  <li><a href="#variables-frecuentes" id="toc-variables-frecuentes" class="nav-link" data-scroll-target="#variables-frecuentes">Variables frecuentes</a></li>
+  <li><a href="#ideas-tipo-examen-5" id="toc-ideas-tipo-examen-5" class="nav-link" data-scroll-target="#ideas-tipo-examen-5">Ideas tipo examen</a></li>
+  </ul></li>
+  <li><a href="#programas-educativos-y-becas" id="toc-programas-educativos-y-becas" class="nav-link" data-scroll-target="#programas-educativos-y-becas">Programas educativos y becas</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-6" id="toc-ideas-tipo-examen-6" class="nav-link" data-scroll-target="#ideas-tipo-examen-6">Ideas tipo examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#synthetic-control" id="toc-synthetic-control" class="nav-link" data-scroll-target="#synthetic-control">Synthetic Control</a>
+  <ul class="collapse">
+  <li><a href="#evaluaciones-territoriales" id="toc-evaluaciones-territoriales" class="nav-link" data-scroll-target="#evaluaciones-territoriales">Evaluaciones territoriales</a>
+  <ul class="collapse">
+  <li><a href="#ideas-tipo-examen-7" id="toc-ideas-tipo-examen-7" class="nav-link" data-scroll-target="#ideas-tipo-examen-7">Ideas tipo examen</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#patrones-comunes-en-los-exámenes" id="toc-patrones-comunes-en-los-exámenes" class="nav-link" data-scroll-target="#patrones-comunes-en-los-exámenes">Patrones comunes en los exámenes</a>
+  <ul class="collapse">
+  <li><a href="#data-wrangling-importante" id="toc-data-wrangling-importante" class="nav-link" data-scroll-target="#data-wrangling-importante">1. Data wrangling importante</a></li>
+  <li><a href="#mucho-peso-en-visualización" id="toc-mucho-peso-en-visualización" class="nav-link" data-scroll-target="#mucho-peso-en-visualización">2. Mucho peso en visualización</a></li>
+  <li><a href="#interpretación-aplicada" id="toc-interpretación-aplicada" class="nav-link" data-scroll-target="#interpretación-aplicada">3. Interpretación aplicada</a></li>
+  <li><a href="#metodologías-más-probables" id="toc-metodologías-más-probables" class="nav-link" data-scroll-target="#metodologías-más-probables">4. Metodologías más probables</a></li>
+  </ul></li>
+  <li><a href="#conclusión" id="toc-conclusión" class="nav-link" data-scroll-target="#conclusión">Conclusión</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Metodologías de inferencia causal en evaluaciones de AIReF</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>ChatGPT </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="objetivo" class="level1">
+<h1>Objetivo</h1>
+<p>Este documento resume de forma breve algunas metodologías de inferencia causal utilizadas por la División de Evaluación del Gasto Público de AIReF en <em>Spending Reviews</em>, opiniones y estudios. El objetivo es identificar patrones y metodologías que potencialmente pueden aparecer en ejercicios prácticos de oposición.</p>
+<p>No pretende ser un inventario exhaustivo ni técnico, sino una guía rápida de orientación.</p>
+</section>
+<section id="difference-in-differences-did" class="level1">
+<h1>Difference-in-Differences (DiD)</h1>
+<section id="recogida-puerta-a-puerta-pap-de-residuos" class="level2">
+<h2 class="anchored" data-anchor-id="recogida-puerta-a-puerta-pap-de-residuos">Recogida puerta a puerta (PaP) de residuos</h2>
+<ul>
+<li>Evaluación del impacto de la implantación del sistema PaP sobre:
+<ul>
+<li>porcentaje de recogida selectiva;</li>
+<li>cantidad de residuos generados.</li>
+</ul></li>
+<li>Uso de datos panel municipio-año.</li>
+<li>Comparación entre municipios tratados y no tratados.</li>
+<li>Análisis dinámico tipo <em>event-study</em>.</li>
+</ul>
+<section id="ideas-tipo-examen" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen">Ideas tipo examen</h3>
+<ul>
+<li>Construcción de variable tratamiento.</li>
+<li>Staggered adoption.</li>
+<li>FE municipio y año.</li>
+<li>Heterogeneidad por tamaño municipal.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="instrumentos-financieros-para-empresas-ico-financiación-pública" class="level2">
+<h2 class="anchored" data-anchor-id="instrumentos-financieros-para-empresas-ico-financiación-pública">Instrumentos financieros para empresas (ICO / financiación pública)</h2>
+<ul>
+<li>Estudios y opiniones sobre programas de apoyo financiero a empresas.</li>
+<li>Uso de estrategias cuasi-experimentales comparando empresas beneficiarias y no beneficiarias.</li>
+<li>Resultados típicos:
+<ul>
+<li>empleo;</li>
+<li>supervivencia;</li>
+<li>inversión.</li>
+</ul></li>
+</ul>
+<section id="ideas-tipo-examen-1" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-1">Ideas tipo examen</h3>
+<ul>
+<li>Panel empresa-año.</li>
+<li>Tendencias paralelas.</li>
+<li>DiD con adopción escalonada.</li>
+<li>Placebos y gráficos pretratamiento.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="políticas-activas-de-empleo" class="level2">
+<h2 class="anchored" data-anchor-id="políticas-activas-de-empleo">Políticas activas de empleo</h2>
+<ul>
+<li>Evaluaciones sobre programas de inserción laboral y formación.</li>
+<li>Comparación entre participantes y grupos de control.</li>
+<li>Variables resultado:
+<ul>
+<li>empleo;</li>
+<li>salarios;</li>
+<li>duración del desempleo.</li>
+</ul></li>
+</ul>
+<section id="ideas-tipo-examen-2" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-2">Ideas tipo examen</h3>
+<ul>
+<li>DiD + matching.</li>
+<li>Efectos dinámicos.</li>
+<li>Heterogeneidad por edad o sexo.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="regression-discontinuity-design-rdd" class="level1">
+<h1>Regression Discontinuity Design (RDD)</h1>
+<section id="beneficios-fiscales-y-umbrales-de-renta" class="level2">
+<h2 class="anchored" data-anchor-id="beneficios-fiscales-y-umbrales-de-renta">Beneficios fiscales y umbrales de renta</h2>
+<ul>
+<li>Algunas evaluaciones de beneficios fiscales explotan reglas de elegibilidad basadas en umbrales.</li>
+<li>Comparación de individuos muy cercanos al punto de corte.</li>
+<li>Variables típicas:
+<ul>
+<li>renta;</li>
+<li>deducciones;</li>
+<li>acceso a ayudas.</li>
+</ul></li>
+</ul>
+<section id="ideas-tipo-examen-3" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-3">Ideas tipo examen</h3>
+<ul>
+<li>Manipulación del running variable.</li>
+<li>McCrary test.</li>
+<li>Local linear regression.</li>
+<li>Bandwidth selection.</li>
+<li>Gráficos alrededor del cutoff.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="becas-y-ayudas-educativas" class="level2">
+<h2 class="anchored" data-anchor-id="becas-y-ayudas-educativas">Becas y ayudas educativas</h2>
+<ul>
+<li>Evaluaciones basadas en notas mínimas o umbrales económicos.</li>
+<li>Comparación de estudiantes justo por encima y por debajo del umbral.</li>
+</ul>
+<section id="ideas-tipo-examen-4" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-4">Ideas tipo examen</h3>
+<ul>
+<li>Sharp vs fuzzy RDD.</li>
+<li>Balance covariables.</li>
+<li>Robustez a bandwidths.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="matching-propensity-score-matching-psm" class="level1">
+<h1>Matching / Propensity Score Matching (PSM)</h1>
+<section id="programas-de-empleo-y-formación" class="level2">
+<h2 class="anchored" data-anchor-id="programas-de-empleo-y-formación">Programas de empleo y formación</h2>
+<ul>
+<li>Comparación entre beneficiarios y no beneficiarios similares.</li>
+<li>Uso de:
+<ul>
+<li>Propensity Score Matching;</li>
+<li>nearest neighbors;</li>
+<li>weighting.</li>
+</ul></li>
+</ul>
+<section id="variables-frecuentes" class="level3">
+<h3 class="anchored" data-anchor-id="variables-frecuentes">Variables frecuentes</h3>
+<ul>
+<li>Edad.</li>
+<li>Sexo.</li>
+<li>Nivel educativo.</li>
+<li>Historial laboral.</li>
+<li>Región.</li>
+</ul>
+</section>
+<section id="ideas-tipo-examen-5" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-5">Ideas tipo examen</h3>
+<ul>
+<li>Estimación del propensity score.</li>
+<li>Balance de covariables.</li>
+<li>ATT.</li>
+<li>Love plots.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="programas-educativos-y-becas" class="level2">
+<h2 class="anchored" data-anchor-id="programas-educativos-y-becas">Programas educativos y becas</h2>
+<ul>
+<li>Evaluaciones de impacto sobre:
+<ul>
+<li>abandono;</li>
+<li>rendimiento;</li>
+<li>continuidad educativa.</li>
+</ul></li>
+</ul>
+<section id="ideas-tipo-examen-6" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-6">Ideas tipo examen</h3>
+<ul>
+<li>Matching exacto o por propensity score.</li>
+<li>Comparación antes/después del matching.</li>
+<li>Sensibilidad a especificación.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="synthetic-control" class="level1">
+<h1>Synthetic Control</h1>
+<section id="evaluaciones-territoriales" class="level2">
+<h2 class="anchored" data-anchor-id="evaluaciones-territoriales">Evaluaciones territoriales</h2>
+<ul>
+<li>Uso más ocasional.</li>
+<li>Aplicable cuando existe una intervención en una sola región o territorio.</li>
+<li>Construcción de una región sintética a partir de combinación ponderada de controles.</li>
+</ul>
+<section id="ideas-tipo-examen-7" class="level3">
+<h3 class="anchored" data-anchor-id="ideas-tipo-examen-7">Ideas tipo examen</h3>
+<ul>
+<li>Comparación visual tratado vs sintético.</li>
+<li>Placebos espaciales.</li>
+<li>RMSPE.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="patrones-comunes-en-los-exámenes" class="level1">
+<h1>Patrones comunes en los exámenes</h1>
+<section id="data-wrangling-importante" class="level2">
+<h2 class="anchored" data-anchor-id="data-wrangling-importante">1. Data wrangling importante</h2>
+<p>Casi todos los ejercicios incluyen:</p>
+<ul>
+<li>limpieza de datos;</li>
+<li>detección de outliers;</li>
+<li>imputaciones simples;</li>
+<li>merges;</li>
+<li>creación de variables;</li>
+<li>reshape o panelización.</li>
+</ul>
+</section>
+<section id="mucho-peso-en-visualización" class="level2">
+<h2 class="anchored" data-anchor-id="mucho-peso-en-visualización">2. Mucho peso en visualización</h2>
+<p>Suelen pedir:</p>
+<ul>
+<li>gráficos descriptivos;</li>
+<li>evolución temporal;</li>
+<li>validación visual de supuestos;</li>
+<li>gráficos de heterogeneidad.</li>
+</ul>
+</section>
+<section id="interpretación-aplicada" class="level2">
+<h2 class="anchored" data-anchor-id="interpretación-aplicada">3. Interpretación aplicada</h2>
+<p>El foco no suele estar en derivaciones matemáticas, sino en:</p>
+<ul>
+<li>justificar identificación causal;</li>
+<li>interpretar coeficientes;</li>
+<li>discutir limitaciones;</li>
+<li>conectar resultados con política pública.</li>
+</ul>
+</section>
+<section id="metodologías-más-probables" class="level2">
+<h2 class="anchored" data-anchor-id="metodologías-más-probables">4. Metodologías más probables</h2>
+<p>Las metodologías que más sentido tienen para un examen tipo AIReF son:</p>
+<ol type="1">
+<li>Difference-in-Differences.</li>
+<li>Event-study.</li>
+<li>Matching / PSM.</li>
+<li>RDD.</li>
+<li>Panel con efectos fijos.</li>
+</ol>
+<p>Synthetic control parece bastante menos probable por complejidad y tiempo.</p>
+</section>
+</section>
+<section id="conclusión" class="level1">
+<h1>Conclusión</h1>
+<p>La orientación típica de los ejercicios de AIReF combina:</p>
+<ul>
+<li>preparación de datos;</li>
+<li>visualización;</li>
+<li>identificación causal;</li>
+<li>interpretación aplicada.</li>
+</ul>
+<p>El patrón más repetido parece ser:</p>
+<blockquote class="blockquote">
+<p>datos panel + política pública + tratamiento escalonado + estimación causal + heterogeneidad.</p>
+</blockquote>
+<p>Por tanto, para preparar el examen merece especialmente la pena practicar:</p>
+<ul>
+<li>DiD con panel;</li>
+<li>event-study;</li>
+<li>matching;</li>
+<li>RDD básico;</li>
+<li>limpieza y transformación rápida de datos en R.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

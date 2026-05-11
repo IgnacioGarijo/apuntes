@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Examen practico - RDD - Beneficios fiscales I+D+i</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="examen_rdd_files/libs/clipboard/clipboard.min.js"></script>
+<script src="examen_rdd_files/libs/quarto-html/quarto.js"></script>
+<script src="examen_rdd_files/libs/quarto-html/popper.min.js"></script>
+<script src="examen_rdd_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="examen_rdd_files/libs/quarto-html/anchor.min.js"></script>
+<link href="examen_rdd_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="examen_rdd_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="examen_rdd_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="examen_rdd_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="examen_rdd_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#contexto" id="toc-contexto" class="nav-link active" data-scroll-target="#contexto"><span class="header-section-number">1</span> Contexto</a></li>
+  <li><a href="#bloque-1-preparacion-y-data-wrangling-12-puntos" id="toc-bloque-1-preparacion-y-data-wrangling-12-puntos" class="nav-link" data-scroll-target="#bloque-1-preparacion-y-data-wrangling-12-puntos"><span class="header-section-number">2</span> Bloque 1: preparacion y data wrangling (12 puntos)</a></li>
+  <li><a href="#bloque-2-descriptivos-y-graficos-10-puntos" id="toc-bloque-2-descriptivos-y-graficos-10-puntos" class="nav-link" data-scroll-target="#bloque-2-descriptivos-y-graficos-10-puntos"><span class="header-section-number">3</span> Bloque 2: descriptivos y graficos (10 puntos)</a></li>
+  <li><a href="#bloque-3-analisis-causal-rdd-8-puntos" id="toc-bloque-3-analisis-causal-rdd-8-puntos" class="nav-link" data-scroll-target="#bloque-3-analisis-causal-rdd-8-puntos"><span class="header-section-number">4</span> Bloque 3: analisis causal RDD (8 puntos)</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Examen practico - RDD - Beneficios fiscales I+D+i</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Primer chunk: genera datos sinteticos para el examen</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">20260510</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspiracion: AIReF, Spending Review de Beneficios Fiscales, que combina</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Diff-in-Diff, regresiones en discontinuidad y microsimuladores fiscales.</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># El ejercicio simula una deduccion fiscal por I+D+i con un umbral de elegibilidad.</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">3500</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>empresas <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">id_empresa =</span> <span class="fu">sprintf</span>(<span class="st">"E%05d"</span>, <span class="dv">1</span><span class="sc">:</span>n),</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">sector =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"Industria"</span>, <span class="st">"TIC"</span>, <span class="st">"Servicios"</span>, <span class="st">"Comercio"</span>), n, <span class="cn">TRUE</span>, <span class="fu">c</span>(.<span class="dv">30</span>,.<span class="dv">22</span>,.<span class="dv">28</span>,.<span class="dv">20</span>)),</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">ccaa =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">"Andalucia"</span>, <span class="st">"Cataluna"</span>, <span class="st">"Madrid"</span>, <span class="st">"Valencia"</span>, <span class="st">"Pais Vasco"</span>, <span class="st">"Galicia"</span>), n, <span class="cn">TRUE</span>),</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">empleados_2020 =</span> <span class="fu">round</span>(<span class="fu">exp</span>(<span class="fu">rnorm</span>(n, <span class="fu">log</span>(<span class="dv">45</span>), .<span class="dv">85</span>))),</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">facturacion_2020_miles =</span> <span class="fu">round</span>(<span class="fu">exp</span>(<span class="fu">rnorm</span>(n, <span class="fu">log</span>(<span class="dv">3500</span>), .<span class="dv">9</span>)), <span class="dv">1</span>),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">intensidad_idi =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="fu">pmin</span>(.<span class="dv">20</span>, <span class="fu">rnorm</span>(n, .<span class="dv">050</span>, .<span class="dv">035</span>)))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Outliers intencionados</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>empresas<span class="sc">$</span>empleados_2020[<span class="fu">sample</span>(n,<span class="dv">1</span>)] <span class="ot">&lt;-</span> <span class="dv">99999</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>empresas<span class="sc">$</span>facturacion_2020_miles[<span class="fu">sample</span>(n,<span class="dv">1</span>)] <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">25</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Umbral de elegibilidad: intensidad de gasto en I+D+i &gt;= 5% de la facturacion</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>empresas<span class="sc">$</span>running <span class="ot">&lt;-</span> empresas<span class="sc">$</span>intensidad_idi <span class="sc">-</span> .<span class="dv">05</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>empresas<span class="sc">$</span>elegible <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(empresas<span class="sc">$</span>running <span class="sc">&gt;=</span> <span class="dv">0</span>)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>anios <span class="ot">&lt;-</span> <span class="dv">2019</span><span class="sc">:</span><span class="dv">2023</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>panel <span class="ot">&lt;-</span> <span class="fu">merge</span>(empresas, <span class="fu">data.frame</span>(<span class="at">anio =</span> anios))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>post <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(panel<span class="sc">$</span>anio <span class="sc">&gt;=</span> <span class="dv">2021</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>deduccion_miles <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(panel<span class="sc">$</span>elegible <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> panel<span class="sc">$</span>post <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">pmax</span>(<span class="dv">0</span>, <span class="dv">25</span> <span class="sc">+</span> <span class="dv">1400</span><span class="sc">*</span>panel<span class="sc">$</span>running <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel), <span class="dv">0</span>, <span class="dv">18</span>)), <span class="dv">0</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>sector_eff <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">12</span>,<span class="dv">0</span>,<span class="sc">-</span><span class="dv">3</span>), <span class="fu">c</span>(<span class="st">"Industria"</span>,<span class="st">"TIC"</span>,<span class="st">"Servicios"</span>,<span class="st">"Comercio"</span>))</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>trend <span class="ot">&lt;-</span> (panel<span class="sc">$</span>anio <span class="sc">-</span> <span class="dv">2019</span>) <span class="sc">*</span> <span class="dv">3</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>trat_effect <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(panel<span class="sc">$</span>elegible <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> panel<span class="sc">$</span>post <span class="sc">==</span> <span class="dv">1</span>, <span class="dv">9</span> <span class="sc">+</span> <span class="dv">2</span><span class="sc">*</span>(panel<span class="sc">$</span>anio<span class="dv">-2021</span>), <span class="dv">0</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>gasto_idi_miles <span class="ot">&lt;-</span> <span class="dv">80</span> <span class="sc">+</span> <span class="fl">0.012</span><span class="sc">*</span>panel<span class="sc">$</span>facturacion_2020_miles <span class="sc">+</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  <span class="fl">0.18</span><span class="sc">*</span>panel<span class="sc">$</span>empleados_2020 <span class="sc">+</span> sector_eff[panel<span class="sc">$</span>sector] <span class="sc">+</span> trend <span class="sc">+</span> trat_effect <span class="sc">+</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="dv">45</span><span class="sc">*</span>panel<span class="sc">$</span>running <span class="sc">+</span> <span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel), <span class="dv">0</span>, <span class="dv">22</span>)</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>gasto_idi_miles <span class="ot">&lt;-</span> <span class="fu">pmax</span>(<span class="dv">0</span>, panel<span class="sc">$</span>gasto_idi_miles)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>panel<span class="sc">$</span>empleo <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">pmax</span>(<span class="dv">1</span>, panel<span class="sc">$</span>empleados_2020 <span class="sc">+</span> (panel<span class="sc">$</span>anio<span class="dv">-2020</span>)<span class="sc">*</span><span class="fu">rnorm</span>(<span class="fu">nrow</span>(panel), <span class="fl">1.2</span>, .<span class="dv">6</span>) <span class="sc">+</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">ifelse</span>(panel<span class="sc">$</span>elegible <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> panel<span class="sc">$</span>post <span class="sc">==</span> <span class="dv">1</span>, <span class="fl">1.5</span>, <span class="dv">0</span>)))</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="st">"datos"</span>)) <span class="fu">dir.create</span>(<span class="st">"datos"</span>)</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(empresas, <span class="st">"datos/empresas_idi.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(panel, <span class="st">"datos/panel_idi.csv"</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Se han creado datos/empresas_idi.csv y datos/panel_idi.csv</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Se han creado datos/empresas_idi.csv y datos/panel_idi.csv</code></pre>
+</div>
+</div>
+<section id="contexto" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Contexto</h1>
+<p>Este examen simula una evaluacion inspirada en el Spending Review de beneficios fiscales de AIReF. La politica evaluada es una deduccion fiscal para empresas con intensidad de gasto en I+D+i igual o superior al 5% de la facturacion. El objetivo es valorar si el umbral de elegibilidad genera un aumento causal del gasto en I+D+i.</p>
+<p>Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, pero no utilizar IA.</p>
+</section>
+<section id="bloque-1-preparacion-y-data-wrangling-12-puntos" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Bloque 1: preparacion y data wrangling (12 puntos)</h1>
+<ol type="a">
+<li>Importe <code>datos/empresas_idi.csv</code> y <code>datos/panel_idi.csv</code>. Compruebe tipos de variables, dimensiones y claves de identificacion. Detecte valores atipicos en empleados y facturacion. Proponga e implemente una imputacion razonable.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>()<span class="sc">+</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            <span class="fu">theme</span>(<span class="at">axis.line =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>),</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.ticks =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>), </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"grey70"</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>datos<span class="ot">&lt;-</span><span class="st">"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos/"</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>df_empresa<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"empresas_idi.csv"</span>))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>df_panel<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"panel_idi.csv"</span>))</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df_empresa)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  id_empresa           sector              ccaa           empleados_2020   
+ Length:3500        Length:3500        Length:3500        Min.   :    3.0  
+ Class :character   Class :character   Class :character   1st Qu.:   25.0  
+ Mode  :character   Mode  :character   Mode  :character   Median :   45.0  
+                                                          Mean   :   94.6  
+                                                          3rd Qu.:   81.0  
+                                                          Max.   :99999.0  
+ facturacion_2020_miles intensidad_idi       running              elegible     
+ Min.   :  -25          Min.   :0.00000   Min.   :-0.0500000   Min.   :0.0000  
+ 1st Qu.: 1987          1st Qu.:0.02720   1st Qu.:-0.0227981   1st Qu.:0.0000  
+ Median : 3664          Median :0.04961   Median :-0.0003942   Median :0.0000  
+ Mean   : 5403          Mean   :0.05142   Mean   : 0.0014208   Mean   :0.4943  
+ 3rd Qu.: 6669          3rd Qu.:0.07355   3rd Qu.: 0.0235460   3rd Qu.:1.0000  
+ Max.   :74358          Max.   :0.17553   Max.   : 0.1255345   Max.   :1.0000  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(df_panel<span class="sc">$</span>empleados_2020, <span class="at">probs=</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">9</span>, <span class="at">by=</span>.<span class="dv">1</span>),<span class="fu">seq</span>(.<span class="dv">91</span>, <span class="dv">1</span>, <span class="at">by=</span>.<span class="dv">01</span>)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      10%      20%      30%      40%      50%      60%      70% 
+    3.00    15.00    22.00    29.00    36.00    45.00    56.00    72.30 
+     80%      90%      91%      92%      93%      94%      95%      96% 
+   95.00   138.00   147.00   154.00   164.00   175.00   187.05   206.00 
+     97%      98%      99%     100% 
+  227.00   258.02   327.05 99999.00 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(df_panel<span class="sc">$</span>facturacion_2020_miles, <span class="at">probs=</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">9</span>, <span class="at">by=</span>.<span class="dv">1</span>),<span class="fu">seq</span>(.<span class="dv">91</span>, <span class="dv">1</span>, <span class="at">by=</span>.<span class="dv">01</span>)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      0%      10%      20%      30%      40%      50%      60%      70% 
+  -25.00  1159.80  1714.26  2276.71  2918.40  3664.15  4616.50  5820.26 
+     80%      90%      91%      92%      93%      94%      95%      96% 
+ 7699.76 11144.75 11913.16 12640.87 13454.43 14222.35 15119.00 16922.58 
+     97%      98%      99%     100% 
+19331.91 22150.95 29368.35 74357.60 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(df_panel<span class="sc">$</span>gasto_idi_miles, <span class="at">probs=</span> <span class="fu">c</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">9</span>, <span class="at">by=</span>.<span class="dv">1</span>),<span class="fu">seq</span>(.<span class="dv">91</span>, <span class="dv">1</span>, <span class="at">by=</span>.<span class="dv">01</span>)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         0%         10%         20%         30%         40%         50% 
+   31.28176   104.77672   119.22971   131.18986   142.41380   153.37530 
+        60%         70%         80%         90%         91%         92% 
+  166.04786   181.63818   205.21779   246.54365   253.67375   262.10188 
+        93%         94%         95%         96%         97%         98% 
+  272.03837   283.52299   297.52695   314.85946   340.49769   381.31366 
+        99%        100% 
+  461.00784 18154.91219 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">is.na</span>(df_panel))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            id_empresa                 sector                   ccaa 
+                     0                      0                      0 
+        empleados_2020 facturacion_2020_miles         intensidad_idi 
+                     0                      0                      0 
+               running               elegible                   anio 
+                     0                      0                      0 
+                  post        deduccion_miles        gasto_idi_miles 
+                     0                      0                      0 
+                empleo 
+                     0 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>df_panel<span class="ot">&lt;-</span> df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">empleados_2020=</span> <span class="fu">ifelse</span>(empleados_2020<span class="sc">&gt;</span><span class="fu">quantile</span>(df_panel<span class="sc">$</span>empleados_2020,.<span class="dv">9998</span>), <span class="fu">median</span>(empleados_2020), empleados_2020),</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">empleo=</span> <span class="fu">ifelse</span>(empleo<span class="sc">&gt;</span><span class="fu">quantile</span>(df_panel<span class="sc">$</span>empleo,.<span class="dv">9997</span>), <span class="fu">median</span>(empleo), empleo),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">gasto_idi_miles=</span> <span class="fu">ifelse</span>(gasto_idi_miles<span class="sc">&gt;</span><span class="dv">1100</span>, <span class="dv">1100</span>, gasto_idi_miles)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>         )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ol start="2" type="a">
+<li>Construya las variables <code>running</code>, <code>elegible</code>, <code>post</code>, <code>tratamiento</code> y una variable de distancia al umbral en puntos porcentuales. Compruebe que coinciden con la definicion de la politica.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>df_panel<span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">running=</span> intensidad_idi<span class="fl">-0.05</span>, </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">elegible=</span> <span class="fu">ifelse</span>(running<span class="sc">&gt;=</span><span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>), </span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">post=</span> <span class="fu">ifelse</span>(anio<span class="sc">&gt;=</span><span class="dv">2021</span>, <span class="dv">1</span>, <span class="dv">0</span>), </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">tratamiento=</span> elegible<span class="sc">*</span>post)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ol start="3" type="a">
+<li>Para 2021, calcule por sector el porcentaje de empresas elegibles, la deduccion media y el gasto medio en I+D+i.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(sector) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">deduccion_media=</span><span class="fu">mean</span>(deduccion_miles, <span class="at">na.rm=</span>T), </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">gasto_medio=</span> <span class="fu">mean</span>(gasto_idi_miles,<span class="at">na.rm=</span>T))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 4 × 3
+  sector    deduccion_media gasto_medio
+  &lt;chr&gt;               &lt;dbl&gt;       &lt;dbl&gt;
+1 Comercio             32.1        164.
+2 Industria            30.7        173.
+3 Servicios            33.7        168.
+4 TIC                  33.1        179.</code></pre>
+</div>
+</div>
+<ol start="4" type="a">
+<li>Restrinja una muestra de ventana local alrededor del umbral: |running| &lt;= 0,03. Indique cuantas empresas quedan a cada lado del umbral y si la densidad parece razonablemente equilibrada.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df_panel1<span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(running<span class="sc">&gt;=-</span><span class="fl">0.03</span> <span class="sc">&amp;</span> running <span class="sc">&lt;=</span><span class="fl">0.03</span>) </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(<span class="at">elegible=</span><span class="fu">ifelse</span>(elegible<span class="sc">==</span><span class="dv">1</span>, <span class="st">"Derecha de umbral"</span>, <span class="st">"Izquierda de umbral"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n=</span><span class="fu">n</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 2
+  elegible                n
+  &lt;chr&gt;               &lt;int&gt;
+1 Derecha de umbral    5135
+2 Izquierda de umbral  5515</code></pre>
+</div>
+</div>
+</section>
+<section id="bloque-2-descriptivos-y-graficos-10-puntos" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Bloque 2: descriptivos y graficos (10 puntos)</h1>
+<ol type="a">
+<li>Represente la relacion entre la variable de asignacion y el gasto en I+D+i en 2021. Use bins o medias por intervalos.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">gasto_idi_miles=</span> <span class="fu">cut</span>(gasto_idi_miles, <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1100</span>, <span class="at">by=</span><span class="dv">50</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">intensidad_idi=</span><span class="fu">mean</span>(intensidad_idi, <span class="at">na.rm=</span>T)) <span class="sc">%&gt;%</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(gasto_idi_miles, intensidad_idi))<span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<ol start="2" type="a">
+<li>Compare la evolucion 2019-2023 del gasto en I+D+i para empresas elegibles y no elegibles dentro de la ventana local.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="at">elegible=</span><span class="fu">factor</span>(elegible), anio) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">value=</span><span class="fu">mean</span>(gasto_idi_miles,<span class="at">na.rm=</span>T)) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(anio, value, <span class="at">color=</span>elegible, <span class="at">group=</span>elegible))<span class="sc">+</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()<span class="sc">+</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()<span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">2020</span>, <span class="at">linetype=</span><span class="st">"longdash"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<ol start="3" type="a">
+<li>Analice visualmente si hay discontinuidades en covariables predeterminadas: empleados y facturacion de 2020.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(empleo))<span class="sc">+</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>()<span class="sc">+</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(facturacion_2020_miles))<span class="sc">+</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="bloque-3-analisis-causal-rdd-8-puntos" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Bloque 3: analisis causal RDD (8 puntos)</h1>
+<ol type="a">
+<li>Estime el impacto causal local de ser elegible sobre el gasto en I+D+i en 2021 mediante una regresion en discontinuidad lineal local. Use al menos dos especificaciones: con y sin controles.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rdrobust)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rddensity)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>df_panel2<span class="ot">&lt;-</span>df_panel1</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>df_elegible<span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(id_empresa, <span class="at">running_2020=</span>running)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>df_panel1<span class="ot">&lt;-</span><span class="fu">left_join</span>(df_panel1, df_elegible, <span class="at">by=</span><span class="fu">c</span>(<span class="st">"id_empresa"</span>))</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>) </span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>density_test<span class="ot">&lt;-</span>rddensity<span class="sc">::</span><span class="fu">rddensity</span>(<span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020,</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>rddensity<span class="sc">::</span><span class="fu">rdplotdensity</span>(density_test, <span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$Estl
+Call: lpdensity
+
+Sample size                                      1103
+Polynomial order for point estimation    (p=)    2
+Order of derivative estimated            (v=)    1
+Polynomial order for confidence interval (q=)    3
+Kernel function                                  triangular
+Scaling factor                                   0.518083607327384
+Bandwidth method                                 user provided
+
+Use summary(...) to show estimates.
+
+$Estr
+Call: lpdensity
+
+Sample size                                      1027
+Polynomial order for point estimation    (p=)    2
+Order of derivative estimated            (v=)    1
+Polynomial order for confidence interval (q=)    3
+Kernel function                                  triangular
+Scaling factor                                   0.482386096759042
+Bandwidth method                                 user provided
+
+Use summary(...) to show estimates.
+
+$Estplot</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(density_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Manipulation testing using local polynomial density estimation.
+
+Number of obs =       2130
+Model =               unrestricted
+Kernel =              triangular
+BW method =           estimated
+VCE method =          jackknife
+
+c = 0                 Left of c           Right of c          
+Number of obs         1103                1027                
+Eff. Number of obs    430                 459                 
+Order est. (p)        2                   2                   
+Order bias (q)        3                   3                   
+BW est. (h)           0.01                0.012               
+
+Method                T                   P &gt; |T|             
+Robust                -1.1137             0.2654              
+
+
+P-values of binomial tests (H0: p=0.5).
+
+Window Length / 2          &lt;c     &gt;=c    P&gt;|T|
+0.001                      28      20    0.3123
+0.001                      58      47    0.3291
+0.002                      82      63    0.1347
+0.002                      99      85    0.3379
+0.003                     117     106    0.5032
+0.003                     136     128    0.6667
+0.004                     159     149    0.6081
+0.004                     184     178    0.7928
+0.005                     205     206    1.0000
+0.005                     232     228    0.8888</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sharp RD estimates using local polynomial regression.
+
+Number of Obs.                 2130
+BW type                       mserd
+Kernel                   Triangular
+VCE method                       NN
+
+Number of Obs.                 1103         1027
+Eff. Number of Obs.             408          381
+Order est. (p)                    1            1
+Order bias  (q)                   2            2
+BW est. (h)                   0.009        0.009
+BW bias (b)                   0.014        0.014
+rho (h/b)                     0.687        0.687
+Unique Obs.                    1103         1027
+
+=====================================================================
+                   Point    Robust Inference
+                Estimate         z     P&gt;|z|      [ 95% C.I. ]       
+---------------------------------------------------------------------
+     RD Effect     5.150     0.288     0.773   [-24.727 , 33.259]    
+=====================================================================</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rdplot</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<ol start="2" type="a">
+<li>Repita la estimacion con ventanas alternativas, por ejemplo 0,02 y 0,04. Comente robustez.</li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.04</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.04</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sharp RD estimates using local polynomial regression.
+
+Number of Obs.                 2130
+BW type                       mserd
+Kernel                   Triangular
+VCE method                       NN
+
+Number of Obs.                 1103         1027
+Eff. Number of Obs.             408          381
+Order est. (p)                    1            1
+Order bias  (q)                   2            2
+BW est. (h)                   0.009        0.009
+BW bias (b)                   0.014        0.014
+rho (h/b)                     0.687        0.687
+Unique Obs.                    1103         1027
+
+=====================================================================
+                   Point    Robust Inference
+                Estimate         z     P&gt;|z|      [ 95% C.I. ]       
+---------------------------------------------------------------------
+     RD Effect     5.150     0.288     0.773   [-24.727 , 33.259]    
+=====================================================================</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.02</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.02</span>)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sharp RD estimates using local polynomial regression.
+
+Number of Obs.                 1548
+BW type                       mserd
+Kernel                   Triangular
+VCE method                       NN
+
+Number of Obs.                  795          753
+Eff. Number of Obs.             260          257
+Order est. (p)                    1            1
+Order bias  (q)                   2            2
+BW est. (h)                   0.006        0.006
+BW bias (b)                   0.009        0.009
+rho (h/b)                     0.703        0.703
+Unique Obs.                     795          753
+
+=====================================================================
+                   Point    Robust Inference
+                Estimate         z     P&gt;|z|      [ 95% C.I. ]       
+---------------------------------------------------------------------
+     RD Effect     3.572     0.106     0.915   [-34.010 , 37.915]    
+=====================================================================</code></pre>
+</div>
+</div>
+<ol start="3" type="a">
+<li>Interprete el coeficiente de elegibilidad. Indique supuestos clave del RDD y posibles amenazas a la validez.</li>
+</ol>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
