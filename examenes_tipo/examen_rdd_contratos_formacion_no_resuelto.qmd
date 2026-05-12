@@ -1,0 +1,381 @@
+---
+title: "Examen RDD: incentivos a la conversión de contratos de formación en indefinidos"
+subtitle: "Inspirado en la evaluación de AIReF sobre incentivos a la contratación y al trabajo autónomo"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# Contexto
+
+Este ejercicio está inspirado en la evaluación de AIReF sobre **incentivos a la contratación y al trabajo autónomo**, en particular el análisis de los **incentivos a la conversión de contratos de formación y aprendizaje en contratos indefinidos**.
+
+En ese estudio, AIReF utilizó una metodología de **regresión en discontinuidad** para evaluar el impacto del incremento de los incentivos introducido en febrero de 2012 sobre la tasa de conversión en indefinido de contratos de formación. La lógica del diseño es comparar contratos cuya oportunidad de conversión se sitúa justo antes y justo después del cambio normativo.
+
+En este examen se usan datos sintéticos, pero la estructura intenta reproducir un caso plausible:
+
+- contratos de formación iniciados antes de la reforma;
+- fecha de finalización prevista del contrato;
+- conversión o no en contrato indefinido;
+- características del trabajador, de la empresa y del contrato;
+- punto de corte temporal en febrero de 2012.
+
+# 0. Paquetes y generación de datos sintéticos
+
+```{r}
+# install.packages(c(
+#   "tidyverse", "janitor", "lubridate", "stringr",
+#   "rdrobust", "rddensity", "modelsummary", "broom", "scales"
+# ))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(rdrobust)
+library(rddensity)
+library(modelsummary)
+library(broom)
+library(scales)
+
+theme_set(theme_minimal())
+set.seed(2026)
+```
+
+```{r}
+dir.create("datos_sinteticos_rdd_contratos", showWarnings = FALSE)
+
+n <- 18000
+cutoff <- as.Date("2012-02-12")
+
+trabajadores <- tibble(
+  id_contrato = 1:n,
+  id_trabajador = sample(100000:999999, n, replace = FALSE),
+  sexo = sample(c("Hombre", "Mujer"), n, replace = TRUE, prob = c(0.58, 0.42)),
+  edad_inicio = round(pmin(pmax(rnorm(n, 23.2, 3.8), 16), 35)),
+  nivel_educativo = sample(
+    c("Primaria o secundaria", "Postsecundaria", "FP superior"),
+    n, replace = TRUE, prob = c(0.70, 0.22, 0.08)
+  ),
+  ccaa = sample(
+    c("Andalucía", "Cataluña", "Madrid", "C. Valenciana", "Galicia",
+      "Castilla y León", "Castilla-La Mancha", "País Vasco", "Resto"),
+    n, replace = TRUE,
+    prob = c(.18,.15,.13,.11,.07,.06,.06,.05,.29)
+  )
+)
+
+empresas <- tibble(
+  id_contrato = 1:n,
+  sector = sample(
+    c("Servicios alta cualificación y comercio", "Industria y construcción",
+      "Hostelería", "Servicios no de mercado", "Agricultura"),
+    n, replace = TRUE, prob = c(.32,.20,.24,.18,.06)
+  ),
+  tamano_empresa = sample(
+    c("1-9", "10-49", "50-249", "250+"),
+    n, replace = TRUE, prob = c(.48,.34,.14,.04)
+  ),
+  provincia = sample(1:52, n, replace = TRUE),
+  contratos_previos_empresa = rpois(n, lambda = 12)
+)
+
+contratos <- trabajadores |>
+  select(id_contrato, sexo, edad_inicio, nivel_educativo, ccaa) |>
+  left_join(empresas, by = "id_contrato") |>
+  mutate(
+    fecha_inicio = sample(seq(as.Date("2009-01-01"), as.Date("2011-12-31"), by = "day"),
+                          n, replace = TRUE),
+    duracion_meses = sample(c(6, 12, 18, 24, 30, 36), n, replace = TRUE,
+                            prob = c(.08,.27,.18,.30,.07,.10)),
+    fecha_fin_prevista = fecha_inicio %m+% months(duracion_meses),
+    running_dias = as.numeric(fecha_fin_prevista - cutoff),
+    running_meses = running_dias / 30.4375,
+    post = as.integer(fecha_fin_prevista >= cutoff),
+    mujer = as.integer(sexo == "Mujer"),
+    educ_baja = as.integer(nivel_educativo == "Primaria o secundaria"),
+    servicios_alta_comercio = as.integer(sector == "Servicios alta cualificación y comercio"),
+    empresa_pequena = as.integer(tamano_empresa %in% c("1-9", "10-49")),
+    # Tendencia temporal suave y probabilidad de conversión.
+    p_base = plogis(
+      -2.65 +
+        0.10 * mujer -
+        0.05 * educ_baja +
+        0.22 * servicios_alta_comercio +
+        0.08 * empresa_pequena -
+        0.012 * abs(running_meses) +
+        0.015 * pmin(pmax(running_meses, -18), 18) / 3
+    ),
+    # Efecto local pequeño de la reforma: en torno a 0,5-0,8 pp.
+    p_conversion = pmin(pmax(p_base + 0.0075 * post * (abs(running_meses) <= 9), 0.01), 0.65),
+    convertido_indefinido = rbinom(n(), 1, p_conversion),
+    dias_hasta_conversion = if_else(
+      convertido_indefinido == 1,
+      round(runif(n(), 0, 120)),
+      NA_real_
+    ),
+    fecha_conversion = if_else(
+      convertido_indefinido == 1,
+      as.Date(fecha_fin_prevista + days(dias_hasta_conversion)),
+      as.Date(NA)
+    ),
+    salario_base_mensual = round(
+      760 +
+        20 * (edad_inicio - 20) +
+        65 * (nivel_educativo == "Postsecundaria") +
+        120 * (nivel_educativo == "FP superior") +
+        90 * (sector == "Industria y construcción") +
+        rnorm(n(), 0, 110),
+      1
+    ),
+    jornada_parcial = rbinom(n(), 1, plogis(-1.0 + 0.25 * mujer + 0.35 * (sector == "Hostelería")))
+  ) |>
+  select(
+    id_contrato, id_trabajador, fecha_inicio, fecha_fin_prevista,
+    duracion_meses, convertido_indefinido, fecha_conversion,
+    sexo, edad_inicio, nivel_educativo, ccaa,
+    sector, tamano_empresa, provincia, contratos_previos_empresa,
+    salario_base_mensual, jornada_parcial
+  )
+
+# Introducimos algunos problemas de datos intencionados.
+set.seed(2027)
+idx_edad <- sample(1:n, 4)
+idx_salario <- sample(1:n, 6)
+idx_na <- sample(1:n, 80)
+
+contratos$edad_inicio[idx_edad] <- c(9, 12, 77, 81)
+contratos$salario_base_mensual[idx_salario] <- c(-100, -50, 5000, 6200, 7200, 8500)
+contratos$sector[idx_na] <- NA
+
+trabajadores_empresas <- contratos |>
+  select(
+    id_contrato, id_trabajador, sexo, edad_inicio, nivel_educativo, ccaa,
+    sector, tamano_empresa, provincia, contratos_previos_empresa,
+    salario_base_mensual, jornada_parcial
+  )
+
+contratos_formacion <- contratos |>
+  select(
+    id_contrato, fecha_inicio, fecha_fin_prevista, duracion_meses,
+    convertido_indefinido, fecha_conversion
+  )
+
+write_csv2(trabajadores_empresas, "datos_sinteticos_rdd_contratos/trabajadores_empresas.csv")
+write_csv2(contratos_formacion, "datos_sinteticos_rdd_contratos/contratos_formacion.csv")
+```
+
+```{r}
+trabajadores_empresas <- read_csv2("datos_sinteticos_rdd_contratos/trabajadores_empresas.csv") |>
+  clean_names()
+
+contratos_formacion <- read_csv2("datos_sinteticos_rdd_contratos/contratos_formacion.csv") |>
+  clean_names()
+
+glimpse(trabajadores_empresas)
+glimpse(contratos_formacion)
+```
+
+
+# Bloque 1: importación, limpieza y preparación
+
+## Pregunta 1.a
+
+Importe los dos ficheros CSV generados y fusiónelos en una única base usando `id_contrato`.
+
+Compruebe:
+
+1. dimensiones de cada base;
+2. duplicados por `id_contrato`;
+3. valores perdidos;
+4. valores atípicos en edad y salario.
+
+Proponga e implemente una imputación o corrección razonable para los valores claramente erróneos.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 1.b
+
+Construya las variables necesarias para un diseño RDD temporal:
+
+1. `cutoff`, fijado en el 12 de febrero de 2012;
+2. `running_dias`, como distancia en días entre `fecha_fin_prevista` y el cutoff;
+3. `running_meses`;
+4. `post`, igual a 1 si la fecha de finalización prevista es posterior o igual al cutoff;
+5. variables auxiliares de covariables predeterminadas.
+
+Restrinja el análisis principal a contratos iniciados antes del cutoff.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 1.c
+
+Calcule la tasa de conversión a indefinido antes y después del cutoff en una ventana de ±12 meses.
+
+Presente una tabla por:
+
+1. lado del cutoff;
+2. sexo;
+3. nivel educativo;
+4. sector.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+# Bloque 2: gráficos y supuestos del RDD
+
+## Pregunta 2.a
+
+Represente gráficamente la relación entre la variable de asignación (`running_meses`) y la tasa de conversión a indefinido.
+
+El gráfico debe permitir observar si hay un salto en torno al cutoff.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 2.b
+
+Analice si hay manipulación o acumulación anómala alrededor del cutoff.
+
+Puede usar un histograma de la variable de asignación y, si lo considera oportuno, un test de densidad.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 2.c
+
+Compruebe si las covariables predeterminadas están balanceadas alrededor del cutoff.
+
+Analice, al menos:
+
+1. edad;
+2. salario base mensual;
+3. jornada parcial;
+4. tamaño de empresa.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+# Bloque 3: estimación causal
+
+## Pregunta 3.a
+
+Estime el efecto causal del incremento de incentivos sobre la probabilidad de conversión a contrato indefinido usando una regresión en discontinuidad.
+
+Estime al menos:
+
+1. modelo sin covariables;
+2. modelo con covariables predeterminadas;
+3. modelo con ancho de banda de 6 meses;
+4. modelo con ancho de banda de 12 meses.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 3.b
+
+Analice la robustez del resultado.
+
+Puede incluir:
+
+1. bandwidths alternativos;
+2. donut RDD excluyendo contratos muy cercanos al cutoff;
+3. placebo cutoffs;
+4. polinomios de distinto orden;
+5. estimación agregada por mes.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+---
+
+## Pregunta 3.c
+
+Analice heterogeneidad del efecto por:
+
+1. sexo;
+2. nivel educativo;
+3. sector.
+
+```{r}
+# Escriba aquí su código
+```
+
+### Respuesta
+
+Escriba aquí su interpretación.
+
+# Comentario final
+
+Discuta brevemente las principales limitaciones de este diseño.
+
+En particular, tenga en cuenta que se trata de un RDD temporal, por lo que podrían coincidir otros cambios normativos o shocks macroeconómicos en torno a febrero de 2012.
+
+```{r}
+# Escriba aquí su código, si procede
+```
+
+### Conclusiones
+
+Escriba aquí sus conclusiones.

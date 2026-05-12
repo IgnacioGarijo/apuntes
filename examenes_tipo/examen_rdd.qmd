@@ -70,6 +70,8 @@ a. Importe `datos/empresas_idi.csv` y `datos/panel_idi.csv`. Compruebe tipos de 
 
 
 ```{r}
+library(rdrobust)
+library(rddensity) 
 library(tidyverse)
 theme_set(theme_minimal()+
             theme(axis.line = element_line(color="black"),
@@ -177,7 +179,8 @@ df_panel1 %>%
   ggplot(aes(facturacion_2020_miles))+
   geom_histogram()
 
-rdplot(
+
+rdrobust::rdplot(
   y = df_panel1$empleados_2020[df_panel1$anio == 2020],
   x = df_panel1$running[df_panel1$anio == 2020],
   c = 0
@@ -197,8 +200,7 @@ summary(rdrobust(
 a. Estime el impacto causal local de ser elegible sobre el gasto en I+D+i en 2021 mediante una regresion en discontinuidad lineal local. Use al menos dos especificaciones: con y sin controles.
 
 ```{r}
-library(rdrobust)
-library(rddensity)
+
 
 df_panel2<-df_panel1
 

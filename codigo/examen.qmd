@@ -1,0 +1,49 @@
+---
+title: "Examen práctico personal laboral AIREF"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+
+```{r}
+library(tidyverse)
+library(scales)
+library(modelsummary)
+
+library(did)
+library(fixest)
+
+library(ranger)
+
+library(rdrobust)
+library(rddensity)
+
+theme_set(theme_minimal()+ 
+            theme(axis.line = element_line(color="black"), 
+                  axis.ticks = element_line(color="black"), 
+                  panel.grid.major.y = element_line(color="lightgrey")))
+
+setwd("C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/")
+
+```
+
+
+```{r}
+mtcars %>% 
+  ggplot(aes(wt,mpg))+
+  geom_point()+
+  geom_smooth(data = filter(mtcars, wt < 3), method = "lm", formula = y ~ poly(x, 2), se = FALSE) +
+  geom_smooth(data = filter(mtcars, wt > 3), method = "lm", formula = y ~ poly(x, 2), se = FALSE)
+
+```
+

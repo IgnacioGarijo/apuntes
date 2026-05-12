@@ -166,18 +166,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Importe <code>datos/empresas_idi.csv</code> y <code>datos/panel_idi.csv</code>. Compruebe tipos de variables, dimensiones y claves de identificacion. Detecte valores atipicos en empleados y facturacion. Proponga e implemente una imputacion razonable.</li>
 </ol>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>()<span class="sc">+</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            <span class="fu">theme</span>(<span class="at">axis.line =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>),</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.ticks =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>), </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"grey70"</span>))</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>          )</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>datos<span class="ot">&lt;-</span><span class="st">"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos/"</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>df_empresa<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"empresas_idi.csv"</span>))</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>df_panel<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"panel_idi.csv"</span>))</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df_empresa)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rdrobust)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rddensity) </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>()<span class="sc">+</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>            <span class="fu">theme</span>(<span class="at">axis.line =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                  <span class="at">axis.ticks =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"black"</span>), </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">panel.grid.major.y =</span> <span class="fu">element_line</span>(<span class="at">color=</span><span class="st">"grey70"</span>))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>datos<span class="ot">&lt;-</span><span class="st">"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos/"</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>df_empresa<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"empresas_idi.csv"</span>))</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>df_panel<span class="ot">&lt;-</span><span class="fu">read.csv</span>(<span class="fu">paste0</span>(datos, <span class="st">"panel_idi.csv"</span>))</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df_empresa)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id_empresa           sector              ccaa           empleados_2020   
  Length:3500        Length:3500        Length:3500        Min.   :    3.0  
@@ -340,6 +342,43 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell-output-display">
 <p><img src="examen_rdd_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid" width="672"></p>
 </div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>rdrobust<span class="sc">::</span><span class="fu">rdplot</span>(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> df_panel1<span class="sc">$</span>empleados_2020[df_panel1<span class="sc">$</span>anio <span class="sc">==</span> <span class="dv">2020</span>],</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> df_panel1<span class="sc">$</span>running[df_panel1<span class="sc">$</span>anio <span class="sc">==</span> <span class="dv">2020</span>],</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">c =</span> <span class="dv">0</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">rdrobust</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> df_panel1<span class="sc">$</span>empleados_2020[df_panel1<span class="sc">$</span>anio <span class="sc">==</span> <span class="dv">2020</span>],</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> df_panel1<span class="sc">$</span>running[df_panel1<span class="sc">$</span>anio <span class="sc">==</span> <span class="dv">2020</span>],</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">c =</span> <span class="dv">0</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sharp RD estimates using local polynomial regression.
+
+Number of Obs.                 2130
+BW type                       mserd
+Kernel                   Triangular
+VCE method                       NN
+
+Number of Obs.                 1103         1027
+Eff. Number of Obs.             248          245
+Order est. (p)                    1            1
+Order bias  (q)                   2            2
+BW est. (h)                   0.006        0.006
+BW bias (b)                   0.009        0.009
+rho (h/b)                     0.638        0.638
+Unique Obs.                    1103         1027
+
+=====================================================================
+                   Point    Robust Inference
+                Estimate         z     P&gt;|z|      [ 95% C.I. ]       
+---------------------------------------------------------------------
+     RD Effect    10.544     0.664     0.507   [-30.009 , 60.771]    
+=====================================================================</code></pre>
+</div>
 </div>
 </section>
 <section id="bloque-3-analisis-causal-rdd-8-puntos" class="level1" data-number="4">
@@ -348,25 +387,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Estime el impacto causal local de ser elegible sobre el gasto en I+D+i en 2021 mediante una regresion en discontinuidad lineal local. Use al menos dos especificaciones: con y sin controles.</li>
 </ol>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rdrobust)</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rddensity)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>df_panel2<span class="ot">&lt;-</span>df_panel1</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>df_elegible<span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span> </span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(id_empresa, <span class="at">running_2020=</span>running)</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>df_panel1<span class="ot">&lt;-</span><span class="fu">left_join</span>(df_panel1, df_elegible, <span class="at">by=</span><span class="fu">c</span>(<span class="st">"id_empresa"</span>))</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span></span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>) </span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>density_test<span class="ot">&lt;-</span>rddensity<span class="sc">::</span><span class="fu">rddensity</span>(<span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020,</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>                     <span class="at">c=</span><span class="dv">0</span>)</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>rddensity<span class="sc">::</span><span class="fu">rdplotdensity</span>(density_test, <span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>df_panel2<span class="ot">&lt;-</span>df_panel1</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>df_elegible<span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span> </span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(id_empresa, <span class="at">running_2020=</span>running)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>df_panel1<span class="ot">&lt;-</span><span class="fu">left_join</span>(df_panel1, df_elegible, <span class="at">by=</span><span class="fu">c</span>(<span class="st">"id_empresa"</span>))</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>df_panel1 <span class="ot">&lt;-</span>df_panel1 <span class="sc">%&gt;%</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>) </span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>density_test<span class="ot">&lt;-</span>rddensity<span class="sc">::</span><span class="fu">rddensity</span>(<span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>                     <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>rddensity<span class="sc">::</span><span class="fu">rdplotdensity</span>(density_test, <span class="at">X=</span>df_panel1<span class="sc">$</span>running_2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="examen_rdd_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
 </div>
@@ -402,7 +438,7 @@ $Estplot</code></pre>
 <div class="cell-output-display">
 <p><img src="examen_rdd_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(density_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(density_test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Manipulation testing using local polynomial density estimation.
@@ -440,10 +476,10 @@ Window Length / 2          &lt;c     &gt;=c    P&gt;|T|
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>model<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Sharp RD estimates using local polynomial regression.
 
@@ -468,81 +504,124 @@ Unique Obs.                    1103         1027
      RD Effect     5.150     0.288     0.773   [-24.727 , 33.259]    
 =====================================================================</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rdplot</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rdplot</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="examen_rdd_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>model_covs<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">covs =</span> df_panel1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(empleo, facturacion_2020_miles))</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model_covs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Covariate-adjusted Sharp RD estimates using local polynomial regression.
+
+Number of Obs.                 2130
+BW type                       mserd
+Kernel                   Triangular
+VCE method                       NN
+
+Number of Obs.                 1103         1027
+Eff. Number of Obs.             367          354
+Order est. (p)                    1            1
+Order bias  (q)                   2            2
+BW est. (h)                   0.009        0.009
+BW bias (b)                   0.013        0.013
+rho (h/b)                     0.659        0.659
+Unique Obs.                    1103         1027
+
+=====================================================================
+                   Point    Robust Inference
+                Estimate         z     P&gt;|z|      [ 95% C.I. ]       
+---------------------------------------------------------------------
+     RD Effect     8.598     2.053     0.040     [0.364 , 15.740]    
+=====================================================================</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rdplot</span>(<span class="at">y=</span>df_panel1<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel1<span class="sc">$</span>running_2020, </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">covs =</span> df_panel1 <span class="sc">%&gt;%</span> <span class="fu">select</span>(empleo, facturacion_2020_miles))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "covs option is meant to be used when plotting RDROBUST estimates. If the option is used for global polynomial fitting, it may deliver results that are not visually compatible with the local binned means depicted due to the underlying assumptions used."</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="examen_rdd_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <ol start="2" type="a">
 <li>Repita la estimacion con ventanas alternativas, por ejemplo 0,02 y 0,04. Comente robustez.</li>
 </ol>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.04</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.04</span>)</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.04</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.04</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">covs=</span>df_panel2 <span class="sc">%&gt;%</span> <span class="fu">select</span>(empleados_2020, facturacion_2020_miles),</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">h=</span><span class="fl">0.02</span>)</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Sharp RD estimates using local polynomial regression.
+<pre><code>Covariate-adjusted Sharp RD estimates using local polynomial regression.
 
 Number of Obs.                 2130
-BW type                       mserd
+BW type                      Manual
 Kernel                   Triangular
 VCE method                       NN
 
 Number of Obs.                 1103         1027
-Eff. Number of Obs.             408          381
+Eff. Number of Obs.             795          753
 Order est. (p)                    1            1
 Order bias  (q)                   2            2
-BW est. (h)                   0.009        0.009
-BW bias (b)                   0.014        0.014
-rho (h/b)                     0.687        0.687
+BW est. (h)                   0.020        0.020
+BW bias (b)                   0.020        0.020
+rho (h/b)                     1.000        1.000
 Unique Obs.                    1103         1027
 
 =====================================================================
                    Point    Robust Inference
                 Estimate         z     P&gt;|z|      [ 95% C.I. ]       
 ---------------------------------------------------------------------
-     RD Effect     5.150     0.288     0.773   [-24.727 , 33.259]    
+     RD Effect     9.637     2.929     0.003     [3.103 , 15.649]    
 =====================================================================</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.02</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.02</span>)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>df_panel2 <span class="ot">&lt;-</span>df_panel <span class="sc">%&gt;%</span> </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(df_elegible, <span class="at">by=</span><span class="st">"id_empresa"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(anio<span class="sc">==</span><span class="dv">2021</span>, running_2020 <span class="sc">&gt;=-</span><span class="fl">0.02</span> <span class="sc">&amp;</span> running_2020<span class="sc">&lt;=</span><span class="fl">0.02</span>) </span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>modelo2<span class="ot">&lt;-</span><span class="fu">rdrobust</span>(<span class="at">y=</span>df_panel2<span class="sc">$</span>gasto_idi_miles, </span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">x=</span>df_panel2<span class="sc">$</span>running_2020, </span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">covs=</span>df_panel2 <span class="sc">%&gt;%</span> <span class="fu">select</span>(empleados_2020),</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">h=</span><span class="fl">0.02</span>,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">c=</span><span class="dv">0</span>)</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(modelo2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>Sharp RD estimates using local polynomial regression.
+<pre><code>Covariate-adjusted Sharp RD estimates using local polynomial regression.
 
 Number of Obs.                 1548
-BW type                       mserd
+BW type                      Manual
 Kernel                   Triangular
 VCE method                       NN
 
 Number of Obs.                  795          753
-Eff. Number of Obs.             260          257
+Eff. Number of Obs.             795          753
 Order est. (p)                    1            1
 Order bias  (q)                   2            2
-BW est. (h)                   0.006        0.006
-BW bias (b)                   0.009        0.009
-rho (h/b)                     0.703        0.703
+BW est. (h)                   0.020        0.020
+BW bias (b)                   0.020        0.020
+rho (h/b)                     1.000        1.000
 Unique Obs.                     795          753
 
 =====================================================================
                    Point    Robust Inference
                 Estimate         z     P&gt;|z|      [ 95% C.I. ]       
 ---------------------------------------------------------------------
-     RD Effect     3.572     0.106     0.915   [-34.010 , 37.915]    
+     RD Effect     3.630     0.541     0.588   [-17.094 , 30.145]    
 =====================================================================</code></pre>
 </div>
 </div>

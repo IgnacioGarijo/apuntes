@@ -52,7 +52,7 @@ cat("Se han creado datos/empresas_pyme.csv y datos/panel_pyme.csv\n")
 
 # Contexto
 
-Este examen simula una evaluacion inspirada en el estudio de AIReF sobre instrumentos financieros de apoyo a la pyme reforzados por el PRTR. Se evalua el efecto de recibir apoyo financiero publico sobre empleo, credito y coste financiero.
+Este examen simula una evaluacion inspirada en el estudio de AIReF sobre instrumentos financieros de apoyo a la pyme reforzados por el PRTR. Se evalua el efecto de recibir apoyo financiero publico sobre empleo, crédito y coste financiero.
 
 Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, pero no utilizar IA.
 
@@ -60,24 +60,336 @@ Tiempo recomendado: 90 minutos. Se permite buscar documentacion en internet, per
 
 a. Importe `datos/empresas_pyme.csv` y `datos/panel_pyme.csv`. Compruebe claves, dimensiones y consistencia temporal. Detecte outliers en empleados base y endeudamiento base e impute valores razonables.
 
+
+```{r}
+library(tidyverse)
+
+datos<-"C:/Users/ignac/OneDrive/Documentos/GitHub/apuntes/examenes_tipo/datos/"
+theme_set(theme_minimal()+theme(axis.line = element_line(color="black"), 
+                                  axis.ticks = element_line(color = "black"), 
+                                  panel.grid.major.y = element_line(color="lightgrey")))
+
+dfempresas<-read.csv(paste0(datos, "empresas_pyme.csv"))
+
+dfpanel<-read.csv(paste0(datos, "panel_pyme.csv"))
+
+table(dfpanel$sector)
+table(dfpanel$tamano)
+table(dfpanel$anio)
+table(dfpanel$anio)
+
+comprobar_consistencia<-dfpanel %>% group_by(id_empresa) %>% summarise(n=n(), 
+                                          n_years= n_distinct(anio), 
+                                          n_sector=n_distinct(sector),
+                                          n_empleados_base= n_distinct(empleados_base),
+                                          n_endeudamiento_base= n_distinct(endeudamiento_base), 
+                                          n_tamano=n_distinct(tamano), 
+                                          n_ccaa=n_distinct(ccaa))
+table(comprobar_consistencia$n)
+table(comprobar_consistencia$n_years)
+table(comprobar_consistencia$n_sector)
+table(comprobar_consistencia$n_empleados_base)
+table(comprobar_consistencia$n_endeudamiento_base)
+table(comprobar_consistencia$n_tamano)
+table(comprobar_consistencia$n_ccaa)
+
+quantile(dfpanel$empleados_base, probs = c(seq(0,.9, by=.1), seq(.91, 1, by=.005)))
+quantile(dfpanel$endeudamiento_base, probs = c(seq(0,.9, by=.1), seq(.91, 1, by=.005)))
+
+dfpanel <-dfpanel %>% 
+  mutate(empleados_base= ifelse(empleados_base>quantile(empleados_base, probs=.995),quantile(empleados_base, probs=.995), empleados_base ), 
+         endeudamiento_base= ifelse(endeudamiento_base>quantile(endeudamiento_base, probs=.995),quantile(endeudamiento_base, probs=.995), endeudamiento_base ))
+
+
+summary(dfpanel)
+```
+Los datos son consistentes en el tiempo, porque hay una observación por empresa y año y las características fijas no varían con el tiempo. 
+
+
 b. Cree variables de tratamiento: `tratamiento`, `post`, `ever_treated`, `cohorte` y `event_time`. Compruebe cuantas empresas reciben apoyo por cohorte y cuantas no lo reciben nunca.
+
+```{r}
+dfpanel<-dfpanel %>% 
+  group_by(id_empresa) %>% 
+  mutate(
+    ever_treated= ifelse(anio_apoyo==Inf, 0, 1), 
+        post= ifelse(anio>=anio_apoyo, 1, 0), 
+    tratamiento=ever_treated*post, 
+    cohorte=ifelse(anio_apoyo==Inf, 0, anio_apoyo), 
+    event_time= anio-anio_apoyo) %>% # Le pongo 0 porque así es compatible con CS did 
+  ungroup()
+
+dfpanel %>% 
+  group_by(cohorte) %>% 
+  summarize(n=n_distinct(id_empresa))
+
+```
+
 
 c. Calcule para cada año el empleo medio, credito medio y tipo de interes medio por grupo tratado alguna vez frente a nunca tratado.
 
+```{r}
+dfpanel %>% 
+  group_by(cohorte=factor(cohorte), anio) %>% 
+  summarise(empleo=mean(empleo, na.rm=T), 
+            credito=mean(credito_miles, na.rm=T), 
+            tipo_interes= mean(tipo_interes, na.rm=T)) %>% 
+  ungroup() %>% 
+  select(cohorte, anio, empleo, credito, tipo_interes) %>% 
+  pivot_longer(cols = c("empleo", "credito", "tipo_interes")) %>% 
+  ggplot(aes(anio, value, color= cohorte, group=cohorte))+
+  geom_line()+
+  facet_wrap(~name, scales="free")
+```
+
+
 d. Restrinja la muestra al horizonte dinamico entre -3 y +4 años respecto a la recepcion del apoyo. Explique que observaciones quedan fuera.
+
+```{r}
+dfpanel_restr<-dfpanel %>% 
+  filter(event_time>=-3 & event_time<=4)
+
+table(dfpanel$anio)
+table(dfpanel_restr$anio)
+
+```
+
+Quedan fuera sobre todo observaciones de 2017 ya que son las más alejadas hacia atrás donde ponemos el límite menor (3). 
+
 
 # Bloque 2: descriptivos y graficos (10 puntos)
 
 a. Grafique la evolucion del empleo medio para empresas tratadas alguna vez y nunca tratadas.
 
+```{r}
+dfpanel %>% 
+  group_by(ever_treated=factor(ever_treated), anio) %>% 
+  summarise(empleo_medio=mean(empleo, na.rm=T)) %>% 
+  ggplot(aes(anio, empleo_medio, group=ever_treated, color=ever_treated))+
+  geom_point()+
+  geom_line()
+
+
+```
+
+
 b. Grafique medias de empleo por tiempo relativo al tratamiento, usando como referencia el año -1.
 
+```{r}
+
+df_base<-dfpanel %>% 
+  filter(ever_treated!=0, event_time==-1) %>% 
+  group_by(cohorte) %>% 
+  summarise(empleo_base=mean(empleo, na.rm = T)) %>% 
+  ungroup()
+  
+
+dfpanel %>%
+  filter(ever_treated!=0) %>% 
+  group_by(cohorte, event_time) %>% 
+  summarise(empleo= mean(empleo, na.rm=T)) %>%
+  ungroup() %>% 
+  left_join(df_base, by="cohorte") %>% 
+  mutate(empleo_norm=(empleo-empleo_base)/empleo_base, 
+         cohorte=factor(cohorte)) %>% 
+  ggplot(aes(event_time, empleo_norm, color=cohorte, group=cohorte))+
+  geom_point() +
+  geom_line()+
+  geom_vline(xintercept = 0, linetype="longdash")
+
+```
+
+
 c. Explore si las empresas tratadas difieren ex ante por tamaño, sector y endeudamiento base. Comente implicaciones para la validez del DiD.
+
+
+```{r}
+dfpanel %>% 
+  group_by(cohorte, anio, group=tamano) %>% 
+  summarise(n=n()) %>% 
+  group_by(cohorte, anio) %>% 
+  mutate(ratio= n/sum(n, na.rm=T), 
+         cohorte=ifelse(cohorte==0, "No tratado", as.character(cohorte))) %>% 
+  ggplot(aes(x=cohorte, y=ratio, fill=group))+
+  geom_col()+
+  facet_wrap(~anio, scales="free_x")
+
+
+dfpanel %>% 
+  group_by(ever_treated, anio, group=tamano) %>% 
+  summarise(n=n()) %>% 
+  group_by(ever_treated, anio) %>% 
+  mutate(ratio= n/sum(n, na.rm=T), 
+         ever_treated=ifelse(ever_treated==0, "No tratado", "Tratado")) %>% 
+  ggplot(aes(x=ever_treated, y=ratio, fill=group))+
+  geom_col()+
+  facet_wrap(~anio, scales="free_x")
+```
+Comparar tratados con no tratados hace difícil el ejercicio, posiblemente sea mejor comparar unas cohortes con otras en su event_time=-1 como se procede a hacer a continuación:
+```{r}
+dfpanel %>% 
+  filter(event_time==-1) %>% 
+  group_by(cohorte, group=tamano) %>% 
+  summarise(n=n()) %>% 
+  group_by(cohorte) %>% 
+  mutate(ratio= n/sum(n, na.rm=T), 
+         cohorte=ifelse(cohorte==0, "No tratado", as.character(cohorte))) %>% 
+  ggplot(aes(x=cohorte, y=ratio, fill=group))+
+  geom_col()+
+  geom_label(aes(label= round(ratio*100,1)), position="stack")
+
+```
+```{r}
+dfpanel %>% 
+  filter(event_time==-1) %>% 
+  group_by(cohorte, group=sector) %>% 
+  summarise(n=n()) %>% 
+  group_by(cohorte) %>% 
+  mutate(ratio= n/sum(n, na.rm=T), 
+         cohorte=ifelse(cohorte==0, "No tratado", as.character(cohorte))) %>% 
+  ggplot(aes(x=cohorte, y=ratio, fill=group))+
+  geom_col()+
+  geom_label(aes(label= round(ratio*100,1)), position="stack")
+```
+
+
+```{r}
+dfpanel %>% 
+  filter(event_time==-1) %>% 
+  group_by(cohorte) %>% 
+  summarise(value=mean(endeudamiento_base)) %>% 
+  mutate(cohorte=ifelse(cohorte==0, "No tratado", as.character(cohorte))) %>% 
+  ggplot(aes(x=cohorte, y=value, fill=cohorte))+
+  geom_col()+
+  geom_label(aes(label= round(value,3)), position="stack")
+```
+Existen algunas diferencias entre las covariables antes del tratamiento, siendo 2021 en general el año más dispar con respecto a los demás. Estas diferencias pueden poner en riesog la comparabilidad de los grupos, aunque en un modelo de diferencias en diferencias, si se cumplen las tendencias paralelas, aliviaría en cierta medida la preocupación por la comparabilidad de los grupos. Sin embargo, quedaría cierta preocupación por la diferencia en, por ejemplo, la composición por tamaño, puesto que la diferente respuesta por cohortes podría venir dada por esta variable u otras también con distribuciones dispares.
 
 # Bloque 3: analisis causal DiD (8 puntos)
 
 a. Estime un modelo de diferencias en diferencias con efectos fijos de empresa y año para el empleo.
 
+```{r}
+library(did)
+
+dfpanel_restr<-dfpanel_restr %>% 
+  mutate(id_empresa_num= as.numeric(substr(id_empresa,2, nchar(id_empresa))))
+
+dfpanel<-dfpanel %>% 
+  mutate(id_empresa_num= as.numeric(substr(id_empresa,2, nchar(id_empresa))))
+
+modelo1<-did::att_gt(yname="empleo", 
+            tname="anio", 
+            idname="id_empresa_num", 
+            gname="cohorte", 
+            data=dfpanel, 
+            panel=T, 
+            control_group = "notyettreated", 
+            bstrap = T,
+            biters=200, 
+            cband = T,
+            base_period = "universal",
+            est_method = "dr")
+
+
+att_modelo1<-aggte(modelo1, type="simple")
+dynamic_modelo1<- aggte(modelo1, type="dynamic")
+ggdid(dynamic_modelo1)
+
+
+modelo2<-did::att_gt(yname="empleo", 
+            tname="anio", 
+            idname="id_empresa_num", 
+            gname="cohorte", 
+            data=dfpanel, 
+            panel=T, 
+            control_group = "nevertreated", 
+            bstrap = T,
+            biters=200, 
+            cband = T,
+            base_period = "universal",
+            est_method = "dr")
+
+
+att_modelo2<-aggte(modelo2, type="simple")
+dynamic_modelo2<- aggte(modelo2, type="dynamic")
+ggdid(dynamic_modelo2)
+
+modelsummary::modelsummary(models=list("not yet treated"=att_modelo1, "never treated"=att_modelo2))
+
+att_modelo_2_calendar<-aggte(modelo2, type="calendar")
+ggdid(att_modelo_2_calendar)
+
+```
+
+
+
 b. Estime un modelo dinamico con dummies de tiempo relativo de -3 a +4, omitiendo el año -1. Represente o tabule los coeficientes.
 
+```{r}
+library(fixest)
+
+twfe_x <- feols(
+  empleo ~ i(event_time, ref=-1) | id_empresa + anio,
+  data = dfpanel_restr,
+  cluster = ~id_empresa
+)
+
+summary(twfe_x)
+
+```
+Este análisis está mal especificado porque se debe hacer con un estimador robusto a heterogeneidad por cohorte y preparado para ello, las siguientes variables se estiman así
+
+
 c. Repita el analisis para credito y tipo de interes. Interprete resultados, supuestos y amenazas.
+
+```{r}
+modelo_credito<-did::att_gt(yname="credito_miles", 
+            tname="anio", 
+            idname="id_empresa_num", 
+            gname="cohorte", 
+            data=dfpanel,
+            panel=T, 
+            control_group = "notyettreated", 
+            bstrap = T,
+            biters=200, 
+            cband = T,
+            base_period = "universal",
+            est_method = "dr")
+
+
+att_modelo_credito<-aggte(modelo_credito, type="simple")
+dynamic_modelo_credito<- aggte(modelo_credito, type="dynamic")
+ggdid(dynamic_modelo_credito)
+
+att_modelo_credito<-aggte(modelo_credito, type="calendar")
+ggdid(att_modelo_credito)
+```
+
+```{r}
+modelo_tipo<-did::att_gt(yname="tipo_interes", 
+            tname="anio", 
+            idname="id_empresa_num", 
+            gname="cohorte", 
+            data=dfpanel,
+            panel=T, 
+            control_group = "notyettreated", 
+            bstrap = T,
+            biters=200, 
+            cband = T,
+            base_period = "universal",
+            est_method = "dr")
+
+
+att_modelo_tipo<-aggte(modelo_tipo, type="simple")
+dynamic_modelo_tipo<- aggte(modelo_tipo, type="dynamic")
+ggdid(dynamic_modelo_tipo)
+
+
+att_modelo_tipo_time<-aggte(modelo_tipo, type="calendar")
+ggdid(att_modelo_tipo_time)
+
+
+```
+
+Podemos concluir que la política tuvo un efecto causal, produciendo una reducción de los tipos de interés y un aumento tanto del empleo como del crédito de las empresas. Los resultados son robustos para diferentes especificaciones (nevertreated vs not-yet-treated), y significativos para todas las cohortes, cumpliendo en todas las especificaciones la hipótesis de tendencias paralelas y sin mostrar signos de adelantamiento al tratamiento, contaminación u otros problemas que pueden afectar a este tipo de diseños cuasiexperimentales.

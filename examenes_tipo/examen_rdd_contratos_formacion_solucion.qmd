@@ -1,0 +1,732 @@
+---
+title: "Examen RDD: incentivos a la conversión de contratos de formación en indefinidos"
+subtitle: "Versión resuelta con datos sintéticos"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# Contexto
+
+Este ejercicio está inspirado en la evaluación de AIReF sobre **incentivos a la contratación y al trabajo autónomo**, en particular el análisis de los **incentivos a la conversión de contratos de formación y aprendizaje en contratos indefinidos**.
+
+En ese estudio, AIReF utilizó una metodología de **regresión en discontinuidad** para evaluar el impacto del incremento de los incentivos introducido en febrero de 2012 sobre la tasa de conversión en indefinido de contratos de formación. La lógica del diseño es comparar contratos cuya oportunidad de conversión se sitúa justo antes y justo después del cambio normativo.
+
+En este examen se usan datos sintéticos, pero la estructura intenta reproducir un caso plausible:
+
+- contratos de formación iniciados antes de la reforma;
+- fecha de finalización prevista del contrato;
+- conversión o no en contrato indefinido;
+- características del trabajador, de la empresa y del contrato;
+- punto de corte temporal en febrero de 2012.
+
+# 0. Paquetes y generación de datos sintéticos
+
+```{r}
+# install.packages(c(
+#   "tidyverse", "janitor", "lubridate", "stringr",
+#   "rdrobust", "rddensity", "modelsummary", "broom", "scales"
+# ))
+
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(stringr)
+library(rdrobust)
+library(rddensity)
+library(modelsummary)
+library(broom)
+library(scales)
+
+theme_set(theme_minimal())
+set.seed(2026)
+```
+
+```{r}
+dir.create("datos_sinteticos_rdd_contratos", showWarnings = FALSE)
+
+n <- 18000
+cutoff <- as.Date("2012-02-12")
+
+trabajadores <- tibble(
+  id_contrato = 1:n,
+  id_trabajador = sample(100000:999999, n, replace = FALSE),
+  sexo = sample(c("Hombre", "Mujer"), n, replace = TRUE, prob = c(0.58, 0.42)),
+  edad_inicio = round(pmin(pmax(rnorm(n, 23.2, 3.8), 16), 35)),
+  nivel_educativo = sample(
+    c("Primaria o secundaria", "Postsecundaria", "FP superior"),
+    n, replace = TRUE, prob = c(0.70, 0.22, 0.08)
+  ),
+  ccaa = sample(
+    c("Andalucía", "Cataluña", "Madrid", "C. Valenciana", "Galicia",
+      "Castilla y León", "Castilla-La Mancha", "País Vasco", "Resto"),
+    n, replace = TRUE,
+    prob = c(.18,.15,.13,.11,.07,.06,.06,.05,.29)
+  )
+)
+
+empresas <- tibble(
+  id_contrato = 1:n,
+  sector = sample(
+    c("Servicios alta cualificación y comercio", "Industria y construcción",
+      "Hostelería", "Servicios no de mercado", "Agricultura"),
+    n, replace = TRUE, prob = c(.32,.20,.24,.18,.06)
+  ),
+  tamano_empresa = sample(
+    c("1-9", "10-49", "50-249", "250+"),
+    n, replace = TRUE, prob = c(.48,.34,.14,.04)
+  ),
+  provincia = sample(1:52, n, replace = TRUE),
+  contratos_previos_empresa = rpois(n, lambda = 12)
+)
+
+contratos <- trabajadores |>
+  select(id_contrato, sexo, edad_inicio, nivel_educativo, ccaa) |>
+  left_join(empresas, by = "id_contrato") |>
+  mutate(
+    fecha_inicio = sample(seq(as.Date("2009-01-01"), as.Date("2011-12-31"), by = "day"),
+                          n, replace = TRUE),
+    duracion_meses = sample(c(6, 12, 18, 24, 30, 36), n, replace = TRUE,
+                            prob = c(.08,.27,.18,.30,.07,.10)),
+    fecha_fin_prevista = fecha_inicio %m+% months(duracion_meses),
+    running_dias = as.numeric(fecha_fin_prevista - cutoff),
+    running_meses = running_dias / 30.4375,
+    post = as.integer(fecha_fin_prevista >= cutoff),
+    mujer = as.integer(sexo == "Mujer"),
+    educ_baja = as.integer(nivel_educativo == "Primaria o secundaria"),
+    servicios_alta_comercio = as.integer(sector == "Servicios alta cualificación y comercio"),
+    empresa_pequena = as.integer(tamano_empresa %in% c("1-9", "10-49")),
+    # Tendencia temporal suave y probabilidad de conversión.
+    p_base = plogis(
+      -2.65 +
+        0.10 * mujer -
+        0.05 * educ_baja +
+        0.22 * servicios_alta_comercio +
+        0.08 * empresa_pequena -
+        0.012 * abs(running_meses) +
+        0.015 * pmin(pmax(running_meses, -18), 18) / 3
+    ),
+    # Efecto local pequeño de la reforma: en torno a 0,5-0,8 pp.
+    p_conversion = pmin(pmax(p_base + 0.0075 * post * (abs(running_meses) <= 9), 0.01), 0.65),
+    convertido_indefinido = rbinom(n(), 1, p_conversion),
+    dias_hasta_conversion = if_else(
+      convertido_indefinido == 1,
+      round(runif(n(), 0, 120)),
+      NA_real_
+    ),
+    fecha_conversion = if_else(
+      convertido_indefinido == 1,
+      as.Date(fecha_fin_prevista + days(dias_hasta_conversion)),
+      as.Date(NA)
+    ),
+    salario_base_mensual = round(
+      760 +
+        20 * (edad_inicio - 20) +
+        65 * (nivel_educativo == "Postsecundaria") +
+        120 * (nivel_educativo == "FP superior") +
+        90 * (sector == "Industria y construcción") +
+        rnorm(n(), 0, 110),
+      1
+    ),
+    jornada_parcial = rbinom(n(), 1, plogis(-1.0 + 0.25 * mujer + 0.35 * (sector == "Hostelería")))
+  ) |>
+  select(
+    id_contrato, id_trabajador, fecha_inicio, fecha_fin_prevista,
+    duracion_meses, convertido_indefinido, fecha_conversion,
+    sexo, edad_inicio, nivel_educativo, ccaa,
+    sector, tamano_empresa, provincia, contratos_previos_empresa,
+    salario_base_mensual, jornada_parcial
+  )
+
+# Introducimos algunos problemas de datos intencionados.
+set.seed(2027)
+idx_edad <- sample(1:n, 4)
+idx_salario <- sample(1:n, 6)
+idx_na <- sample(1:n, 80)
+
+contratos$edad_inicio[idx_edad] <- c(9, 12, 77, 81)
+contratos$salario_base_mensual[idx_salario] <- c(-100, -50, 5000, 6200, 7200, 8500)
+contratos$sector[idx_na] <- NA
+
+trabajadores_empresas <- contratos |>
+  select(
+    id_contrato, id_trabajador, sexo, edad_inicio, nivel_educativo, ccaa,
+    sector, tamano_empresa, provincia, contratos_previos_empresa,
+    salario_base_mensual, jornada_parcial
+  )
+
+contratos_formacion <- contratos |>
+  select(
+    id_contrato, fecha_inicio, fecha_fin_prevista, duracion_meses,
+    convertido_indefinido, fecha_conversion
+  )
+
+write_csv2(trabajadores_empresas, "datos_sinteticos_rdd_contratos/trabajadores_empresas.csv")
+write_csv2(contratos_formacion, "datos_sinteticos_rdd_contratos/contratos_formacion.csv")
+```
+
+```{r}
+trabajadores_empresas <- read_csv2("datos_sinteticos_rdd_contratos/trabajadores_empresas.csv") |>
+  clean_names()
+
+contratos_formacion <- read_csv2("datos_sinteticos_rdd_contratos/contratos_formacion.csv") |>
+  clean_names()
+
+glimpse(trabajadores_empresas)
+glimpse(contratos_formacion)
+```
+
+
+# Bloque 1: importación, limpieza y preparación
+
+## Pregunta 1.a
+
+```{r}
+df <- contratos_formacion |>
+  left_join(trabajadores_empresas, by = "id_contrato")
+
+dim(contratos_formacion)
+dim(trabajadores_empresas)
+dim(df)
+
+duplicados <- df |>
+  count(id_contrato) |>
+  filter(n > 1)
+
+duplicados
+
+colSums(is.na(df))
+summary(df$edad_inicio)
+summary(df$salario_base_mensual)
+```
+
+Corregimos valores claramente imposibles:
+
+- edades inferiores a 16 o superiores a 35;
+- salarios negativos o extraordinariamente altos;
+- sector ausente.
+
+La corrección se hace de forma conservadora usando medianas por grupo cuando sea posible.
+
+```{r}
+df <- df |>
+  mutate(
+    edad_inicio = if_else(edad_inicio < 16 | edad_inicio > 35, NA_real_, as.numeric(edad_inicio)),
+    salario_base_mensual = if_else(
+      salario_base_mensual < 400 | salario_base_mensual > 3000,
+      NA_real_,
+      as.numeric(salario_base_mensual)
+    )
+  ) |>
+  group_by(nivel_educativo, sexo) |>
+  mutate(
+    edad_inicio = if_else(
+      is.na(edad_inicio),
+      median(edad_inicio, na.rm = TRUE),
+      edad_inicio
+    )
+  ) |>
+  ungroup() |>
+  group_by(sector, nivel_educativo) |>
+  mutate(
+    salario_base_mensual = if_else(
+      is.na(salario_base_mensual),
+      median(salario_base_mensual, na.rm = TRUE),
+      salario_base_mensual
+    )
+  ) |>
+  ungroup() |>
+  mutate(
+    sector = if_else(is.na(sector), "Sector no informado", sector)
+  )
+
+colSums(is.na(df))
+summary(df$edad_inicio)
+summary(df$salario_base_mensual)
+```
+
+### Respuesta
+
+La fusión se realiza correctamente por `id_contrato`. No hay duplicados relevantes. Se detectan errores intencionados en edad y salario: edades imposibles y salarios negativos o excesivamente altos. Se imputan con medianas de grupos comparables porque ambas son covariables predeterminadas y no resultados del análisis.
+
+---
+
+## Pregunta 1.b
+
+```{r}
+cutoff <- as.Date("2012-02-12")
+
+df <- df |>
+  mutate(
+    fecha_inicio = as.Date(fecha_inicio),
+    fecha_fin_prevista = as.Date(fecha_fin_prevista),
+    fecha_conversion = as.Date(fecha_conversion),
+    running_dias = as.numeric(fecha_fin_prevista - cutoff),
+    running_meses = running_dias / 30.4375,
+    post = as.integer(fecha_fin_prevista >= cutoff),
+    mujer = as.integer(sexo == "Mujer"),
+    educ_baja = as.integer(nivel_educativo == "Primaria o secundaria"),
+    jornada_parcial = as.integer(jornada_parcial),
+    empresa_pequena = as.integer(tamano_empresa %in% c("1-9", "10-49"))
+  ) |>
+  filter(fecha_inicio < cutoff)
+
+summary(df$running_meses)
+table(df$post)
+```
+
+### Respuesta
+
+La variable de asignación es la distancia temporal entre la finalización prevista del contrato de formación y el 12 de febrero de 2012. La variable `post` indica si la oportunidad de conversión ocurre después del cambio normativo. Se restringe a contratos iniciados antes de la reforma para evitar que la composición de nuevos contratos firmados después esté afectada por la propia política.
+
+---
+
+## Pregunta 1.c
+
+```{r}
+tabla_ventana <- df |>
+  filter(abs(running_meses) <= 12) |>
+  mutate(lado = if_else(post == 1, "Después cutoff", "Antes cutoff")) |>
+  summarise(
+    n = n(),
+    tasa_conversion = mean(convertido_indefinido),
+    .by = lado
+  )
+
+tabla_ventana
+
+tabla_sexo <- df |>
+  filter(abs(running_meses) <= 12) |>
+  mutate(lado = if_else(post == 1, "Después cutoff", "Antes cutoff")) |>
+  summarise(
+    n = n(),
+    tasa_conversion = mean(convertido_indefinido),
+    .by = c(lado, sexo)
+  )
+
+tabla_educ <- df |>
+  filter(abs(running_meses) <= 12) |>
+  mutate(lado = if_else(post == 1, "Después cutoff", "Antes cutoff")) |>
+  summarise(
+    n = n(),
+    tasa_conversion = mean(convertido_indefinido),
+    .by = c(lado, nivel_educativo)
+  )
+
+tabla_sector <- df |>
+  filter(abs(running_meses) <= 12) |>
+  mutate(lado = if_else(post == 1, "Después cutoff", "Antes cutoff")) |>
+  summarise(
+    n = n(),
+    tasa_conversion = mean(convertido_indefinido),
+    .by = c(lado, sector)
+  )
+
+tabla_sexo
+tabla_educ
+tabla_sector
+```
+
+### Respuesta
+
+La comparación bruta antes/después alrededor del cutoff permite una primera intuición, pero no es todavía una estimación causal. Para el RDD importa la comparación local y flexible justo alrededor del punto de corte, controlando la tendencia suave en el tiempo.
+
+# Bloque 2: gráficos y supuestos del RDD
+
+## Pregunta 2.a
+
+```{r}
+df_bins <- df |>
+  filter(abs(running_meses) <= 18) |>
+  mutate(bin = cut(running_meses, breaks = seq(-18, 18, by = 1))) |>
+  group_by(bin) |>
+  summarise(
+    running_medio = mean(running_meses, na.rm = TRUE),
+    tasa_conversion = mean(convertido_indefinido, na.rm = TRUE),
+    n = n(),
+    .groups = "drop"
+  ) |>
+  drop_na()
+
+ggplot(df_bins, aes(running_medio, tasa_conversion)) +
+  geom_point(aes(size = n), alpha = 0.7) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_smooth(
+    data = df |> filter(running_meses < 0, abs(running_meses) <= 18),
+    aes(running_meses, convertido_indefinido),
+    method = "lm", formula = y ~ x, se = FALSE
+  ) +
+  geom_smooth(
+    data = df |> filter(running_meses >= 0, abs(running_meses) <= 18),
+    aes(running_meses, convertido_indefinido),
+    method = "lm", formula = y ~ x, se = FALSE
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    x = "Meses respecto al 12 de febrero de 2012",
+    y = "Tasa de conversión a indefinido",
+    title = "RDD descriptivo: conversión de contratos de formación"
+  )
+```
+
+```{r}
+rdplot(
+  y = df$convertido_indefinido,
+  x = df$running_meses,
+  c = 0,
+  x.label = "Meses respecto al cutoff",
+  y.label = "Conversión a indefinido"
+)
+```
+
+### Respuesta
+
+El gráfico debe mostrar si existe un salto discreto en la tasa de conversión justo en el cutoff, más allá de una tendencia temporal suave. La interpretación visual debe centrarse en el entorno local, no en toda la serie histórica.
+
+---
+
+## Pregunta 2.b
+
+```{r}
+df |>
+  filter(abs(running_meses) <= 24) |>
+  ggplot(aes(running_meses)) +
+  geom_histogram(binwidth = 1, boundary = 0) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  labs(
+    x = "Meses respecto al cutoff",
+    y = "Número de contratos",
+    title = "Densidad de la variable de asignación"
+  )
+
+densidad <- rddensity(X = df$running_meses, c = 0)
+summary(densidad)
+```
+
+### Respuesta
+
+En un RDD convencional se debe comprobar que no existe manipulación precisa de la variable de asignación. En este caso la running variable es tiempo, por lo que la interpretación del test de densidad es más delicada: puede haber estacionalidad o cambios administrativos. Aun así, una acumulación muy marcada justo antes o después del cutoff sería una señal de alerta.
+
+---
+
+## Pregunta 2.c
+
+```{r}
+df_local <- df |>
+  filter(abs(running_meses) <= 12)
+
+balance_edad <- rdrobust(
+  y = df_local$edad_inicio,
+  x = df_local$running_meses,
+  c = 0,
+  h = 12
+)
+
+balance_salario <- rdrobust(
+  y = df_local$salario_base_mensual,
+  x = df_local$running_meses,
+  c = 0,
+  h = 12
+)
+
+balance_jornada <- rdrobust(
+  y = df_local$jornada_parcial,
+  x = df_local$running_meses,
+  c = 0,
+  h = 12
+)
+
+balance_empresa <- rdrobust(
+  y = df_local$empresa_pequena,
+  x = df_local$running_meses,
+  c = 0,
+  h = 12
+)
+
+summary(balance_edad)
+summary(balance_salario)
+summary(balance_jornada)
+summary(balance_empresa)
+```
+
+```{r}
+covariables_long <- df |>
+  filter(abs(running_meses) <= 18) |>
+  select(running_meses, edad_inicio, salario_base_mensual, jornada_parcial, empresa_pequena) |>
+  pivot_longer(-running_meses, names_to = "variable", values_to = "valor") |>
+  mutate(bin = cut(running_meses, breaks = seq(-18, 18, by = 2))) |>
+  group_by(variable, bin) |>
+  summarise(
+    running_medio = mean(running_meses),
+    valor_medio = mean(valor, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot(covariables_long, aes(running_medio, valor_medio)) +
+  geom_point() +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(
+    x = "Meses respecto al cutoff",
+    y = "Media por bin",
+    title = "Balance gráfico de covariables predeterminadas"
+  )
+```
+
+### Respuesta
+
+Las covariables predeterminadas no deberían presentar saltos discontinuos en el cutoff. Si hubiera discontinuidades claras en edad, salario, jornada o tamaño empresarial, la comparabilidad local entre contratos justo antes y justo después de febrero de 2012 sería menos creíble.
+
+# Bloque 3: estimación causal
+
+## Pregunta 3.a
+
+```{r}
+df_rdd <- df |>
+  filter(
+    !is.na(convertido_indefinido),
+    !is.na(running_meses),
+    !is.na(edad_inicio),
+    !is.na(salario_base_mensual),
+    !is.na(jornada_parcial),
+    !is.na(empresa_pequena),
+    !is.na(sexo),
+    !is.na(nivel_educativo),
+    !is.na(sector)
+  )
+
+covs_mat <- model.matrix(
+  ~ edad_inicio + salario_base_mensual + jornada_parcial + empresa_pequena +
+    sexo + nivel_educativo + sector,
+  data = df_rdd
+)[, -1]
+
+m_sin_covs <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = 0,
+  h = 12
+)
+
+m_con_covs <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = 0,
+  h = 12,
+  covs = covs_mat
+)
+
+m_h6 <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = 0,
+  h = 6
+)
+
+m_h12 <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = 0,
+  h = 12
+)
+
+summary(m_sin_covs)
+summary(m_con_covs)
+summary(m_h6)
+summary(m_h12)
+```
+
+```{r}
+extraer_tau <- function(modelo, nombre) {
+  tibble(
+    modelo = nombre,
+    tau_convencional = modelo$Estimate[1, 1],
+    se_convencional = modelo$se[1, 1],
+    p_value = modelo$pv[1, 1]
+  )
+}
+
+resultados_rdd <- bind_rows(
+  extraer_tau(m_sin_covs, "Sin covariables, h=12"),
+  extraer_tau(m_con_covs, "Con covariables, h=12"),
+  extraer_tau(m_h6, "Sin covariables, h=6"),
+  extraer_tau(m_h12, "Sin covariables, h=12")
+) |>
+  mutate(
+    efecto_pp = 100 * tau_convencional,
+    se_pp = 100 * se_convencional
+  )
+
+resultados_rdd
+```
+
+### Respuesta
+
+El coeficiente RDD estima el salto local en la probabilidad de conversión a contrato indefinido en torno a febrero de 2012. Al estar el resultado codificado como 0/1, el coeficiente puede interpretarse en puntos porcentuales multiplicándolo por 100. La especificación con covariables no es necesaria para la identificación, pero puede mejorar precisión y sirve como robustez.
+
+---
+
+## Pregunta 3.b
+
+```{r}
+bandwidths <- c(3, 6, 9, 12, 18)
+
+robust_bw <- map_dfr(bandwidths, function(hh) {
+  mod <- rdrobust(
+    y = df_rdd$convertido_indefinido,
+    x = df_rdd$running_meses,
+    c = 0,
+    h = hh
+  )
+  tibble(
+    h = hh,
+    tau = mod$Estimate[1, 1],
+    se = mod$se[1, 1],
+    p = mod$pv[1, 1]
+  )
+}) |>
+  mutate(efecto_pp = 100 * tau)
+
+robust_bw
+```
+
+```{r}
+# Donut RDD: excluimos contratos demasiado cercanos al cutoff.
+df_donut <- df_rdd |>
+  filter(abs(running_meses) >= 0.5)
+
+m_donut <- rdrobust(
+  y = df_donut$convertido_indefinido,
+  x = df_donut$running_meses,
+  c = 0,
+  h = 12
+)
+
+summary(m_donut)
+```
+
+```{r}
+# Placebo cutoffs en -12 y +12 meses.
+m_placebo_menos12 <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = -12,
+  h = 6
+)
+
+m_placebo_mas12 <- rdrobust(
+  y = df_rdd$convertido_indefinido,
+  x = df_rdd$running_meses,
+  c = 12,
+  h = 6
+)
+
+summary(m_placebo_menos12)
+summary(m_placebo_mas12)
+```
+
+```{r}
+# Estimación agregada por mes como comprobación descriptiva.
+mensual <- df |>
+  mutate(mes_relativo = floor(running_meses)) |>
+  filter(mes_relativo >= -24, mes_relativo <= 24) |>
+  summarise(
+    tasa_conversion = mean(convertido_indefinido),
+    n = n(),
+    .by = mes_relativo
+  )
+
+ggplot(mensual, aes(mes_relativo, tasa_conversion)) +
+  geom_point(aes(size = n)) +
+  geom_vline(xintercept = 0, linetype = "dashed") +
+  geom_smooth(data = mensual |> filter(mes_relativo < 0), method = "lm", se = FALSE) +
+  geom_smooth(data = mensual |> filter(mes_relativo >= 0), method = "lm", se = FALSE) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  labs(
+    x = "Mes relativo al cutoff",
+    y = "Tasa mensual de conversión",
+    title = "RDD agregado por mes"
+  )
+```
+
+### Respuesta
+
+La robustez debe mostrar si el resultado mantiene signo y magnitud razonable al cambiar el ancho de banda, excluir observaciones muy cercanas al cutoff o desplazar falsamente el punto de corte. En un RDD temporal los placebos son especialmente relevantes, porque ayudan a detectar si el salto estimado responde a una tendencia o estacionalidad y no al cambio normativo.
+
+---
+
+## Pregunta 3.c
+
+```{r}
+estimar_subgrupo <- function(data, filtro, nombre) {
+  d <- data |> filter({{ filtro }})
+  if (nrow(d) < 500 || length(unique(d$post)) < 2) {
+    return(tibble(grupo = nombre, tau = NA_real_, se = NA_real_, n = nrow(d)))
+  }
+  mod <- rdrobust(
+    y = d$convertido_indefinido,
+    x = d$running_meses,
+    c = 0,
+    h = 12
+  )
+  tibble(
+    grupo = nombre,
+    tau = mod$Estimate[1, 1],
+    se = mod$se[1, 1],
+    n = nrow(d)
+  )
+}
+
+heterogeneidad <- bind_rows(
+  estimar_subgrupo(df_rdd, sexo == "Hombre", "Hombres"),
+  estimar_subgrupo(df_rdd, sexo == "Mujer", "Mujeres"),
+  estimar_subgrupo(df_rdd, nivel_educativo == "Primaria o secundaria", "Educación baja"),
+  estimar_subgrupo(df_rdd, nivel_educativo != "Primaria o secundaria", "Educación media/alta"),
+  estimar_subgrupo(df_rdd, sector == "Servicios alta cualificación y comercio", "Servicios alta cualificación y comercio"),
+  estimar_subgrupo(df_rdd, sector == "Industria y construcción", "Industria y construcción"),
+  estimar_subgrupo(df_rdd, sector == "Hostelería", "Hostelería")
+) |>
+  mutate(
+    efecto_pp = 100 * tau,
+    se_pp = 100 * se
+  )
+
+heterogeneidad
+
+ggplot(heterogeneidad, aes(reorder(grupo, efecto_pp), efecto_pp)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = efecto_pp - 1.96 * se_pp, ymax = efecto_pp + 1.96 * se_pp), width = 0.1) +
+  coord_flip() +
+  labs(
+    x = NULL,
+    y = "Efecto estimado en puntos porcentuales",
+    title = "Heterogeneidad del efecto RDD"
+  )
+```
+
+### Respuesta
+
+La heterogeneidad permite analizar si el incentivo funciona mejor para algunos colectivos. En un contexto de políticas activas de empleo es especialmente importante distinguir si el efecto se concentra en colectivos de baja empleabilidad o en sectores donde la conversión es más frecuente por razones estructurales.
+
+# Comentario final
+
+### Conclusiones
+
+El diseño RDD identifica un efecto local alrededor de febrero de 2012. Su principal ventaja es que compara contratos con fecha prevista de finalización muy cercana al cambio normativo. Sin embargo, al ser un RDD temporal, la identificación es más vulnerable que en un RDD basado en un umbral individual continuo: pueden coincidir otros cambios regulatorios, estacionalidad o shocks macroeconómicos.
+
+Por tanto, una respuesta sólida debe:
+
+- justificar por qué se usan solo contratos iniciados antes de la reforma;
+- comprobar densidad y balance de covariables;
+- estimar el salto local en la tasa de conversión;
+- analizar robustez a bandwidths, donut y placebos;
+- interpretar el resultado como efecto local, no como efecto medio nacional para todos los contratos.

@@ -1,0 +1,796 @@
+---
+title: "Mini-tutorial práctico: DiD, TWFE y event-study en R"
+subtitle: "Chuleta con datos sintéticos para no dudar entre interacción, i(), sunab() y att_gt()"
+author: "Ignacio Garijo Campos"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    theme: cosmo
+    code-fold: false
+    code-tools: true
+execute:
+  warning: false
+  message: false
+---
+
+# Objetivo
+
+Este mini-tutorial resume cómo especificar en R varios modelos de diferencias en diferencias con `fixest` y `did`.
+
+La idea es distinguir claramente cuatro casos:
+
+1. DiD clásico 2x2: grupo tratado + grupo control, fecha común de tratamiento.
+2. Event-study clásico: grupo tratado + grupo control, fecha común, efectos dinámicos.
+3. TWFE con adopción escalonada: varias cohortes tratadas en años distintos.
+4. Estimadores robustos a adopción escalonada: `sunab()` y `att_gt()`.
+
+La regla mental básica es:
+
+> En DiD con efectos fijos, el efecto causal está en la interacción tratamiento × post.  
+> En event-study, está en las interacciones entre grupo tratado y tiempo relativo.  
+> En adopción escalonada, `treated` o `i(event_time, ever_treated)` son benchmarks; `sunab()` o `att_gt()` son preferibles.
+
+# Paquetes
+
+```{r}
+# install.packages(c("tidyverse", "fixest", "did", "modelsummary", "broom"))
+
+library(tidyverse)
+library(fixest)
+library(did)
+library(modelsummary)
+library(broom)
+
+theme_set(theme_minimal())
+set.seed(12345)
+```
+
+# 1. DiD clásico 2x2
+
+## 1.1. Estructura
+
+Este es el caso más sencillo:
+
+- hay un grupo tratado;
+- hay un grupo nunca tratado;
+- todos los tratados reciben la política en el mismo año;
+- hay datos antes y después.
+
+Ejemplo:
+
+- empresas observadas entre 2017 y 2024;
+- la política empieza en 2021;
+- algunas empresas son tratadas y otras no.
+
+## 1.2. Simulación de datos
+
+```{r}
+n_emp <- 800
+years <- 2017:2024
+
+empresas_2x2 <- tibble(
+  id_empresa = 1:n_emp,
+  grupo_tratado = rbinom(n_emp, 1, 0.45),
+  sector = sample(c("Industria", "Comercio", "Servicios"), n_emp, replace = TRUE),
+  tamano_base = round(exp(rnorm(n_emp, log(20), 0.6))),
+  alpha_i = rnorm(n_emp, 0, 4)
+)
+
+df_2x2 <- expand_grid(
+  id_empresa = empresas_2x2$id_empresa,
+  anio = years
+) |>
+  left_join(empresas_2x2, by = "id_empresa") |>
+  mutate(
+    post = as.integer(anio >= 2021),
+    did = grupo_tratado * post,
+    tendencia = 1.2 * (anio - 2017),
+    efecto_real = 4 * did,
+    empleo = 10 + tamano_base + alpha_i + tendencia + efecto_real + rnorm(n(), 0, 3)
+  )
+
+glimpse(df_2x2)
+```
+
+## 1.3. DiD manual descriptivo
+
+```{r}
+did_manual <- df_2x2 |>
+  mutate(periodo = if_else(post == 1, "Post", "Pre")) |>
+  group_by(grupo_tratado, periodo) |>
+  summarise(empleo_medio = mean(empleo), .groups = "drop") |>
+  pivot_wider(names_from = periodo, values_from = empleo_medio) |>
+  mutate(cambio = Post - Pre)
+
+did_manual
+
+did_manual |>
+  summarise(
+    did_manual = cambio[grupo_tratado == 1] - cambio[grupo_tratado == 0]
+  )
+```
+
+Esto es útil para entender la lógica, pero en examen normalmente usarás una regresión con efectos fijos.
+
+## 1.4. TWFE correcto para DiD 2x2
+
+Con efectos fijos de empresa y año, lo más limpio es:
+
+```{r}
+m_2x2_did <- feols(
+  empleo ~ did | id_empresa + anio,
+  data = df_2x2,
+  cluster = ~ id_empresa
+)
+
+summary(m_2x2_did)
+```
+
+También puedes escribir la interacción directamente:
+
+```{r}
+m_2x2_interaccion <- feols(
+  empleo ~ grupo_tratado:post | id_empresa + anio,
+  data = df_2x2,
+  cluster = ~ id_empresa
+)
+
+summary(m_2x2_interaccion)
+```
+
+Ambas versiones son equivalentes.
+
+## 1.5. Qué NO hace falta incluir
+
+No hace falta incluir `grupo_tratado` ni `post` por separado:
+
+```{r}
+m_2x2_redundante <- feols(
+  empleo ~ grupo_tratado * post | id_empresa + anio,
+  data = df_2x2,
+  cluster = ~ id_empresa
+)
+
+summary(m_2x2_redundante)
+```
+
+`fixest` eliminará por colinealidad las variables absorbidas por los efectos fijos:
+
+- `grupo_tratado` queda absorbida por el efecto fijo de empresa;
+- `post` queda absorbida por el efecto fijo de año;
+- la interacción es lo que identifica el DiD.
+
+## 1.6. Interpretación
+
+Si el coeficiente de `did` es aproximadamente 4, la interpretación es:
+
+> Tras la política, las empresas tratadas aumentan su empleo en unos 4 trabajadores más que las empresas no tratadas, descontando diferencias fijas entre empresas y shocks comunes de cada año.
+
+# 2. Event-study clásico con fecha común
+
+## 2.1. Cuándo usarlo
+
+Usa un event-study cuando quieras ver:
+
+- si había tendencias distintas antes de la política;
+- cómo evoluciona el efecto después;
+- si el efecto aparece de golpe o crece gradualmente.
+
+En el caso clásico, todos los tratados empiezan en el mismo año.
+
+```{r}
+df_2x2 <- df_2x2 |>
+  mutate(event_time = anio - 2021)
+```
+
+## 2.2. Especificación correcta con `i()`
+
+```{r}
+m_event_2x2 <- feols(
+  empleo ~ i(event_time, grupo_tratado, ref = -1) | id_empresa + anio,
+  data = df_2x2,
+  cluster = ~ id_empresa
+)
+
+summary(m_event_2x2)
+iplot(m_event_2x2)
+```
+
+La parte importante es:
+
+```r
+i(event_time, grupo_tratado, ref = -1)
+```
+
+Esto crea interacciones entre:
+
+- cada valor de `event_time`;
+- el grupo tratado;
+- omitiendo `event_time = -1` como referencia.
+
+## 2.3. Interpretación de los coeficientes
+
+- Coeficientes para `event_time < 0`: placebo / pretrends.
+- Coeficiente para `event_time = 0`: efecto en el año de inicio.
+- Coeficientes para `event_time > 0`: efecto dinámico posterior.
+
+Una buena frase de examen:
+
+> Los coeficientes previos al tratamiento permiten evaluar visualmente la plausibilidad de tendencias paralelas. Si los leads son cercanos a cero, aumenta la credibilidad del diseño. Los coeficientes posteriores muestran la evolución dinámica del efecto.
+
+## 2.4. Error frecuente
+
+No hagas esto:
+
+```{r}
+m_event_mal <- feols(
+  empleo ~ i(event_time, ref = -1) | id_empresa + anio,
+  data = df_2x2,
+  cluster = ~ id_empresa
+)
+
+summary(m_event_mal)
+```
+
+¿Por qué está mal?
+
+Porque `i(event_time, ref = -1)` crea dummies de tiempo relativo para todo el mundo, no solo para el grupo tratado. En un DiD, los coeficientes dinámicos deben ser diferenciales entre tratados y controles.
+
+La forma correcta es:
+
+```r
+i(event_time, grupo_tratado, ref = -1)
+```
+
+# 3. DiD con adopción escalonada
+
+## 3.1. Estructura
+
+Ahora la política no empieza el mismo año para todos.
+
+Ejemplo:
+
+- algunas empresas reciben apoyo en 2020;
+- otras en 2021;
+- otras en 2022;
+- otras en 2023;
+- otras nunca reciben apoyo.
+
+Este caso es muy típico en evaluaciones de políticas públicas.
+
+## 3.2. Simulación de datos escalonados
+
+```{r}
+n_emp <- 1000
+years <- 2017:2024
+
+empresas_stag <- tibble(
+  id_empresa = 1:n_emp,
+  first_treat_year = sample(
+    c(2020, 2021, 2022, 2023, NA),
+    n_emp,
+    replace = TRUE,
+    prob = c(0.15, 0.18, 0.17, 0.10, 0.40)
+  ),
+  sector = sample(c("Industria", "Comercio", "Servicios", "TIC"), n_emp, replace = TRUE),
+  tamano_base = round(exp(rnorm(n_emp, log(18), 0.7))),
+  alpha_i = rnorm(n_emp, 0, 5)
+)
+
+df_stag <- expand_grid(
+  id_empresa = empresas_stag$id_empresa,
+  anio = years
+) |>
+  left_join(empresas_stag, by = "id_empresa") |>
+  mutate(
+    ever_treated = as.integer(!is.na(first_treat_year)),
+    treated = as.integer(!is.na(first_treat_year) & anio >= first_treat_year),
+    event_time = if_else(ever_treated == 1, anio - first_treat_year, NA_real_),
+    tendencia = 1.0 * (anio - 2017),
+    efecto_real = if_else(
+      treated == 1,
+      2.5 + 1.2 * pmin(pmax(event_time, 0), 4),
+      0
+    ),
+    empleo = 8 + tamano_base + alpha_i + tendencia + efecto_real + rnorm(n(), 0, 3.5)
+  )
+
+df_stag |>
+  count(first_treat_year)
+```
+
+## 3.3. Crear variables correctamente
+
+En adopción escalonada necesitas:
+
+```{r}
+df_stag <- df_stag |>
+  mutate(
+    cohort = if_else(is.na(first_treat_year), 0, first_treat_year),
+    treated = as.integer(cohort != 0 & anio >= cohort),
+    ever_treated = as.integer(cohort != 0),
+    event_time = if_else(cohort != 0, anio - cohort, NA_real_)
+  )
+
+df_stag |>
+  summarise(
+    empresas = n_distinct(id_empresa),
+    nunca_tratadas = n_distinct(id_empresa[cohort == 0]),
+    tratadas_alguna_vez = n_distinct(id_empresa[cohort != 0])
+  )
+```
+
+En `did::att_gt()`, la cohorte de nunca tratados debe ser `0`.
+
+# 4. TWFE simple con adopción escalonada
+
+## 4.1. Modelo benchmark
+
+```{r}
+m_stag_twfe <- feols(
+  empleo ~ treated | id_empresa + anio,
+  data = df_stag,
+  cluster = ~ id_empresa
+)
+
+summary(m_stag_twfe)
+```
+
+Este modelo responde:
+
+> ¿Cuál es el efecto medio TWFE de estar tratado, controlando por efectos fijos de empresa y año?
+
+Pero en adopción escalonada puede ser problemático si:
+
+- los efectos cambian con el tiempo desde el tratamiento;
+- los efectos son distintos por cohorte;
+- unidades ya tratadas actúan como controles de unidades tratadas más tarde.
+
+Por tanto, úsalo como benchmark, no como resultado principal si puedes evitarlo.
+
+## 4.2. Frase útil
+
+> El TWFE simple se presenta como benchmark. Con adopción escalonada y efectos heterogéneos, puede mezclar comparaciones no deseadas entre cohortes ya tratadas y cohortes tratadas más tarde. Por eso conviene complementarlo con estimadores robustos a heterogeneidad.
+
+# 5. Event-study TWFE con adopción escalonada
+
+## 5.1. Versión benchmark con `i()`
+
+```{r}
+m_stag_event_twfe <- feols(
+  empleo ~ i(event_time, ever_treated, ref = -1) | id_empresa + anio,
+  data = df_stag,
+  cluster = ~ id_empresa
+)
+
+summary(m_stag_event_twfe)
+iplot(m_stag_event_twfe)
+```
+
+Esto es útil como gráfico rápido, pero no es el estimador más robusto.
+
+## 5.2. Error frecuente: cargarse los nunca tratados
+
+No hagas esto antes de estimar:
+
+```r
+df <- df |> filter(!is.na(event_time))
+```
+
+Eso elimina a los nunca tratados y te quedas sin grupo de control.
+
+Si quieres restringir la ventana dinámica pero mantener controles nunca tratados:
+
+```{r}
+df_stag_restr <- df_stag |>
+  filter(cohort == 0 | between(event_time, -3, 4))
+
+df_stag_restr |>
+  summarise(
+    empresas = n_distinct(id_empresa),
+    nunca_tratadas = n_distinct(id_empresa[cohort == 0])
+  )
+```
+
+Y entonces:
+
+```{r}
+m_stag_event_restr <- feols(
+  empleo ~ i(event_time, ever_treated, ref = -1) | id_empresa + anio,
+  data = df_stag_restr,
+  cluster = ~ id_empresa
+)
+
+summary(m_stag_event_restr)
+iplot(m_stag_event_restr)
+```
+
+# 6. Event-study robusto con `sunab()`
+
+## 6.1. Cuándo usarlo
+
+`sunab()` implementa una lógica tipo Sun & Abraham para adopción escalonada.
+
+Es una opción muy cómoda dentro de `fixest`.
+
+```{r}
+m_sunab <- feols(
+  empleo ~ sunab(first_treat_year, anio) | id_empresa + anio,
+  data = df_stag,
+  cluster = ~ id_empresa
+)
+
+summary(m_sunab)
+iplot(m_sunab)
+```
+
+## 6.2. Ventaja
+
+`sunab(first_treat_year, anio)` sabe que:
+
+- `first_treat_year` es la cohorte;
+- `anio` es el tiempo calendario;
+- los nunca tratados tienen `first_treat_year = NA`;
+- hay adopción escalonada.
+
+## 6.3. Frase útil
+
+> Uso `sunab()` porque permite estimar un event-study con adopción escalonada evitando algunas comparaciones problemáticas del TWFE dinámico convencional.
+
+# 7. Estimador Callaway-Sant'Anna con `did::att_gt()`
+
+## 7.1. Preparación
+
+`att_gt()` necesita:
+
+- outcome: `yname`;
+- tiempo: `tname`;
+- identificador individual: `idname`;
+- cohorte de primer tratamiento: `gname`;
+- cohorte 0 para nunca tratados.
+
+Además, el identificador debe ser numérico en algunas configuraciones.
+
+```{r}
+df_stag_did <- df_stag |>
+  mutate(
+    id_num = as.numeric(id_empresa),
+    cohort = if_else(is.na(first_treat_year), 0, first_treat_year)
+  )
+```
+
+## 7.2. Estimación
+
+```{r}
+m_attgt <- att_gt(
+  yname = "empleo",
+  tname = "anio",
+  idname = "id_num",
+  gname = "cohort",
+  data = df_stag_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 100,
+  cband = TRUE
+)
+
+summary(m_attgt)
+```
+
+## 7.3. Agregación simple
+
+```{r}
+m_attgt_simple <- aggte(m_attgt, type = "simple")
+summary(m_attgt_simple)
+```
+
+Esto da un ATT medio agregado.
+
+## 7.4. Event-study dinámico
+
+```{r}
+m_attgt_dynamic <- aggte(m_attgt, type = "dynamic")
+summary(m_attgt_dynamic)
+ggdid(m_attgt_dynamic)
+```
+
+## 7.5. `notyettreated` vs `nevertreated`
+
+Puedes comparar dos grupos de control:
+
+```{r}
+m_attgt_never <- att_gt(
+  yname = "empleo",
+  tname = "anio",
+  idname = "id_num",
+  gname = "cohort",
+  data = df_stag_did,
+  panel = TRUE,
+  control_group = "nevertreated",
+  est_method = "dr",
+  bstrap = TRUE,
+  biters = 100,
+  cband = TRUE
+)
+
+simple_notyet <- aggte(m_attgt, type = "simple")
+simple_never <- aggte(m_attgt_never, type = "simple")
+
+modelsummary(
+  list(
+    "not-yet-treated" = simple_notyet,
+    "never-treated" = simple_never
+  )
+)
+```
+
+Interpretación:
+
+- `notyettreated`: usa como controles a unidades que todavía no han recibido tratamiento.
+- `nevertreated`: usa solo unidades que nunca reciben tratamiento.
+- Si ambos dan resultados similares, es una buena señal de robustez.
+
+# 8. Añadir covariables
+
+## 8.1. En TWFE
+
+Puedes añadir covariables que cambian en el tiempo:
+
+```{r}
+df_stag <- df_stag |>
+  mutate(
+    ventas = 100 + 4 * tamano_base + 5 * (anio - 2017) + rnorm(n(), 0, 20)
+  )
+
+m_twfe_cov <- feols(
+  empleo ~ treated + ventas | id_empresa + anio,
+  data = df_stag,
+  cluster = ~ id_empresa
+)
+
+summary(m_twfe_cov)
+```
+
+Pero cuidado: si `ventas` puede estar afectada por el tratamiento, controlarla puede introducir sesgo. En general, usa covariables predeterminadas o claramente exógenas.
+
+## 8.2. Covariables fijas
+
+Variables como sector o tamaño base quedan absorbidas por efectos fijos de empresa:
+
+```{r}
+m_twfe_sector <- feols(
+  empleo ~ treated + sector + tamano_base | id_empresa + anio,
+  data = df_stag,
+  cluster = ~ id_empresa
+)
+
+summary(m_twfe_sector)
+```
+
+`fixest` probablemente eliminará `sector` y `tamano_base` porque no cambian dentro de empresa.
+
+## 8.3. En `att_gt()`
+
+Con `att_gt()` puedes usar `xformla`.
+
+```{r}
+m_attgt_cov <- att_gt(
+  yname = "empleo",
+  tname = "anio",
+  idname = "id_num",
+  gname = "cohort",
+  data = df_stag_did,
+  panel = TRUE,
+  control_group = "notyettreated",
+  est_method = "dr",
+  xformla = ~ tamano_base + sector,
+  bstrap = TRUE,
+  biters = 100,
+  cband = TRUE
+)
+
+summary(aggte(m_attgt_cov, type = "simple"))
+```
+
+Aquí sí tiene sentido incluir covariables fijas porque el estimador no funciona igual que un TWFE con efectos fijos individuales absorbentes en la fórmula.
+
+# 9. Chuleta final
+
+## Caso A: DiD clásico, fecha común
+
+```r
+df <- df |>
+  mutate(
+    post = as.integer(year >= 2021),
+    did = treated_group * post
+  )
+
+feols(y ~ did | id + year, data = df, cluster = ~ id)
+```
+
+O directamente:
+
+```r
+feols(y ~ treated_group:post | id + year, data = df, cluster = ~ id)
+```
+
+## Caso B: event-study clásico, fecha común
+
+```r
+df <- df |>
+  mutate(event_time = year - 2021)
+
+feols(
+  y ~ i(event_time, treated_group, ref = -1) | id + year,
+  data = df,
+  cluster = ~ id
+)
+```
+
+## Caso C: adopción escalonada, TWFE benchmark
+
+```r
+df <- df |>
+  mutate(
+    treated = as.integer(!is.na(first_treat_year) & year >= first_treat_year)
+  )
+
+feols(y ~ treated | id + year, data = df, cluster = ~ id)
+```
+
+## Caso D: adopción escalonada, event-study benchmark
+
+```r
+df <- df |>
+  mutate(
+    ever_treated = as.integer(!is.na(first_treat_year)),
+    event_time = year - first_treat_year
+  )
+
+feols(
+  y ~ i(event_time, ever_treated, ref = -1) | id + year,
+  data = df,
+  cluster = ~ id
+)
+```
+
+## Caso E: adopción escalonada robusta con `sunab()`
+
+```r
+feols(
+  y ~ sunab(first_treat_year, year) | id + year,
+  data = df,
+  cluster = ~ id
+)
+```
+
+## Caso F: adopción escalonada robusta con `att_gt()`
+
+```r
+df <- df |>
+  mutate(
+    cohort = if_else(is.na(first_treat_year), 0, first_treat_year)
+  )
+
+att_gt(
+  yname = "y",
+  tname = "year",
+  idname = "id",
+  gname = "cohort",
+  data = df,
+  panel = TRUE,
+  control_group = "notyettreated"
+)
+```
+
+# 10. Errores comunes
+
+## Error 1: meter `treated_group` y `post` con efectos fijos
+
+No es grave, pero es redundante:
+
+```r
+feols(y ~ treated_group + post + did | id + year, data = df)
+```
+
+Mejor:
+
+```r
+feols(y ~ did | id + year, data = df)
+```
+
+## Error 2: event-study sin interacción
+
+Mal:
+
+```r
+feols(y ~ i(event_time, ref = -1) | id + year, data = df)
+```
+
+Bien:
+
+```r
+feols(y ~ i(event_time, treated_group, ref = -1) | id + year, data = df)
+```
+
+## Error 3: eliminar nunca tratados
+
+Mal:
+
+```r
+df <- df |> filter(!is.na(event_time))
+```
+
+Bien:
+
+```r
+df <- df |> filter(cohort == 0 | between(event_time, -3, 4))
+```
+
+## Error 4: controlar por variables postratamiento
+
+Evita usar covariables que puedan ser consecuencia del tratamiento:
+
+```r
+feols(y ~ did + ventas_post | id + year, data = df)
+```
+
+Mejor usar variables predeterminadas o no controlar.
+
+# 11. Qué escribir en un examen
+
+## DiD clásico
+
+> Estimo un modelo de diferencias en diferencias con efectos fijos de unidad y año. El coeficiente de la interacción tratado × post mide el cambio diferencial del grupo tratado tras la política respecto al grupo de control, descontando diferencias fijas entre unidades y shocks comunes temporales.
+
+## Event-study
+
+> La especificación dinámica permite evaluar la plausibilidad de tendencias paralelas antes de la política y analizar la evolución temporal del efecto. Se omite el periodo -1 como referencia.
+
+## Adopción escalonada
+
+> Dado que las unidades reciben el tratamiento en distintos años, el TWFE convencional puede ser problemático si existen efectos heterogéneos por cohorte o por tiempo desde el tratamiento. Por ello, uso el TWFE como benchmark y complemento con estimadores robustos a adopción escalonada.
+
+## Supuesto clave
+
+> La interpretación causal descansa en el supuesto de tendencias paralelas: en ausencia de la política, las unidades tratadas habrían seguido una evolución similar a la de las unidades de control.
+
+# 12. Mini-ejercicio para practicar
+
+Con `df_stag`, intenta responder:
+
+1. Estima el efecto del tratamiento sobre `empleo` con TWFE simple.
+2. Estima un event-study con `i(event_time, ever_treated, ref = -1)`.
+3. Estima un event-study robusto con `sunab()`.
+4. Estima un `att_gt()` con `notyettreated`.
+5. Repite usando `nevertreated`.
+6. Compara resultados.
+7. Escribe 5 líneas interpretando supuestos, magnitud y limitaciones.
+
+```{r}
+# Tu código aquí
+```
+
+# Conclusión
+
+La decisión práctica es:
+
+| Situación | Especificación recomendada |
+|---|---|
+| Tratamiento único, fecha común | `feols(y ~ treated:post | id + year)` |
+| Fecha común y dinámica | `feols(y ~ i(event_time, treated, ref = -1) | id + year)` |
+| Adopción escalonada simple | `feols(y ~ treated | id + year)` como benchmark |
+| Adopción escalonada dinámica | `sunab(first_treat_year, year)` o `att_gt()` |
+| Dudas sobre controles | usar solo predeterminados; evitar postratamiento |
+
+La forma más segura de no equivocarte es preguntarte siempre:
+
+1. ¿Hay una fecha común o adopción escalonada?
+2. ¿Quiero un efecto medio o dinámica?
+3. ¿Estoy interactuando el tiempo relativo con el grupo tratado?
+4. ¿Estoy manteniendo a los nunca tratados en la muestra?
+5. ¿Estoy usando controles pretratamiento?
